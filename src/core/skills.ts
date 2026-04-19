@@ -15,7 +15,7 @@ async function exists(p: string): Promise<boolean> {
 }
 
 function extractFrontmatterField(content: string, key: string): string {
-  const match = content.match(/^---\n([\s\S]*?)\n---/);
+  const match = content.match(/^---\r?\n([\s\S]*?)\r?\n---/);
   if (!match) return '';
   const line = match[1]?.split('\n').find(l => l.startsWith(`${key}:`));
   return line ? line.slice(key.length + 1).trim() : '';
@@ -24,12 +24,14 @@ function extractFrontmatterField(content: string, key: string): string {
 async function scanDir(dir: string, scope: SkillScope): Promise<Skill[]> {
   if (!await exists(dir)) return [];
   const result: Skill[] = [];
-  for (const name of await fs.readdir(dir)) {
-    const skillFile = path.join(dir, name, 'SKILL.md');
+  const entries = await fs.readdir(dir, { withFileTypes: true });
+  for (const entry of entries) {
+    if (!entry.isDirectory()) continue;
+    const skillFile = path.join(dir, entry.name, 'SKILL.md');
     if (!await exists(skillFile)) continue;
     const content = await fs.readFile(skillFile, 'utf-8');
     result.push({
-      name,
+      name: entry.name,
       description: extractFrontmatterField(content, 'description'),
       scope,
       path: skillFile,
