@@ -5,6 +5,7 @@ import { SkillsTreeProvider } from './tree/skills-tree';
 import { MemoryTreeProvider } from './tree/memory-tree';
 import { SettingsTreeProvider, openSettingsFile } from './tree/settings-tree';
 import { UsageTreeProvider } from './tree/usage-tree';
+import { registerPluginCommands } from './commands/plugins';
 
 export function activate(context: vscode.ExtensionContext): void {
   const plugins = new PluginsTreeProvider();
@@ -31,6 +32,7 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand('claudeCopilot.openUsage', () => {
       vscode.window.showInformationMessage('Usage dashboard — coming in M5');
     }),
+    ...registerPluginCommands(() => plugins.refresh()),
   );
 }
 

@@ -32,8 +32,25 @@
       { "command": "claudeCopilot.refresh", "title": "Claude Copilot: Refresh All", "icon": "$(refresh)" },
       { "command": "claudeCopilot.openFile", "title": "Claude Copilot: Open File" },
       { "command": "claudeCopilot.openSettings", "title": "Claude Copilot: Open Settings File" },
-      { "command": "claudeCopilot.openUsage", "title": "Claude Copilot: Open Usage Dashboard" }
-    ]
+      { "command": "claudeCopilot.openUsage", "title": "Claude Copilot: Open Usage Dashboard" },
+      { "command": "claudeCopilot.plugin.install", "title": "Install Plugin...", "icon": "$(add)" },
+      { "command": "claudeCopilot.plugin.uninstall", "title": "Uninstall" },
+      { "command": "claudeCopilot.plugin.toggle", "title": "Toggle Enable" },
+      { "command": "claudeCopilot.marketplace.add", "title": "Add Marketplace...", "icon": "$(add)" },
+      { "command": "claudeCopilot.marketplace.remove", "title": "Remove Marketplace" }
+    ],
+    "menus": {
+      "view/title": [
+        { "command": "claudeCopilot.plugin.install", "when": "view == claudeCopilot.plugins", "group": "navigation@1" },
+        { "command": "claudeCopilot.refresh", "when": "view == claudeCopilot.plugins", "group": "navigation@2" }
+      ],
+      "view/item/context": [
+        { "command": "claudeCopilot.marketplace.add", "when": "view == claudeCopilot.plugins && viewItem == group:marketplaces", "group": "inline" },
+        { "command": "claudeCopilot.marketplace.remove", "when": "view == claudeCopilot.plugins && viewItem == marketplace" },
+        { "command": "claudeCopilot.plugin.toggle", "when": "view == claudeCopilot.plugins && viewItem =~ /^plugin:/", "group": "inline" },
+        { "command": "claudeCopilot.plugin.uninstall", "when": "view == claudeCopilot.plugins && viewItem =~ /^plugin:/" }
+      ]
+    }
   },
   "scripts": {
     "build": "esbuild src/extension.ts --bundle --outfile=out/extension.js --external:vscode --platform=node --format=cjs --target=node18 --sourcemap",
