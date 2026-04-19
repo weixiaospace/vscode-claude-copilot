@@ -1,13 +1,11 @@
 import * as vscode from 'vscode';
-import { HelloTreeProvider } from './tree/hello-tree';
+import { PluginsTreeProvider } from './tree/plugins-tree';
 
 export function activate(context: vscode.ExtensionContext): void {
-  const helloProvider = new HelloTreeProvider();
+  const plugins = new PluginsTreeProvider();
   context.subscriptions.push(
-    vscode.window.registerTreeDataProvider('claudeCopilot.hello', helloProvider),
-    vscode.commands.registerCommand('claudeCopilot.refresh', () => {
-      vscode.window.showInformationMessage('Claude Copilot: refresh stub');
-    }),
+    vscode.window.registerTreeDataProvider('claudeCopilot.plugins', plugins),
+    vscode.commands.registerCommand('claudeCopilot.refresh', () => plugins.refresh()),
   );
 }
 

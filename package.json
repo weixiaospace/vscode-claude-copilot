@@ -20,11 +20,16 @@
     },
     "views": {
       "claudeCopilot": [
-        { "id": "claudeCopilot.hello", "name": "Hello" }
+        { "id": "claudeCopilot.plugins", "name": "Plugins" },
+        { "id": "claudeCopilot.mcp", "name": "MCP Servers" },
+        { "id": "claudeCopilot.skills", "name": "Skills" },
+        { "id": "claudeCopilot.memory", "name": "Memory" },
+        { "id": "claudeCopilot.settings", "name": "Settings" },
+        { "id": "claudeCopilot.usage", "name": "Usage" }
       ]
     },
     "commands": [
-      { "command": "claudeCopilot.refresh", "title": "Claude Copilot: Refresh All" }
+      { "command": "claudeCopilot.refresh", "title": "Claude Copilot: Refresh All", "icon": "$(refresh)" }
     ]
   },
   "scripts": {
