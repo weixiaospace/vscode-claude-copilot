@@ -9,6 +9,7 @@ import { registerPluginCommands } from './commands/plugins';
 import { registerMcpCommands } from './commands/mcp';
 import { registerSkillCommands } from './commands/skills';
 import { registerMemoryCommands } from './commands/memory';
+import { registerWatchers } from './lib/watchers';
 
 export function activate(context: vscode.ExtensionContext): void {
   const plugins = new PluginsTreeProvider();
@@ -39,6 +40,13 @@ export function activate(context: vscode.ExtensionContext): void {
     ...registerMcpCommands(() => mcp.refresh()),
     ...registerSkillCommands(() => skills.refresh()),
     ...registerMemoryCommands(() => memory.refresh()),
+    ...registerWatchers({
+      plugins: () => plugins.refresh(),
+      mcp: () => mcp.refresh(),
+      skills: () => skills.refresh(),
+      memory: () => memory.refresh(),
+      settings: () => settings.refresh(),
+    }),
   );
 }
 
