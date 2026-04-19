@@ -37,7 +37,10 @@
       { "command": "claudeCopilot.plugin.uninstall", "title": "Uninstall" },
       { "command": "claudeCopilot.plugin.toggle", "title": "Toggle Enable" },
       { "command": "claudeCopilot.marketplace.add", "title": "Add Marketplace...", "icon": "$(add)" },
-      { "command": "claudeCopilot.marketplace.remove", "title": "Remove Marketplace" }
+      { "command": "claudeCopilot.marketplace.remove", "title": "Remove Marketplace" },
+      { "command": "claudeCopilot.mcp.addUser", "title": "Add User MCP...", "icon": "$(add)" },
+      { "command": "claudeCopilot.mcp.addProject", "title": "Add Project MCP...", "icon": "$(add)" },
+      { "command": "claudeCopilot.mcp.remove", "title": "Remove MCP Server" }
     ],
     "menus": {
       "view/title": [
@@ -48,7 +51,10 @@
         { "command": "claudeCopilot.marketplace.add", "when": "view == claudeCopilot.plugins && viewItem == group:marketplaces", "group": "inline" },
         { "command": "claudeCopilot.marketplace.remove", "when": "view == claudeCopilot.plugins && viewItem == marketplace" },
         { "command": "claudeCopilot.plugin.toggle", "when": "view == claudeCopilot.plugins && viewItem =~ /^plugin:/", "group": "inline" },
-        { "command": "claudeCopilot.plugin.uninstall", "when": "view == claudeCopilot.plugins && viewItem =~ /^plugin:/" }
+        { "command": "claudeCopilot.plugin.uninstall", "when": "view == claudeCopilot.plugins && viewItem =~ /^plugin:/" },
+        { "command": "claudeCopilot.mcp.addUser", "when": "view == claudeCopilot.mcp && viewItem == group:mcp:user", "group": "inline" },
+        { "command": "claudeCopilot.mcp.addProject", "when": "view == claudeCopilot.mcp && viewItem == group:mcp:project", "group": "inline" },
+        { "command": "claudeCopilot.mcp.remove", "when": "view == claudeCopilot.mcp && viewItem =~ /^mcp:/" }
       ]
     }
   },
