@@ -1,0 +1,46 @@
+{
+  "name": "claude-copilot",
+  "displayName": "Claude Copilot",
+  "description": "Claude Code 配置管理与辅助工具：plugins / MCP / skills / memory / settings / usage 一站式可视化",
+  "version": "0.1.0",
+  "publisher": "ky-studio",
+  "engines": { "vscode": "^1.90.0" },
+  "categories": ["Other"],
+  "main": "./out/extension.js",
+  "activationEvents": ["onStartupFinished"],
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "claudeCopilot",
+          "title": "Claude Copilot",
+          "icon": "resources/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "claudeCopilot": [
+        { "id": "claudeCopilot.hello", "name": "Hello" }
+      ]
+    },
+    "commands": [
+      { "command": "claudeCopilot.refresh", "title": "Claude Copilot: Refresh All" }
+    ]
+  },
+  "scripts": {
+    "build": "esbuild src/extension.ts --bundle --outfile=out/extension.js --external:vscode --platform=node --format=cjs --target=node18 --sourcemap",
+    "watch": "pnpm build -- --watch",
+    "test": "mocha --require ts-node/register 'src/**/*.test.ts'",
+    "package": "vsce package --no-dependencies"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.6",
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.90.0",
+    "@vscode/vsce": "^3.0.0",
+    "esbuild": "^0.24.0",
+    "mocha": "^10.7.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.6.0"
+  }
+}

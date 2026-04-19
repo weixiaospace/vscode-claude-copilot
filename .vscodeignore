@@ -1,0 +1,12 @@
+.git
+node_modules
+src
+.vscode-test
+**/*.test.ts
+tsconfig.json
+.vscodeignore
+.gitignore
+*.map
+webview-ui/node_modules
+webview-ui/src
+docs
