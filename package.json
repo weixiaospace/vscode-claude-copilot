@@ -42,13 +42,16 @@
       { "command": "claudeCopilot.mcp.addProject", "title": "Add Project MCP...", "icon": "$(add)" },
       { "command": "claudeCopilot.mcp.remove", "title": "Remove MCP Server" },
       { "command": "claudeCopilot.skill.create", "title": "Create Skill...", "icon": "$(add)" },
-      { "command": "claudeCopilot.skill.delete", "title": "Delete Skill" }
+      { "command": "claudeCopilot.skill.delete", "title": "Delete Skill" },
+      { "command": "claudeCopilot.memory.create", "title": "New Memory...", "icon": "$(add)" },
+      { "command": "claudeCopilot.memory.delete", "title": "Delete Memory" }
     ],
     "menus": {
       "view/title": [
         { "command": "claudeCopilot.plugin.install", "when": "view == claudeCopilot.plugins", "group": "navigation@1" },
         { "command": "claudeCopilot.refresh", "when": "view == claudeCopilot.plugins", "group": "navigation@2" },
-        { "command": "claudeCopilot.skill.create", "when": "view == claudeCopilot.skills", "group": "navigation@1" }
+        { "command": "claudeCopilot.skill.create", "when": "view == claudeCopilot.skills", "group": "navigation@1" },
+        { "command": "claudeCopilot.memory.create", "when": "view == claudeCopilot.memory", "group": "navigation@1" }
       ],
       "view/item/context": [
         { "command": "claudeCopilot.marketplace.add", "when": "view == claudeCopilot.plugins && viewItem == group:marketplaces", "group": "inline" },
@@ -58,7 +61,8 @@
         { "command": "claudeCopilot.mcp.addUser", "when": "view == claudeCopilot.mcp && viewItem == group:mcp:user", "group": "inline" },
         { "command": "claudeCopilot.mcp.addProject", "when": "view == claudeCopilot.mcp && viewItem == group:mcp:project", "group": "inline" },
         { "command": "claudeCopilot.mcp.remove", "when": "view == claudeCopilot.mcp && viewItem =~ /^mcp:/" },
-        { "command": "claudeCopilot.skill.delete", "when": "view == claudeCopilot.skills && viewItem =~ /^skill:/" }
+        { "command": "claudeCopilot.skill.delete", "when": "view == claudeCopilot.skills && viewItem =~ /^skill:/" },
+        { "command": "claudeCopilot.memory.delete", "when": "view == claudeCopilot.memory && viewItem == memory:item" }
       ]
     }
   },
