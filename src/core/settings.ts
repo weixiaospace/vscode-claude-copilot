@@ -2,8 +2,12 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 
 async function readJsonSafe<T = any>(p: string, fallback: T): Promise<T> {
-  try { return JSON.parse(await fs.readFile(p, 'utf-8')); }
-  catch { return fallback; }
+  try {
+    return JSON.parse(await fs.readFile(p, 'utf-8'));
+  } catch (err: any) {
+    if (err?.code === 'ENOENT') return fallback;
+    throw err;
+  }
 }
 
 export type Settings = Record<string, unknown>;
@@ -28,6 +32,8 @@ export async function readLocalSettings(projectPath: string): Promise<Settings> 
   return readJsonSafe(localSettingsPath(projectPath), {});
 }
 
+// Shallow merge — top-level keys only. Consumers that need nested keys
+// (permissions, env, mcpServers) should read individual layers and merge themselves.
 export async function mergeSettings(home: string, projectPath: string): Promise<Settings> {
   const [user, project, local] = await Promise.all([
     readUser(home), readProjectSettings(projectPath), readLocalSettings(projectPath),
