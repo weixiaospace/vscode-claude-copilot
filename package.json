@@ -47,6 +47,10 @@
       { "command": "claudeCopilot.memory.delete", "title": "Delete Memory" }
     ],
     "menus": {
+      "commandPalette": [
+        { "command": "claudeCopilot.openSettings", "when": "false" },
+        { "command": "claudeCopilot.openFile", "when": "false" }
+      ],
       "view/title": [
         { "command": "claudeCopilot.plugin.install", "when": "view == claudeCopilot.plugins", "group": "navigation@1" },
         { "command": "claudeCopilot.refresh", "when": "view == claudeCopilot.plugins", "group": "navigation@2" },

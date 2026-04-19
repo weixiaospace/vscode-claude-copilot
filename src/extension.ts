@@ -11,6 +11,7 @@ import { registerSkillCommands } from './commands/skills';
 import { registerMemoryCommands } from './commands/memory';
 import { registerWatchers } from './lib/watchers';
 import { openUsagePanel } from './webview/usage-panel';
+import { runClaude } from './core/claude-cli';
 
 export function activate(context: vscode.ExtensionContext): void {
   const plugins = new PluginsTreeProvider();
@@ -47,6 +48,10 @@ export function activate(context: vscode.ExtensionContext): void {
       settings: () => settings.refresh(),
     }),
   );
+
+  runClaude(['--version'], 5000).catch(() => {
+    vscode.window.showWarningMessage('未检测到 Claude CLI。请先安装 claude，然后用命令面板执行 "Claude Copilot: Refresh All"。');
+  });
 }
 
 export function deactivate(): void {}
