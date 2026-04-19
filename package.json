@@ -67,10 +67,10 @@
     }
   },
   "scripts": {
-    "build": "esbuild src/extension.ts --bundle --outfile=out/extension.js --external:vscode --platform=node --format=cjs --target=node18 --sourcemap",
+    "build": "esbuild src/extension.ts --bundle --outfile=out/extension.js --external:vscode --platform=node --format=cjs --target=node18 --sourcemap && pnpm -C webview-ui build",
     "watch": "pnpm build -- --watch",
     "test": "mocha --require ts-node/register 'src/**/*.test.ts'",
-    "package": "vsce package --no-dependencies"
+    "package": "pnpm build && vsce package --no-dependencies"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.6",

@@ -10,6 +10,7 @@ import { registerMcpCommands } from './commands/mcp';
 import { registerSkillCommands } from './commands/skills';
 import { registerMemoryCommands } from './commands/memory';
 import { registerWatchers } from './lib/watchers';
+import { openUsagePanel } from './webview/usage-panel';
 
 export function activate(context: vscode.ExtensionContext): void {
   const plugins = new PluginsTreeProvider();
@@ -33,9 +34,7 @@ export function activate(context: vscode.ExtensionContext): void {
       await vscode.window.showTextDocument(doc);
     }),
     vscode.commands.registerCommand('claudeCopilot.openSettings', openSettingsFile),
-    vscode.commands.registerCommand('claudeCopilot.openUsage', () => {
-      vscode.window.showInformationMessage('Usage dashboard — coming in M5');
-    }),
+    vscode.commands.registerCommand('claudeCopilot.openUsage', () => openUsagePanel(context)),
     ...registerPluginCommands(() => plugins.refresh()),
     ...registerMcpCommands(() => mcp.refresh()),
     ...registerSkillCommands(() => skills.refresh()),
