@@ -29,7 +29,8 @@
       ]
     },
     "commands": [
-      { "command": "claudeCopilot.refresh", "title": "Claude Copilot: Refresh All", "icon": "$(refresh)" }
+      { "command": "claudeCopilot.refresh", "title": "Claude Copilot: Refresh All", "icon": "$(refresh)" },
+      { "command": "claudeCopilot.openFile", "title": "Claude Copilot: Open File" }
     ]
   },
   "scripts": {
