@@ -10,7 +10,8 @@ let cached: ClaudeEnv | null = null;
 export function resolveClaudeBinary(): Promise<ClaudeEnv> {
   if (cached) return Promise.resolve(cached);
   return new Promise((resolve) => {
-    const shell = process.env.SHELL || '/bin/zsh';
+    const rawShell = process.env.SHELL;
+    const shell = rawShell && /^[a-zA-Z0-9/_-]+$/.test(rawShell) ? rawShell : '/bin/zsh';
     exec(`${shell} -ilc 'echo "PATH=$PATH" && which claude'`, {
       encoding: 'utf-8', timeout: 10000,
     }, (err, stdout) => {
