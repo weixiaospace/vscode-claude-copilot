@@ -4,6 +4,7 @@
   "description": "Claude Code 配置管理与辅助工具：plugins / MCP / skills / memory / settings / usage 一站式可视化",
   "version": "0.1.0",
   "publisher": "ky-studio",
+  "repository": { "type": "git", "url": "https://github.com/ky-studio/claude-copilot.git" },
   "engines": { "vscode": "^1.90.0" },
   "categories": ["Other"],
   "main": "./out/extension.js",
