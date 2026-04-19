@@ -30,7 +30,8 @@
     },
     "commands": [
       { "command": "claudeCopilot.refresh", "title": "Claude Copilot: Refresh All", "icon": "$(refresh)" },
-      { "command": "claudeCopilot.openFile", "title": "Claude Copilot: Open File" }
+      { "command": "claudeCopilot.openFile", "title": "Claude Copilot: Open File" },
+      { "command": "claudeCopilot.openSettings", "title": "Claude Copilot: Open Settings File" }
     ]
   },
   "scripts": {
