@@ -7,6 +7,7 @@ import { SettingsTreeProvider, openSettingsFile } from './tree/settings-tree';
 import { UsageTreeProvider } from './tree/usage-tree';
 import { registerPluginCommands } from './commands/plugins';
 import { registerMcpCommands } from './commands/mcp';
+import { registerSkillCommands } from './commands/skills';
 
 export function activate(context: vscode.ExtensionContext): void {
   const plugins = new PluginsTreeProvider();
@@ -35,6 +36,7 @@ export function activate(context: vscode.ExtensionContext): void {
     }),
     ...registerPluginCommands(() => plugins.refresh()),
     ...registerMcpCommands(() => mcp.refresh()),
+    ...registerSkillCommands(() => skills.refresh()),
   );
 }
 
