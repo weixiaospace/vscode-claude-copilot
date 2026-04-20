@@ -3,7 +3,7 @@ import { listUserMcp, listProjectMcp, type McpServer } from '../core/mcp';
 import { currentWorkspace } from '../lib/workspace';
 
 type Node =
-  | { kind: 'group'; scope: 'user' | 'project'; label: string; available: boolean }
+  | { kind: 'group'; scope: 'user' | 'project'; available: boolean; workspaceName?: string }
   | { kind: 'server'; server: McpServer };
 
 export class McpTreeProvider implements vscode.TreeDataProvider<Node> {
@@ -13,10 +13,13 @@ export class McpTreeProvider implements vscode.TreeDataProvider<Node> {
 
   getTreeItem(node: Node): vscode.TreeItem {
     if (node.kind === 'group') {
-      const item = new vscode.TreeItem(node.label,
+      const label = vscode.l10n.t(node.scope === 'user' ? 'tree.group.user' : 'tree.group.project');
+      const item = new vscode.TreeItem(label,
         node.available ? vscode.TreeItemCollapsibleState.Expanded : vscode.TreeItemCollapsibleState.None);
+      item.iconPath = new vscode.ThemeIcon(node.scope === 'user' ? 'account' : 'folder-opened');
       item.contextValue = `group:mcp:${node.scope}`;
-      if (!node.available) item.description = '(no workspace)';
+      if (!node.available) item.description = vscode.l10n.t('tree.group.noWorkspace');
+      else if (node.scope === 'project' && node.workspaceName) item.description = node.workspaceName;
       return item;
     }
     const s = node.server;
@@ -32,8 +35,8 @@ export class McpTreeProvider implements vscode.TreeDataProvider<Node> {
     if (!node) {
       const ws = currentWorkspace();
       return [
-        { kind: 'group', scope: 'user', label: 'User', available: true },
-        { kind: 'group', scope: 'project', label: ws ? `Project (${ws.name})` : 'Project', available: !!ws },
+        { kind: 'group', scope: 'user', available: true },
+        { kind: 'group', scope: 'project', available: !!ws, workspaceName: ws?.name },
       ];
     }
     if (node.kind === 'group' && node.scope === 'user') {

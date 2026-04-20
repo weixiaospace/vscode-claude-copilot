@@ -90,5 +90,13 @@
   "settings.reset": "Reset",
   "settings.editJson": "Edit as JSON →",
   "settings.saveFailed": "Save failed",
-  "settings.unsavedChanges": "You have unsaved changes. Switch anyway?"
+  "settings.unsavedChanges": "You have unsaved changes. Switch anyway?",
+
+  "tree.group.marketplaces": "Marketplaces",
+  "tree.group.installed": "Installed",
+  "tree.group.user": "User",
+  "tree.group.project": "Project",
+  "tree.group.memory": "Memory",
+  "tree.group.noWorkspace": "(no workspace)",
+  "tree.layer.local": "Local"
 }

@@ -5,7 +5,7 @@ import { CLAUDE_HOME } from '../lib/paths';
 import { currentWorkspace } from '../lib/workspace';
 
 type Node =
-  | { kind: 'group'; label: string; available: boolean }
+  | { kind: 'group'; available: boolean; workspaceName?: string }
   | { kind: 'index' }
   | { kind: 'memory'; memory: Memory };
 
@@ -16,10 +16,12 @@ export class MemoryTreeProvider implements vscode.TreeDataProvider<Node> {
 
   getTreeItem(node: Node): vscode.TreeItem {
     if (node.kind === 'group') {
-      const item = new vscode.TreeItem(node.label,
+      const item = new vscode.TreeItem(vscode.l10n.t('tree.group.memory'),
         node.available ? vscode.TreeItemCollapsibleState.Expanded : vscode.TreeItemCollapsibleState.None);
+      item.iconPath = new vscode.ThemeIcon('folder-opened');
       item.contextValue = 'group:memory';
-      if (!node.available) item.description = '(no workspace)';
+      if (!node.available) item.description = vscode.l10n.t('tree.group.noWorkspace');
+      else if (node.workspaceName) item.description = node.workspaceName;
       return item;
     }
     if (node.kind === 'index') {
@@ -43,7 +45,7 @@ export class MemoryTreeProvider implements vscode.TreeDataProvider<Node> {
   async getChildren(node?: Node): Promise<Node[]> {
     const ws = currentWorkspace();
     if (!node) {
-      return [{ kind: 'group', label: ws ? ws.name : 'Memory', available: !!ws }];
+      return [{ kind: 'group', available: !!ws, workspaceName: ws?.name }];
     }
     if (node.kind !== 'group' || !ws) return [];
     const memories = await listMemories(CLAUDE_HOME, ws.fsPath);

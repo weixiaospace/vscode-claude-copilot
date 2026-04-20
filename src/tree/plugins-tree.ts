@@ -2,10 +2,17 @@ import * as vscode from 'vscode';
 import { listInstalledPlugins, listMarketplaces, type InstalledPlugin, type Marketplace } from '../core/plugins';
 import { CLAUDE_HOME } from '../lib/paths';
 
+type GroupKind = 'marketplaces' | 'installed';
+
 type Node =
-  | { kind: 'group'; label: 'Marketplaces' | 'Installed' }
+  | { kind: 'group'; groupKind: GroupKind }
   | { kind: 'mp'; mp: Marketplace }
   | { kind: 'plugin'; plugin: InstalledPlugin };
+
+const GROUP_META: Record<GroupKind, { labelKey: string; icon: string; contextSuffix: string }> = {
+  marketplaces: { labelKey: 'tree.group.marketplaces', icon: 'library', contextSuffix: 'marketplaces' },
+  installed: { labelKey: 'tree.group.installed', icon: 'package', contextSuffix: 'installed' },
+};
 
 export class PluginsTreeProvider implements vscode.TreeDataProvider<Node> {
   private _onDidChange = new vscode.EventEmitter<void>();
@@ -15,8 +22,10 @@ export class PluginsTreeProvider implements vscode.TreeDataProvider<Node> {
 
   getTreeItem(node: Node): vscode.TreeItem {
     if (node.kind === 'group') {
-      const item = new vscode.TreeItem(node.label, vscode.TreeItemCollapsibleState.Expanded);
-      item.contextValue = `group:${node.label.toLowerCase()}`;
+      const meta = GROUP_META[node.groupKind];
+      const item = new vscode.TreeItem(vscode.l10n.t(meta.labelKey), vscode.TreeItemCollapsibleState.Expanded);
+      item.iconPath = new vscode.ThemeIcon(meta.icon);
+      item.contextValue = `group:${meta.contextSuffix}`;
       return item;
     }
     if (node.kind === 'mp') {
@@ -27,7 +36,7 @@ export class PluginsTreeProvider implements vscode.TreeDataProvider<Node> {
       return item;
     }
     const p = node.plugin;
-    const item = new vscode.TreeItem(`${p.name} (${p.enabled ? 'enabled' : 'disabled'})`, vscode.TreeItemCollapsibleState.None);
+    const item = new vscode.TreeItem(p.name, vscode.TreeItemCollapsibleState.None);
     item.iconPath = new vscode.ThemeIcon(p.enabled ? 'pass-filled' : 'circle-outline');
     item.tooltip = `v${p.version} · ${p.marketplace || 'local'}`;
     item.description = p.version;
@@ -36,15 +45,13 @@ export class PluginsTreeProvider implements vscode.TreeDataProvider<Node> {
   }
 
   async getChildren(node?: Node): Promise<Node[]> {
-    if (!node) return [{ kind: 'group', label: 'Marketplaces' }, { kind: 'group', label: 'Installed' }];
-    if (node.kind === 'group' && node.label === 'Marketplaces') {
+    if (!node) return [{ kind: 'group', groupKind: 'marketplaces' }, { kind: 'group', groupKind: 'installed' }];
+    if (node.kind !== 'group') return [];
+    if (node.groupKind === 'marketplaces') {
       const mps = await listMarketplaces(CLAUDE_HOME);
       return mps.map(mp => ({ kind: 'mp', mp }) as Node);
     }
-    if (node.kind === 'group' && node.label === 'Installed') {
-      const ps = await listInstalledPlugins(CLAUDE_HOME);
-      return ps.map(p => ({ kind: 'plugin', plugin: p }) as Node);
-    }
-    return [];
+    const ps = await listInstalledPlugins(CLAUDE_HOME);
+    return ps.map(p => ({ kind: 'plugin', plugin: p }) as Node);
   }
 }
