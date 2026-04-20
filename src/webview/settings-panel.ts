@@ -4,6 +4,7 @@ import * as fs from 'fs/promises';
 import {
   readUser, readProjectSettings, readLocalSettings,
   userSettingsPath, projectSettingsPath, localSettingsPath,
+  mergeForSave,
   type Settings,
 } from '../core/settings';
 import { listInstalledPlugins } from '../core/plugins';
@@ -206,9 +207,7 @@ function availability() {
 async function writeLayer(layer: Layer, partial: Record<string, unknown>, knownKeys: string[]): Promise<void> {
   const existing = await readLayer(layer);
   if (!existing) throw new Error('Layer not available');
-  const next: Settings = { ...existing.settings };
-  for (const k of knownKeys) delete next[k];
-  Object.assign(next, partial);
+  const next = mergeForSave(existing.settings, partial, knownKeys);
   await fs.mkdir(path.dirname(existing.filePath), { recursive: true });
   await fs.writeFile(existing.filePath, JSON.stringify(next, null, 2) + '\n', 'utf-8');
 }

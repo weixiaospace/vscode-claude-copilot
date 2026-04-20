@@ -138,6 +138,7 @@ interface FormState {
   envCustom: Array<{ key: string; value: string }>;
   // Plugins
   enabledPlugins: Record<string, boolean>;
+  _rawEnabledPlugins: Record<string, boolean>;
 }
 
 interface State {
@@ -249,6 +250,7 @@ function settingsToForm(settings: Record<string, unknown>, installedPlugins: Ins
     envNumbers,
     envCustom,
     enabledPlugins: enabled,
+    _rawEnabledPlugins: { ...enabledPluginsObj },
   };
 }
 
@@ -318,13 +320,14 @@ function formToPartial(form: FormState): Record<string, unknown> {
   for (const { key, value } of form.envCustom) if (key.trim()) envOut[key.trim()] = value;
   if (Object.keys(envOut).length) p.env = envOut;
 
-  // enabledPlugins — only write overrides (keys set to false)
-  const enabledPlugins: Record<string, boolean> = {};
-  let hasOverride = false;
+  // enabledPlugins — preserve raw entries for plugins not in the managed list,
+  // overlay explicit false overrides for managed plugins (true is the default, no need to store).
+  const enabledPlugins: Record<string, boolean> = { ...form._rawEnabledPlugins };
   for (const [key, value] of Object.entries(form.enabledPlugins)) {
-    if (!value) { enabledPlugins[key] = false; hasOverride = true; }
+    if (value) delete enabledPlugins[key];
+    else enabledPlugins[key] = false;
   }
-  if (hasOverride) p.enabledPlugins = enabledPlugins;
+  if (Object.keys(enabledPlugins).length > 0) p.enabledPlugins = enabledPlugins;
 
   return p;
 }

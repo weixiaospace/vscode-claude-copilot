@@ -10,9 +10,19 @@ export interface InstalledPlugin {
   marketplace: string;
   installPath?: string;
   types: PluginType[];
+  skills: PluginChild[];
+  agents: PluginChild[];
+  commands: PluginChild[];
+  hooksPath?: string;
+  mcpPath?: string;
 }
 
 export type PluginType = 'skills' | 'agents' | 'hooks' | 'mcp' | 'commands';
+
+export interface PluginChild {
+  name: string;
+  path: string;
+}
 
 export interface AvailablePlugin {
   name: string;
@@ -52,21 +62,30 @@ export async function listInstalledPlugins(home: string): Promise<InstalledPlugi
     if (!entry) continue;
     const [name, marketplace] = key.split('@');
     const types: PluginType[] = [];
+    let skills: PluginChild[] = [];
+    let agents: PluginChild[] = [];
+    let commands: PluginChild[] = [];
+    let hooksPath: string | undefined;
+    let mcpPath: string | undefined;
+
     if (entry.installPath) {
-      const [hasSkills, hasAgents, hasHooks, hasMcp, hasCommands] = await Promise.all([
-        exists(path.join(entry.installPath, 'skills')),
-        exists(path.join(entry.installPath, 'agents')),
-        exists(path.join(entry.installPath, 'hooks'))
-          .then(ok => ok || exists(path.join(entry.installPath, 'hooks.json'))),
-        exists(path.join(entry.installPath, '.mcp.json')),
-        exists(path.join(entry.installPath, 'commands')),
-      ]);
-      if (hasSkills) types.push('skills');
-      if (hasAgents) types.push('agents');
-      if (hasHooks) types.push('hooks');
-      if (hasMcp) types.push('mcp');
-      if (hasCommands) types.push('commands');
+      skills = await listSkillChildren(path.join(entry.installPath, 'skills'));
+      agents = await listMarkdownChildren(path.join(entry.installPath, 'agents'));
+      commands = await listMarkdownChildren(path.join(entry.installPath, 'commands'));
+      const hooksJson = path.join(entry.installPath, 'hooks.json');
+      const hooksDir = path.join(entry.installPath, 'hooks');
+      if (await exists(hooksJson)) hooksPath = hooksJson;
+      else if (await exists(hooksDir)) hooksPath = hooksDir;
+      const mcp = path.join(entry.installPath, '.mcp.json');
+      if (await exists(mcp)) mcpPath = mcp;
+
+      if (skills.length) types.push('skills');
+      if (agents.length) types.push('agents');
+      if (hooksPath) types.push('hooks');
+      if (mcpPath) types.push('mcp');
+      if (commands.length) types.push('commands');
     }
+
     plugins.push({
       name: name || key,
       version: entry.version || 'unknown',
@@ -75,9 +94,39 @@ export async function listInstalledPlugins(home: string): Promise<InstalledPlugi
       marketplace: marketplace || '',
       installPath: entry.installPath,
       types,
+      skills,
+      agents,
+      commands,
+      hooksPath,
+      mcpPath,
     });
   }
   return plugins;
+}
+
+async function listSkillChildren(dir: string): Promise<PluginChild[]> {
+  if (!await exists(dir)) return [];
+  try {
+    const entries = await fs.readdir(dir, { withFileTypes: true });
+    const out: PluginChild[] = [];
+    for (const e of entries) {
+      if (!e.isDirectory()) continue;
+      const skillFile = path.join(dir, e.name, 'SKILL.md');
+      if (await exists(skillFile)) out.push({ name: e.name, path: skillFile });
+    }
+    return out.sort((a, b) => a.name.localeCompare(b.name));
+  } catch { return []; }
+}
+
+async function listMarkdownChildren(dir: string): Promise<PluginChild[]> {
+  if (!await exists(dir)) return [];
+  try {
+    const files = await fs.readdir(dir);
+    return files
+      .filter(f => f.endsWith('.md'))
+      .map(f => ({ name: f.replace(/\.md$/, ''), path: path.join(dir, f) }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  } catch { return []; }
 }
 
 export async function listMarketplaces(home: string): Promise<Marketplace[]> {

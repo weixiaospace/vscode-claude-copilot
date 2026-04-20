@@ -31,3 +31,23 @@ export async function readProjectSettings(projectPath: string): Promise<Settings
 export async function readLocalSettings(projectPath: string): Promise<Settings> {
   return readJsonSafe(localSettingsPath(projectPath), {});
 }
+
+/**
+ * Merge a partial update into existing settings.
+ * Keys listed in `knownKeys` are first deleted from existing, then overwritten
+ * by `partial`. Keys NOT in `knownKeys` are preserved untouched.
+ *
+ * This gives the form full control over the subset it manages, while keeping
+ * unrelated settings (hooks, statusLine, sandbox, custom fields, etc.) intact.
+ *
+ * Side effect: saving normalizes the file — a redundant explicit
+ * `autoMemoryEnabled: true` (which equals the CLI default) will be dropped
+ * from disk on save. Semantics are unchanged since the CLI treats missing
+ * keys as their default.
+ */
+export function mergeForSave(existing: Settings, partial: Record<string, unknown>, knownKeys: string[]): Settings {
+  const next: Settings = { ...existing };
+  for (const k of knownKeys) delete next[k];
+  Object.assign(next, partial);
+  return next;
+}

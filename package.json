@@ -2,7 +2,7 @@
   "name": "claude-copilot",
   "displayName": "%displayName%",
   "description": "%description%",
-  "version": "0.1.15",
+  "version": "0.1.16",
   "l10n": "./l10n",
   "publisher": "weixiao-space",
   "repository": { "type": "git", "url": "https://github.com/weixiaospace/vscode-claude-copilot.git" },
