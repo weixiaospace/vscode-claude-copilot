@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { userSettingsPath, projectSettingsPath, localSettingsPath } from '../core/settings';
 import { CLAUDE_HOME } from '../lib/paths';
 import { currentWorkspace } from '../lib/workspace';
+import { t } from '../lib/l10n';
 
 type Layer = 'user' | 'project' | 'local';
 type Node = { kind: 'layer'; layer: Layer; path: string; available: boolean };
@@ -19,10 +20,10 @@ export class SettingsTreeProvider implements vscode.TreeDataProvider<Node> {
 
   getTreeItem(node: Node): vscode.TreeItem {
     const meta = LAYER_META[node.layer];
-    const item = new vscode.TreeItem(vscode.l10n.t(meta.labelKey), vscode.TreeItemCollapsibleState.None);
+    const item = new vscode.TreeItem(t(meta.labelKey), vscode.TreeItemCollapsibleState.None);
     item.iconPath = new vscode.ThemeIcon(meta.icon);
     item.tooltip = node.path;
-    item.description = node.available ? '' : vscode.l10n.t('tree.group.noWorkspace');
+    item.description = node.available ? '' : t('tree.group.noWorkspace');
     if (node.available) {
       item.command = { command: 'claudeCopilot.openSettingsPanel', title: 'Open Settings' };
     }

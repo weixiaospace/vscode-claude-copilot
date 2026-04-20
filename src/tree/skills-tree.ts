@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { listSkills, type Skill } from '../core/skills';
 import { CLAUDE_HOME } from '../lib/paths';
 import { currentWorkspace } from '../lib/workspace';
+import { t } from '../lib/l10n';
 
 type Node =
   | { kind: 'group'; scope: 'user' | 'project'; available: boolean }
@@ -14,12 +15,12 @@ export class SkillsTreeProvider implements vscode.TreeDataProvider<Node> {
 
   getTreeItem(node: Node): vscode.TreeItem {
     if (node.kind === 'group') {
-      const label = vscode.l10n.t(node.scope === 'user' ? 'tree.group.user' : 'tree.group.project');
+      const label = t(node.scope === 'user' ? 'tree.group.user' : 'tree.group.project');
       const item = new vscode.TreeItem(label,
         node.available ? vscode.TreeItemCollapsibleState.Expanded : vscode.TreeItemCollapsibleState.None);
       item.iconPath = new vscode.ThemeIcon(node.scope === 'user' ? 'account' : 'folder-opened');
       item.contextValue = `group:skills:${node.scope}`;
-      if (!node.available) item.description = vscode.l10n.t('tree.group.noWorkspace');
+      if (!node.available) item.description = t('tree.group.noWorkspace');
       else item.description = node.scope === 'user' ? '~/.claude/skills' : '.claude/skills';
       return item;
     }

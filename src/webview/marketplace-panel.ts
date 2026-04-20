@@ -3,6 +3,7 @@ import * as path from 'path';
 import { listAvailablePlugins, listInstalledPlugins, listMarketplaces, installPlugin, uninstallPlugin } from '../core/plugins';
 import { CLAUDE_HOME } from '../lib/paths';
 import type { RpcRequest, RpcResponse } from './messaging';
+import { t } from '../lib/l10n';
 
 let current: vscode.WebviewPanel | null = null;
 const refreshers: (() => void)[] = [];
@@ -29,7 +30,7 @@ export function registerMarketplaceRefresh(cb: () => void): void {
 export function openMarketplacePanel(context: vscode.ExtensionContext): void {
   if (current) { current.reveal(); return; }
   const panel = vscode.window.createWebviewPanel(
-    'claudeCopilot.marketplace', vscode.l10n.t('marketplace.title'), vscode.ViewColumn.One,
+    'claudeCopilot.marketplace', t('marketplace.title'), vscode.ViewColumn.One,
     {
       enableScripts: true,
       retainContextWhenHidden: true,
@@ -45,7 +46,7 @@ export function openMarketplacePanel(context: vscode.ExtensionContext): void {
 
   const strings: Record<string, string> = {};
   for (const key of MARKETPLACE_KEYS) {
-    strings[key] = vscode.l10n.t(key);
+    strings[key] = t(key);
   }
 
   panel.webview.html = /* html */`
@@ -55,7 +56,7 @@ export function openMarketplacePanel(context: vscode.ExtensionContext): void {
         <meta charset="UTF-8" />
         <meta http-equiv="Content-Security-Policy" content="${csp}">
         <link rel="stylesheet" href="${cssUri}" />
-        <title>${vscode.l10n.t('marketplace.title')}</title>
+        <title>${t('marketplace.title')}</title>
       </head>
       <body>
         <script>window.__l10n = ${JSON.stringify(strings)};</script>

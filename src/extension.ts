@@ -14,6 +14,7 @@ import { openUsagePanel } from './webview/usage-panel';
 import { openMarketplacePanel, registerMarketplaceRefresh } from './webview/marketplace-panel';
 import { openSettingsPanel } from './webview/settings-panel';
 import { runClaude } from './core/claude-cli';
+import { t } from './lib/l10n';
 
 export function activate(context: vscode.ExtensionContext): void {
   const plugins = new PluginsTreeProvider();
@@ -55,7 +56,7 @@ export function activate(context: vscode.ExtensionContext): void {
   registerMarketplaceRefresh(() => plugins.refresh());
 
   runClaude(['--version'], 5000).catch(() => {
-    vscode.window.showWarningMessage(vscode.l10n.t('toast.cliMissing'));
+    vscode.window.showWarningMessage(t('toast.cliMissing'));
   });
 }
 

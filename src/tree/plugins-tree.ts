@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { listInstalledPlugins, listMarketplaces, type InstalledPlugin, type Marketplace } from '../core/plugins';
 import { CLAUDE_HOME } from '../lib/paths';
+import { t } from '../lib/l10n';
 
 type GroupKind = 'marketplaces' | 'installed';
 
@@ -23,7 +24,7 @@ export class PluginsTreeProvider implements vscode.TreeDataProvider<Node> {
   getTreeItem(node: Node): vscode.TreeItem {
     if (node.kind === 'group') {
       const meta = GROUP_META[node.groupKind];
-      const item = new vscode.TreeItem(vscode.l10n.t(meta.labelKey), vscode.TreeItemCollapsibleState.Expanded);
+      const item = new vscode.TreeItem(t(meta.labelKey), vscode.TreeItemCollapsibleState.Expanded);
       item.iconPath = new vscode.ThemeIcon(meta.icon);
       item.contextValue = `group:${meta.contextSuffix}`;
       return item;

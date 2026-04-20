@@ -4,6 +4,7 @@ import { queryUsage } from '../core/usage';
 import { CLAUDE_HOME } from '../lib/paths';
 import { currentWorkspace } from '../lib/workspace';
 import type { RpcRequest, RpcResponse } from './messaging';
+import { t } from '../lib/l10n';
 
 let current: vscode.WebviewPanel | null = null;
 
@@ -34,7 +35,7 @@ const USAGE_KEYS = [
 export function openUsagePanel(context: vscode.ExtensionContext): void {
   if (current) { current.reveal(); return; }
   const panel = vscode.window.createWebviewPanel(
-    'claudeCopilot.usage', vscode.l10n.t('dashboard.title'), vscode.ViewColumn.One,
+    'claudeCopilot.usage', t('dashboard.title'), vscode.ViewColumn.One,
     {
       enableScripts: true,
       retainContextWhenHidden: true,
@@ -50,7 +51,7 @@ export function openUsagePanel(context: vscode.ExtensionContext): void {
 
   const strings: Record<string, string> = {};
   for (const key of USAGE_KEYS) {
-    strings[key] = vscode.l10n.t(key);
+    strings[key] = t(key);
   }
 
   panel.webview.html = /* html */`
@@ -60,7 +61,7 @@ export function openUsagePanel(context: vscode.ExtensionContext): void {
         <meta charset="UTF-8" />
         <meta http-equiv="Content-Security-Policy" content="${csp}">
         <link rel="stylesheet" href="${cssUri}" />
-        <title>${vscode.l10n.t('dashboard.title')}</title>
+        <title>${t('dashboard.title')}</title>
       </head>
       <body>
         <script>window.__l10n = ${JSON.stringify(strings)};</script>

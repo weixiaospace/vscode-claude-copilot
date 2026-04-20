@@ -3,6 +3,7 @@ import * as path from 'path';
 import { listMemories, memoryDir, type Memory } from '../core/memory';
 import { CLAUDE_HOME } from '../lib/paths';
 import { currentWorkspace } from '../lib/workspace';
+import { t } from '../lib/l10n';
 
 type Node =
   | { kind: 'group'; available: boolean; workspaceName?: string }
@@ -16,11 +17,11 @@ export class MemoryTreeProvider implements vscode.TreeDataProvider<Node> {
 
   getTreeItem(node: Node): vscode.TreeItem {
     if (node.kind === 'group') {
-      const item = new vscode.TreeItem(vscode.l10n.t('tree.group.memory'),
+      const item = new vscode.TreeItem(t('tree.group.memory'),
         node.available ? vscode.TreeItemCollapsibleState.Expanded : vscode.TreeItemCollapsibleState.None);
       item.iconPath = new vscode.ThemeIcon('folder-opened');
       item.contextValue = 'group:memory';
-      if (!node.available) item.description = vscode.l10n.t('tree.group.noWorkspace');
+      if (!node.available) item.description = t('tree.group.noWorkspace');
       else if (node.workspaceName) item.description = node.workspaceName;
       return item;
     }

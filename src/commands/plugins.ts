@@ -5,25 +5,26 @@ import {
   type InstalledPlugin, type Marketplace,
 } from '../core/plugins';
 import { CLAUDE_HOME } from '../lib/paths';
+import { t } from '../lib/l10n';
 
 export function registerPluginCommands(refresh: () => void): vscode.Disposable[] {
   return [
     vscode.commands.registerCommand('claudeCopilot.plugin.install', async () => {
       const available = await listAvailablePlugins(CLAUDE_HOME);
       if (available.length === 0) {
-        vscode.window.showWarningMessage(vscode.l10n.t('warn.noPluginsAvailable'));
+        vscode.window.showWarningMessage(t('warn.noPluginsAvailable'));
         return;
       }
       const picked = await vscode.window.showQuickPick(
         available.map(p => ({ label: p.name, description: p.marketplace, detail: p.description, value: p })),
-        { placeHolder: vscode.l10n.t('quickpick.selectPlugin') },
+        { placeHolder: t('quickpick.selectPlugin') },
       );
       if (!picked) return;
       await vscode.window.withProgress(
-        { location: vscode.ProgressLocation.Notification, title: vscode.l10n.t('progress.installPlugin', picked.value.name) },
+        { location: vscode.ProgressLocation.Notification, title: t('progress.installPlugin', picked.value.name) },
         async () => { await installPlugin(`${picked.value.name}@${picked.value.marketplace}`); },
       );
-      vscode.window.showInformationMessage(vscode.l10n.t('toast.pluginInstalled', picked.value.name));
+      vscode.window.showInformationMessage(t('toast.pluginInstalled', picked.value.name));
       refresh();
     }),
 
@@ -31,11 +32,11 @@ export function registerPluginCommands(refresh: () => void): vscode.Disposable[]
       const p = node?.plugin;
       if (!p) return;
       const confirm = await vscode.window.showWarningMessage(
-        vscode.l10n.t('confirm.uninstallPlugin', p.name), { modal: true }, vscode.l10n.t('confirm.uninstallPluginBtn'),
+        t('confirm.uninstallPlugin', p.name), { modal: true }, t('confirm.uninstallPluginBtn'),
       );
-      if (confirm !== vscode.l10n.t('confirm.uninstallPluginBtn')) return;
+      if (confirm !== t('confirm.uninstallPluginBtn')) return;
       await uninstallPlugin(`${p.name}@${p.marketplace}`);
-      vscode.window.showInformationMessage(vscode.l10n.t('toast.pluginUninstalled', p.name));
+      vscode.window.showInformationMessage(t('toast.pluginUninstalled', p.name));
       refresh();
     }),
 
@@ -48,15 +49,15 @@ export function registerPluginCommands(refresh: () => void): vscode.Disposable[]
 
     vscode.commands.registerCommand('claudeCopilot.marketplace.add', async () => {
       const source = await vscode.window.showInputBox({
-        prompt: vscode.l10n.t('prompt.marketplaceSource'),
+        prompt: t('prompt.marketplaceSource'),
         placeHolder: 'https://github.com/anthropics/claude-plugins-official',
       });
       if (!source) return;
       await vscode.window.withProgress(
-        { location: vscode.ProgressLocation.Notification, title: vscode.l10n.t('progress.addMarketplace') },
+        { location: vscode.ProgressLocation.Notification, title: t('progress.addMarketplace') },
         async () => { await addMarketplace(source); },
       );
-      vscode.window.showInformationMessage(vscode.l10n.t('toast.marketplaceAdded'));
+      vscode.window.showInformationMessage(t('toast.marketplaceAdded'));
       refresh();
     }),
 
@@ -64,9 +65,9 @@ export function registerPluginCommands(refresh: () => void): vscode.Disposable[]
       const mp = node?.mp;
       if (!mp) return;
       const confirm = await vscode.window.showWarningMessage(
-        vscode.l10n.t('confirm.removeMarketplace', mp.name), { modal: true }, vscode.l10n.t('confirm.removeMarketplaceBtn'),
+        t('confirm.removeMarketplace', mp.name), { modal: true }, t('confirm.removeMarketplaceBtn'),
       );
-      if (confirm !== vscode.l10n.t('confirm.removeMarketplaceBtn')) return;
+      if (confirm !== t('confirm.removeMarketplaceBtn')) return;
       await removeMarketplace(mp.name);
       refresh();
     }),

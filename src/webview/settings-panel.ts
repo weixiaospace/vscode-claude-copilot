@@ -10,6 +10,7 @@ import { listInstalledPlugins } from '../core/plugins';
 import { CLAUDE_HOME } from '../lib/paths';
 import { currentWorkspace } from '../lib/workspace';
 import type { RpcRequest, RpcResponse } from './messaging';
+import { t } from '../lib/l10n';
 
 type Layer = 'user' | 'project' | 'local';
 
@@ -70,7 +71,7 @@ async function writeLayer(layer: Layer, partial: Record<string, unknown>, knownK
 export function openSettingsPanel(context: vscode.ExtensionContext): void {
   if (current) { current.reveal(); return; }
   const panel = vscode.window.createWebviewPanel(
-    'claudeCopilot.settings', vscode.l10n.t('settings.title'), vscode.ViewColumn.One,
+    'claudeCopilot.settings', t('settings.title'), vscode.ViewColumn.One,
     {
       enableScripts: true,
       retainContextWhenHidden: true,
@@ -86,7 +87,7 @@ export function openSettingsPanel(context: vscode.ExtensionContext): void {
 
   const strings: Record<string, string> = {};
   for (const key of SETTINGS_KEYS) {
-    strings[key] = vscode.l10n.t(key);
+    strings[key] = t(key);
   }
 
   panel.webview.html = /* html */`
@@ -96,7 +97,7 @@ export function openSettingsPanel(context: vscode.ExtensionContext): void {
         <meta charset="UTF-8" />
         <meta http-equiv="Content-Security-Policy" content="${csp}">
         <link rel="stylesheet" href="${cssUri}" />
-        <title>${vscode.l10n.t('settings.title')}</title>
+        <title>${t('settings.title')}</title>
       </head>
       <body>
         <script>window.__l10n = ${JSON.stringify(strings)};</script>
