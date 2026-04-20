@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { userSettingsPath, projectSettingsPath, localSettingsPath, ensureFile } from '../core/settings';
+import { userSettingsPath, projectSettingsPath, localSettingsPath } from '../core/settings';
 import { CLAUDE_HOME } from '../lib/paths';
 import { currentWorkspace } from '../lib/workspace';
 
@@ -12,11 +12,11 @@ export class SettingsTreeProvider implements vscode.TreeDataProvider<Node> {
 
   getTreeItem(node: Node): vscode.TreeItem {
     const item = new vscode.TreeItem(node.label, vscode.TreeItemCollapsibleState.None);
-    item.iconPath = new vscode.ThemeIcon('json');
+    item.iconPath = new vscode.ThemeIcon('gear');
     item.tooltip = node.path;
     item.description = node.available ? '' : '(no workspace)';
     if (node.available) {
-      item.command = { command: 'claudeCopilot.openSettings', title: 'Open', arguments: [node.path] };
+      item.command = { command: 'claudeCopilot.openSettingsPanel', title: 'Open Settings' };
     }
     item.contextValue = 'settings:layer';
     return item;
@@ -30,10 +30,4 @@ export class SettingsTreeProvider implements vscode.TreeDataProvider<Node> {
       { kind: 'layer', label: 'Local', path: ws ? localSettingsPath(ws.fsPath) : '', available: !!ws },
     ];
   }
-}
-
-export async function openSettingsFile(filePath: string): Promise<void> {
-  await ensureFile(filePath);
-  const doc = await vscode.workspace.openTextDocument(vscode.Uri.file(filePath));
-  await vscode.window.showTextDocument(doc);
 }

@@ -32,7 +32,7 @@
     "commands": [
       { "command": "claudeCopilot.refresh", "title": "Claude Copilot: Refresh All", "icon": "$(refresh)" },
       { "command": "claudeCopilot.openFile", "title": "Claude Copilot: Open File" },
-      { "command": "claudeCopilot.openSettings", "title": "Claude Copilot: Open Settings File" },
+      { "command": "claudeCopilot.openSettingsPanel", "title": "Claude Copilot: Open Settings Panel", "icon": "$(gear)" },
       { "command": "claudeCopilot.openUsage", "title": "Claude Copilot: Open Usage Dashboard" },
       { "command": "claudeCopilot.openMarketplace", "title": "Claude Copilot: Browse Marketplace", "icon": "$(extensions)" },
       { "command": "claudeCopilot.plugin.install", "title": "Install Plugin...", "icon": "$(add)" },
@@ -50,7 +50,6 @@
     ],
     "menus": {
       "commandPalette": [
-        { "command": "claudeCopilot.openSettings", "when": "false" },
         { "command": "claudeCopilot.openFile", "when": "false" }
       ],
       "view/title": [

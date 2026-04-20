@@ -3,7 +3,7 @@ import { PluginsTreeProvider } from './tree/plugins-tree';
 import { McpTreeProvider } from './tree/mcp-tree';
 import { SkillsTreeProvider } from './tree/skills-tree';
 import { MemoryTreeProvider } from './tree/memory-tree';
-import { SettingsTreeProvider, openSettingsFile } from './tree/settings-tree';
+import { SettingsTreeProvider } from './tree/settings-tree';
 import { UsageTreeProvider } from './tree/usage-tree';
 import { registerPluginCommands } from './commands/plugins';
 import { registerMcpCommands } from './commands/mcp';
@@ -12,6 +12,7 @@ import { registerMemoryCommands } from './commands/memory';
 import { registerWatchers } from './lib/watchers';
 import { openUsagePanel } from './webview/usage-panel';
 import { openMarketplacePanel, registerMarketplaceRefresh } from './webview/marketplace-panel';
+import { openSettingsPanel } from './webview/settings-panel';
 import { runClaude } from './core/claude-cli';
 
 export function activate(context: vscode.ExtensionContext): void {
@@ -35,7 +36,7 @@ export function activate(context: vscode.ExtensionContext): void {
       const doc = await vscode.workspace.openTextDocument(vscode.Uri.file(filePath));
       await vscode.window.showTextDocument(doc);
     }),
-    vscode.commands.registerCommand('claudeCopilot.openSettings', openSettingsFile),
+    vscode.commands.registerCommand('claudeCopilot.openSettingsPanel', () => openSettingsPanel(context)),
     vscode.commands.registerCommand('claudeCopilot.openUsage', () => openUsagePanel(context)),
     vscode.commands.registerCommand('claudeCopilot.openMarketplace', () => openMarketplacePanel(context)),
     ...registerPluginCommands(() => plugins.refresh()),
