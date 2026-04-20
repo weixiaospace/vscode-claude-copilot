@@ -6,12 +6,12 @@ import {
 import { currentWorkspace } from '../lib/workspace';
 
 async function promptMcpForm(): Promise<{ name: string; transport: string; urlOrCommand: string } | undefined> {
-  const transport = await vscode.window.showQuickPick(['stdio', 'http', 'sse'], { placeHolder: '选择 transport' });
+  const transport = await vscode.window.showQuickPick(['stdio', 'http', 'sse'], { placeHolder: vscode.l10n.t('prompt.mcpTransport') });
   if (!transport) return;
-  const name = await vscode.window.showInputBox({ prompt: 'Server 名称' });
+  const name = await vscode.window.showInputBox({ prompt: vscode.l10n.t('prompt.mcpServerName') });
   if (!name) return;
   const urlOrCommand = await vscode.window.showInputBox({
-    prompt: transport === 'stdio' ? '执行命令（如 node /path/server.js）' : 'URL',
+    prompt: transport === 'stdio' ? vscode.l10n.t('prompt.mcpStdioCommand') : vscode.l10n.t('prompt.mcpUrl'),
   });
   if (!urlOrCommand) return;
   return { name, transport, urlOrCommand };
@@ -23,17 +23,17 @@ export function registerMcpCommands(refresh: () => void): vscode.Disposable[] {
       const form = await promptMcpForm();
       if (!form) return;
       await addUserMcp(form.name, form.transport, form.urlOrCommand);
-      vscode.window.showInformationMessage(`已添加 user MCP server: ${form.name}`);
+      vscode.window.showInformationMessage(vscode.l10n.t('toast.mcpUserAdded', form.name));
       refresh();
     }),
 
     vscode.commands.registerCommand('claudeCopilot.mcp.addProject', async () => {
       const ws = currentWorkspace();
-      if (!ws) { vscode.window.showWarningMessage('未打开 workspace'); return; }
+      if (!ws) { vscode.window.showWarningMessage(vscode.l10n.t('toast.noWorkspace')); return; }
       const form = await promptMcpForm();
       if (!form) return;
       await addProjectMcp(ws.fsPath, form.name, form.transport, form.urlOrCommand);
-      vscode.window.showInformationMessage(`已添加 project MCP server: ${form.name}`);
+      vscode.window.showInformationMessage(vscode.l10n.t('toast.mcpProjectAdded', form.name));
       refresh();
     }),
 
@@ -41,9 +41,9 @@ export function registerMcpCommands(refresh: () => void): vscode.Disposable[] {
       const s = node?.server;
       if (!s) return;
       const confirm = await vscode.window.showWarningMessage(
-        `移除 MCP server ${s.name} (${s.scope})？`, { modal: true }, '移除',
+        vscode.l10n.t('confirm.removeMcp', s.name, s.scope), { modal: true }, vscode.l10n.t('confirm.removeMcpBtn'),
       );
-      if (confirm !== '移除') return;
+      if (confirm !== vscode.l10n.t('confirm.removeMcpBtn')) return;
       if (s.scope === 'project') {
         const ws = currentWorkspace();
         if (!ws) return;

@@ -17,3 +17,6 @@ docs
 .mocharc.json
 pnpm-lock.yaml
 pnpm-workspace.yaml
+!l10n
+!package.nls.json
+!package.nls.zh-cn.json

@@ -1,4 +1,5 @@
 import { call } from './rpc';
+import { t } from './l10n';
 import type { UsageResult, DailyUsage, ModelUsage } from './types';
 
 const PRICING: Record<string, { input: number; output: number; cacheRead: number; cacheCreate: number }> = {
@@ -8,9 +9,9 @@ const PRICING: Record<string, { input: number; output: number; cacheRead: number
 };
 
 function formatTokens(n: number): string {
-  if (n >= 100_000_000) return `${(n / 100_000_000).toFixed(1)}亿`;
-  if (n >= 10_000) return `${(n / 10_000).toFixed(1)}万`;
-  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}千`;
+  if (n >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(1)}B`;
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
   return String(n);
 }
 
@@ -48,7 +49,7 @@ export function mount(root: HTMLElement): void {
   }
 
   function renderChart(daily: DailyUsage[]): string {
-    if (daily.length === 0) return `<div class="text-sm opacity-60 py-8 text-center">暂无数据</div>`;
+    if (daily.length === 0) return `<div class="text-sm opacity-60 py-8 text-center">${t('common.noData')}</div>`;
     const items = daily.slice().reverse(); // oldest → newest
     const max = Math.max(...items.map(d => d.input + d.output + d.cacheRead + d.cacheCreate), 1);
     const width = 800;
@@ -58,11 +59,11 @@ export function mount(root: HTMLElement): void {
     const band = (width - pad.left - pad.right) / items.length;
     const barW = band * 0.7;
     const scale = (n: number) => (n / max) * chartH;
-    const segments: Array<{ key: keyof DailyUsage; color: string; label: string }> = [
-      { key: 'input', color: '#60a5fa', label: '输入' },
-      { key: 'output', color: '#34d399', label: '输出' },
-      { key: 'cacheRead', color: '#a78bfa', label: '缓存读' },
-      { key: 'cacheCreate', color: '#f472b6', label: '缓存创' },
+    const segments: Array<{ key: keyof DailyUsage; color: string; labelKey: string }> = [
+      { key: 'input', color: '#60a5fa', labelKey: 'chart.input' },
+      { key: 'output', color: '#34d399', labelKey: 'chart.output' },
+      { key: 'cacheRead', color: '#a78bfa', labelKey: 'chart.cacheRead' },
+      { key: 'cacheCreate', color: '#f472b6', labelKey: 'chart.cacheCreate' },
     ];
     const bars = items.map((d, i) => {
       const x = pad.left + i * band + (band - barW) / 2;
@@ -71,14 +72,14 @@ export function mount(root: HTMLElement): void {
         const v = d[s.key] as number;
         const h = scale(v);
         yCursor -= h;
-        return `<rect x="${x}" y="${yCursor}" width="${barW}" height="${h}" fill="${s.color}"><title>${s.label}: ${formatTokens(v)}</title></rect>`;
+        return `<rect x="${x}" y="${yCursor}" width="${barW}" height="${h}" fill="${s.color}"><title>${t(s.labelKey)}: ${formatTokens(v)}</title></rect>`;
       }).join('');
       const labelX = x + barW / 2;
       return `<g>${rects}<text x="${labelX}" y="${height - 10}" text-anchor="middle" font-size="10" fill="currentColor" opacity="0.6">${escapeHtml(d.date.slice(5))}</text></g>`;
     }).join('');
     const legend = segments.map(s =>
       `<span class="inline-flex items-center gap-1 text-xs mr-3">
-        <span class="inline-block w-2 h-2 rounded-sm" style="background:${s.color}"></span>${s.label}
+        <span class="inline-block w-2 h-2 rounded-sm" style="background:${s.color}"></span>${t(s.labelKey)}
       </span>`
     ).join('');
     return `
@@ -91,10 +92,10 @@ export function mount(root: HTMLElement): void {
 
   function renderCards(totals: { input: number; output: number; cost: number }, totalSessions: number): string {
     const cards = [
-      { label: '输入 tokens', value: formatTokens(totals.input) },
-      { label: '输出 tokens', value: formatTokens(totals.output) },
-      { label: '估算成本', value: `$${totals.cost.toFixed(2)}` },
-      { label: '会话总数', value: String(totalSessions) },
+      { label: t('dashboard.inputTokens'), value: formatTokens(totals.input) },
+      { label: t('dashboard.outputTokens'), value: formatTokens(totals.output) },
+      { label: t('dashboard.estimatedCost'), value: `$${totals.cost.toFixed(2)}` },
+      { label: t('dashboard.totalSessions'), value: String(totalSessions) },
     ];
     return cards.map(c => `
       <div class="border border-current/15 rounded p-3 text-center">
@@ -105,7 +106,7 @@ export function mount(root: HTMLElement): void {
   }
 
   function renderModelTable(models: ModelUsage[]): string {
-    if (models.length === 0) return `<div class="text-sm opacity-60">暂无数据</div>`;
+    if (models.length === 0) return `<div class="text-sm opacity-60">${t('common.noData')}</div>`;
     const rows = models.map(m => `
       <tr class="border-t border-current/10">
         <td class="py-1">${escapeHtml(m.model)}</td>
@@ -118,7 +119,13 @@ export function mount(root: HTMLElement): void {
     return `
       <table class="w-full text-sm">
         <thead class="opacity-70">
-          <tr><th class="text-left py-1">模型</th><th>调用</th><th>输入</th><th>输出</th><th>估算成本</th></tr>
+          <tr>
+            <th class="text-left py-1">${t('table.model')}</th>
+            <th>${t('table.calls')}</th>
+            <th>${t('table.input')}</th>
+            <th>${t('table.output')}</th>
+            <th>${t('table.estimatedCost')}</th>
+          </tr>
         </thead>
         <tbody>${rows}</tbody>
       </table>
@@ -128,7 +135,7 @@ export function mount(root: HTMLElement): void {
   function render() {
     const { data, scope, loading } = state;
     if (!data) {
-      root.innerHTML = `<div class="p-6 text-sm opacity-70">加载中...</div>`;
+      root.innerHTML = `<div class="p-6 text-sm opacity-70">${t('common.loading')}</div>`;
       return;
     }
     const totals = data.models.reduce(
@@ -139,15 +146,15 @@ export function mount(root: HTMLElement): void {
     root.innerHTML = `
       <div class="p-6 space-y-6 max-w-5xl mx-auto">
         <div class="flex items-center justify-between">
-          <h1 class="text-xl font-semibold">Claude Usage</h1>
+          <h1 class="text-xl font-semibold">${t('dashboard.title')}</h1>
           <div class="flex gap-2 items-center">
             <select id="scope-select" class="bg-transparent border border-current/20 rounded px-2 py-1 text-sm">
-              <option value="all" ${scope === 'all' ? 'selected' : ''}>全部项目</option>
-              <option value="project" ${scope === 'project' ? 'selected' : ''}>仅当前项目</option>
+              <option value="all" ${scope === 'all' ? 'selected' : ''}>${t('dashboard.scopeAll')}</option>
+              <option value="project" ${scope === 'project' ? 'selected' : ''}>${t('dashboard.scopeProject')}</option>
             </select>
             <button id="refresh-btn" ${loading ? 'disabled' : ''}
               class="border border-current/20 rounded px-3 py-1 text-sm disabled:opacity-50">
-              ${loading ? '...' : '刷新'}
+              ${loading ? '...' : t('common.refresh')}
             </button>
           </div>
         </div>
@@ -155,12 +162,12 @@ export function mount(root: HTMLElement): void {
         <div class="grid grid-cols-4 gap-3">${renderCards(totals, data.totalSessions)}</div>
 
         <section>
-          <h2 class="text-xs uppercase tracking-wider opacity-60 mb-2">每日趋势</h2>
+          <h2 class="text-xs uppercase tracking-wider opacity-60 mb-2">${t('dashboard.dailyTrend')}</h2>
           ${renderChart(data.daily)}
         </section>
 
         <section>
-          <h2 class="text-xs uppercase tracking-wider opacity-60 mb-2">按模型聚合</h2>
+          <h2 class="text-xs uppercase tracking-wider opacity-60 mb-2">${t('dashboard.byModel')}</h2>
           ${renderModelTable(data.models)}
         </section>
       </div>

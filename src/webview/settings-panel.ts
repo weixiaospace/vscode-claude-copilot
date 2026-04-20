@@ -15,6 +15,31 @@ type Layer = 'user' | 'project' | 'local';
 
 let current: vscode.WebviewPanel | null = null;
 
+const SETTINGS_KEYS = [
+  'common.loading',
+  'common.preparing',
+  'settings.title',
+  'settings.unsaved',
+  'settings.defaultModel',
+  'settings.modelDefault',
+  'settings.permissionMode',
+  'settings.permissionModeDefault',
+  'settings.enabledPlugins',
+  'settings.pluginsHint',
+  'settings.noPlugins',
+  'settings.envVars',
+  'settings.envAdd',
+  'settings.other',
+  'settings.includeCoAuthored',
+  'settings.cleanupDays',
+  'settings.save',
+  'settings.saving',
+  'settings.reset',
+  'settings.editJson',
+  'settings.saveFailed',
+  'settings.unsavedChanges',
+];
+
 async function readLayer(layer: Layer): Promise<{ settings: Settings; filePath: string } | null> {
   if (layer === 'user') {
     return { settings: await readUser(CLAUDE_HOME), filePath: userSettingsPath(CLAUDE_HOME) };
@@ -45,7 +70,7 @@ async function writeLayer(layer: Layer, partial: Record<string, unknown>, knownK
 export function openSettingsPanel(context: vscode.ExtensionContext): void {
   if (current) { current.reveal(); return; }
   const panel = vscode.window.createWebviewPanel(
-    'claudeCopilot.settings', 'Claude Settings', vscode.ViewColumn.One,
+    'claudeCopilot.settings', vscode.l10n.t('settings.title'), vscode.ViewColumn.One,
     {
       enableScripts: true,
       retainContextWhenHidden: true,
@@ -59,6 +84,11 @@ export function openSettingsPanel(context: vscode.ExtensionContext): void {
   const cssUri = panel.webview.asWebviewUri(vscode.Uri.joinPath(distRoot, 'assets', 'src.css'));
   const csp = `default-src 'none'; img-src ${panel.webview.cspSource} data:; style-src ${panel.webview.cspSource} 'unsafe-inline'; script-src ${panel.webview.cspSource};`;
 
+  const strings: Record<string, string> = {};
+  for (const key of SETTINGS_KEYS) {
+    strings[key] = vscode.l10n.t(key);
+  }
+
   panel.webview.html = /* html */`
     <!doctype html>
     <html>
@@ -66,9 +96,10 @@ export function openSettingsPanel(context: vscode.ExtensionContext): void {
         <meta charset="UTF-8" />
         <meta http-equiv="Content-Security-Policy" content="${csp}">
         <link rel="stylesheet" href="${cssUri}" />
-        <title>Claude Settings</title>
+        <title>${vscode.l10n.t('settings.title')}</title>
       </head>
       <body>
+        <script>window.__l10n = ${JSON.stringify(strings)};</script>
         <div id="root"></div>
         <script type="module" src="${scriptUri}"></script>
       </body>

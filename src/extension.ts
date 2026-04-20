@@ -55,7 +55,7 @@ export function activate(context: vscode.ExtensionContext): void {
   registerMarketplaceRefresh(() => plugins.refresh());
 
   runClaude(['--version'], 5000).catch(() => {
-    vscode.window.showWarningMessage('未检测到 Claude CLI。请先安装 claude，然后用命令面板执行 "Claude Copilot: Refresh All"。');
+    vscode.window.showWarningMessage(vscode.l10n.t('toast.cliMissing'));
   });
 }
 

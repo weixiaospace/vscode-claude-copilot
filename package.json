@@ -1,8 +1,9 @@
 {
   "name": "claude-copilot",
-  "displayName": "Claude Copilot",
-  "description": "Claude Code 配置管理与辅助工具：plugins / MCP / skills / memory / settings / usage 一站式可视化",
-  "version": "0.1.1",
+  "displayName": "%displayName%",
+  "description": "%description%",
+  "version": "0.1.2",
+  "l10n": "./l10n",
   "publisher": "ky-studio",
   "repository": { "type": "git", "url": "https://github.com/ky-studio/claude-copilot.git" },
   "engines": { "vscode": "^1.90.0" },
@@ -21,32 +22,32 @@
     },
     "views": {
       "claudeCopilot": [
-        { "id": "claudeCopilot.plugins", "name": "Plugins" },
-        { "id": "claudeCopilot.mcp", "name": "MCP Servers" },
-        { "id": "claudeCopilot.skills", "name": "Skills" },
-        { "id": "claudeCopilot.memory", "name": "Memory" },
-        { "id": "claudeCopilot.settings", "name": "Settings" },
-        { "id": "claudeCopilot.usage", "name": "Usage" }
+        { "id": "claudeCopilot.plugins", "name": "%view.plugins.name%" },
+        { "id": "claudeCopilot.mcp", "name": "%view.mcp.name%" },
+        { "id": "claudeCopilot.skills", "name": "%view.skills.name%" },
+        { "id": "claudeCopilot.memory", "name": "%view.memory.name%" },
+        { "id": "claudeCopilot.settings", "name": "%view.settings.name%" },
+        { "id": "claudeCopilot.usage", "name": "%view.usage.name%" }
       ]
     },
     "commands": [
-      { "command": "claudeCopilot.refresh", "title": "Claude Copilot: Refresh All", "icon": "$(refresh)" },
-      { "command": "claudeCopilot.openFile", "title": "Claude Copilot: Open File" },
-      { "command": "claudeCopilot.openSettingsPanel", "title": "Claude Copilot: Open Settings Panel", "icon": "$(gear)" },
-      { "command": "claudeCopilot.openUsage", "title": "Claude Copilot: Open Usage Dashboard" },
-      { "command": "claudeCopilot.openMarketplace", "title": "Claude Copilot: Browse Marketplace", "icon": "$(extensions)" },
-      { "command": "claudeCopilot.plugin.install", "title": "Install Plugin...", "icon": "$(add)" },
-      { "command": "claudeCopilot.plugin.uninstall", "title": "Uninstall" },
-      { "command": "claudeCopilot.plugin.toggle", "title": "Toggle Enable" },
-      { "command": "claudeCopilot.marketplace.add", "title": "Add Marketplace...", "icon": "$(add)" },
-      { "command": "claudeCopilot.marketplace.remove", "title": "Remove Marketplace" },
-      { "command": "claudeCopilot.mcp.addUser", "title": "Add User MCP...", "icon": "$(add)" },
-      { "command": "claudeCopilot.mcp.addProject", "title": "Add Project MCP...", "icon": "$(add)" },
-      { "command": "claudeCopilot.mcp.remove", "title": "Remove MCP Server" },
-      { "command": "claudeCopilot.skill.create", "title": "Create Skill...", "icon": "$(add)" },
-      { "command": "claudeCopilot.skill.delete", "title": "Delete Skill" },
-      { "command": "claudeCopilot.memory.create", "title": "New Memory...", "icon": "$(add)" },
-      { "command": "claudeCopilot.memory.delete", "title": "Delete Memory" }
+      { "command": "claudeCopilot.refresh", "title": "%cmd.refresh%", "icon": "$(refresh)" },
+      { "command": "claudeCopilot.openFile", "title": "%cmd.openFile%" },
+      { "command": "claudeCopilot.openSettingsPanel", "title": "%cmd.openSettingsPanel%", "icon": "$(gear)" },
+      { "command": "claudeCopilot.openUsage", "title": "%cmd.openUsage%" },
+      { "command": "claudeCopilot.openMarketplace", "title": "%cmd.openMarketplace%", "icon": "$(extensions)" },
+      { "command": "claudeCopilot.plugin.install", "title": "%cmd.plugin.install%", "icon": "$(add)" },
+      { "command": "claudeCopilot.plugin.uninstall", "title": "%cmd.plugin.uninstall%" },
+      { "command": "claudeCopilot.plugin.toggle", "title": "%cmd.plugin.toggle%" },
+      { "command": "claudeCopilot.marketplace.add", "title": "%cmd.marketplace.add%", "icon": "$(add)" },
+      { "command": "claudeCopilot.marketplace.remove", "title": "%cmd.marketplace.remove%" },
+      { "command": "claudeCopilot.mcp.addUser", "title": "%cmd.mcp.addUser%", "icon": "$(add)" },
+      { "command": "claudeCopilot.mcp.addProject", "title": "%cmd.mcp.addProject%", "icon": "$(add)" },
+      { "command": "claudeCopilot.mcp.remove", "title": "%cmd.mcp.remove%" },
+      { "command": "claudeCopilot.skill.create", "title": "%cmd.skill.create%", "icon": "$(add)" },
+      { "command": "claudeCopilot.skill.delete", "title": "%cmd.skill.delete%" },
+      { "command": "claudeCopilot.memory.create", "title": "%cmd.memory.create%", "icon": "$(add)" },
+      { "command": "claudeCopilot.memory.delete", "title": "%cmd.memory.delete%" }
     ],
     "menus": {
       "commandPalette": [

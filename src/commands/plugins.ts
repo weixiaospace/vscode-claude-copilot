@@ -11,19 +11,19 @@ export function registerPluginCommands(refresh: () => void): vscode.Disposable[]
     vscode.commands.registerCommand('claudeCopilot.plugin.install', async () => {
       const available = await listAvailablePlugins(CLAUDE_HOME);
       if (available.length === 0) {
-        vscode.window.showWarningMessage('未发现任何可安装的插件，先添加一个 marketplace。');
+        vscode.window.showWarningMessage(vscode.l10n.t('warn.noPluginsAvailable'));
         return;
       }
       const picked = await vscode.window.showQuickPick(
         available.map(p => ({ label: p.name, description: p.marketplace, detail: p.description, value: p })),
-        { placeHolder: '选择要安装的插件' },
+        { placeHolder: vscode.l10n.t('quickpick.selectPlugin') },
       );
       if (!picked) return;
       await vscode.window.withProgress(
-        { location: vscode.ProgressLocation.Notification, title: `安装 ${picked.value.name}...` },
+        { location: vscode.ProgressLocation.Notification, title: vscode.l10n.t('progress.installPlugin', picked.value.name) },
         async () => { await installPlugin(`${picked.value.name}@${picked.value.marketplace}`); },
       );
-      vscode.window.showInformationMessage(`已安装 ${picked.value.name}`);
+      vscode.window.showInformationMessage(vscode.l10n.t('toast.pluginInstalled', picked.value.name));
       refresh();
     }),
 
@@ -31,11 +31,11 @@ export function registerPluginCommands(refresh: () => void): vscode.Disposable[]
       const p = node?.plugin;
       if (!p) return;
       const confirm = await vscode.window.showWarningMessage(
-        `卸载插件 ${p.name}？`, { modal: true }, '卸载',
+        vscode.l10n.t('confirm.uninstallPlugin', p.name), { modal: true }, vscode.l10n.t('confirm.uninstallPluginBtn'),
       );
-      if (confirm !== '卸载') return;
+      if (confirm !== vscode.l10n.t('confirm.uninstallPluginBtn')) return;
       await uninstallPlugin(`${p.name}@${p.marketplace}`);
-      vscode.window.showInformationMessage(`已卸载 ${p.name}`);
+      vscode.window.showInformationMessage(vscode.l10n.t('toast.pluginUninstalled', p.name));
       refresh();
     }),
 
@@ -48,15 +48,15 @@ export function registerPluginCommands(refresh: () => void): vscode.Disposable[]
 
     vscode.commands.registerCommand('claudeCopilot.marketplace.add', async () => {
       const source = await vscode.window.showInputBox({
-        prompt: '输入 marketplace git URL 或 owner/repo',
+        prompt: vscode.l10n.t('prompt.marketplaceSource'),
         placeHolder: 'https://github.com/anthropics/claude-plugins-official',
       });
       if (!source) return;
       await vscode.window.withProgress(
-        { location: vscode.ProgressLocation.Notification, title: `添加 marketplace...` },
+        { location: vscode.ProgressLocation.Notification, title: vscode.l10n.t('progress.addMarketplace') },
         async () => { await addMarketplace(source); },
       );
-      vscode.window.showInformationMessage('Marketplace 已添加');
+      vscode.window.showInformationMessage(vscode.l10n.t('toast.marketplaceAdded'));
       refresh();
     }),
 
@@ -64,9 +64,9 @@ export function registerPluginCommands(refresh: () => void): vscode.Disposable[]
       const mp = node?.mp;
       if (!mp) return;
       const confirm = await vscode.window.showWarningMessage(
-        `移除 marketplace ${mp.name}？`, { modal: true }, '移除',
+        vscode.l10n.t('confirm.removeMarketplace', mp.name), { modal: true }, vscode.l10n.t('confirm.removeMarketplaceBtn'),
       );
-      if (confirm !== '移除') return;
+      if (confirm !== vscode.l10n.t('confirm.removeMarketplaceBtn')) return;
       await removeMarketplace(mp.name);
       refresh();
     }),

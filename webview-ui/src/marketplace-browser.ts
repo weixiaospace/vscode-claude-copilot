@@ -1,4 +1,5 @@
 import { call } from './rpc';
+import { t } from './l10n';
 
 interface AvailablePlugin {
   name: string;
@@ -106,7 +107,7 @@ export function mount(root: HTMLElement): void {
     const key = pluginKey(p);
     const installed = getInstalled(p.name, p.marketplace);
     const busy = state.busy.has(key);
-    const btnLabel = busy ? '...' : (installed ? '卸' : '装');
+    const btnLabel = busy ? '...' : (installed ? t('marketplace.uninstall') : t('marketplace.install'));
     const btnAction = busy ? 'busy' : (installed ? 'uninstall' : 'install');
     return `
       <div class="border border-current/15 rounded-lg p-4 flex flex-col min-h-32">
@@ -115,7 +116,7 @@ export function mount(root: HTMLElement): void {
           ${installed ? `<span class="text-[10px] px-1.5 py-0.5 rounded border border-current/30 opacity-80">v${escapeHtml(installed.version)}</span>` : ''}
         </div>
         <div class="text-[11px] opacity-60 mb-2">${escapeHtml(p.marketplace)}</div>
-        <div class="text-xs opacity-80 flex-1 line-clamp-3">${escapeHtml(p.description || '— 无描述 —')}</div>
+        <div class="text-xs opacity-80 flex-1 line-clamp-3">${escapeHtml(p.description || t('marketplace.noDescription'))}</div>
         <div class="mt-3 flex justify-end">
           <button
             data-action="${btnAction}"
@@ -133,7 +134,7 @@ export function mount(root: HTMLElement): void {
   function render() {
     const { data, search, marketplaceFilter, loading } = state;
     if (!data) {
-      root.innerHTML = `<div class="p-6 text-sm opacity-70">加载中...</div>`;
+      root.innerHTML = `<div class="p-6 text-sm opacity-70">${t('common.loading')}</div>`;
       return;
     }
     const items = filteredPlugins();
@@ -141,28 +142,28 @@ export function mount(root: HTMLElement): void {
     root.innerHTML = `
       <div class="p-6 max-w-6xl mx-auto space-y-4">
         <div class="flex items-center justify-between">
-          <h1 class="text-xl font-semibold">🏪 Marketplace</h1>
+          <h1 class="text-xl font-semibold">🏪 ${t('marketplace.title')}</h1>
           <button id="refresh-btn" ${loading ? 'disabled' : ''}
             class="border border-current/20 rounded px-3 py-1 text-sm disabled:opacity-50">
-            ${loading ? '...' : '刷新'}
+            ${loading ? '...' : t('common.refresh')}
           </button>
         </div>
 
         <div class="flex gap-3 items-center">
-          <input id="search-input" type="text" placeholder="🔍 搜索插件..." value="${escapeHtml(search)}"
+          <input id="search-input" type="text" placeholder="${t('marketplace.searchPlaceholder')}" value="${escapeHtml(search)}"
             class="flex-1 bg-transparent border border-current/20 rounded px-3 py-1.5 text-sm" />
           <select id="mp-filter" class="bg-transparent border border-current/20 rounded px-2 py-1.5 text-sm">
-            ${mpOptions.map(m => `<option value="${escapeHtml(m)}" ${marketplaceFilter === m ? 'selected' : ''}>${m === 'all' ? '全部 marketplace' : escapeHtml(m)}</option>`).join('')}
+            ${mpOptions.map(m => `<option value="${escapeHtml(m)}" ${marketplaceFilter === m ? 'selected' : ''}>${m === 'all' ? t('marketplace.allMarketplaces') : escapeHtml(m)}</option>`).join('')}
           </select>
         </div>
 
-        <div class="text-xs opacity-60">共 ${items.length} 个插件${data.available.length !== items.length ? ` / ${data.available.length} 总数` : ''}</div>
+        <div class="text-xs opacity-60">${t('marketplace.pluginCount', items.length)}${data.available.length !== items.length ? ` / ${t('marketplace.totalCount', data.available.length)}` : ''}</div>
 
         ${items.length === 0
           ? `<div class="text-center py-16 opacity-60 text-sm">
               ${data.marketplaces.length === 0
-                ? '还没添加任何 marketplace。请到 Plugins 面板添加 marketplace。'
-                : '没有匹配的插件。'}
+                ? t('marketplace.noMarketplace')
+                : t('marketplace.noMatch')}
              </div>`
           : `<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                ${items.map(renderCard).join('')}

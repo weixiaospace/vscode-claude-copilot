@@ -7,8 +7,8 @@ export function registerMemoryCommands(refresh: () => void): vscode.Disposable[]
   return [
     vscode.commands.registerCommand('claudeCopilot.memory.create', async () => {
       const ws = currentWorkspace();
-      if (!ws) { vscode.window.showWarningMessage('未打开 workspace'); return; }
-      const fileName = await vscode.window.showInputBox({ prompt: '文件名（如 user_role.md）' });
+      if (!ws) { vscode.window.showWarningMessage(vscode.l10n.t('toast.noWorkspace')); return; }
+      const fileName = await vscode.window.showInputBox({ prompt: vscode.l10n.t('prompt.memoryFileName') });
       if (!fileName) return;
       const filePath = await createMemory(CLAUDE_HOME, ws.fsPath, fileName);
       refresh();
@@ -21,9 +21,9 @@ export function registerMemoryCommands(refresh: () => void): vscode.Disposable[]
       const m = node?.memory;
       if (!ws || !m) return;
       const confirm = await vscode.window.showWarningMessage(
-        `删除记忆 ${m.fileName}？`, { modal: true }, '删除',
+        vscode.l10n.t('confirm.deleteMemory', m.fileName), { modal: true }, vscode.l10n.t('confirm.deleteMemoryBtn'),
       );
-      if (confirm !== '删除') return;
+      if (confirm !== vscode.l10n.t('confirm.deleteMemoryBtn')) return;
       await deleteMemory(CLAUDE_HOME, ws.fsPath, m.path);
       refresh();
     }),

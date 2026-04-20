@@ -1,4 +1,5 @@
 import { call } from './rpc';
+import { t } from './l10n';
 
 type Layer = 'user' | 'project' | 'local';
 
@@ -133,7 +134,7 @@ export function mount(root: HTMLElement): void {
       await load();
     } catch (err: any) {
       console.error('settings:write failed', err);
-      alert('保存失败：' + (err?.message || err));
+      alert(t('settings.saveFailed') + ': ' + (err?.message || err));
     } finally {
       state.saving = false;
       render();
@@ -153,7 +154,7 @@ export function mount(root: HTMLElement): void {
 
   function switchLayer(next: Layer) {
     if (state.dirty) {
-      const ok = confirm('有未保存的更改，确认切换？');
+      const ok = confirm(t('settings.unsavedChanges'));
       if (!ok) return;
     }
     state.layer = next;
@@ -196,14 +197,14 @@ export function mount(root: HTMLElement): void {
       </div>
     `).join('');
     return rows + `
-      <button id="env-add" class="text-xs px-3 py-1 border border-current/20 rounded mt-2 hover:bg-current/10">+ 添加</button>
+      <button id="env-add" class="text-xs px-3 py-1 border border-current/20 rounded mt-2 hover:bg-current/10">+ ${t('settings.envAdd')}</button>
     `;
   }
 
   function renderPluginList(): string {
     if (!state.form || !state.data) return '';
     if (state.data.installedPlugins.length === 0) {
-      return `<div class="text-xs opacity-60">当前还没装任何插件</div>`;
+      return `<div class="text-xs opacity-60">${t('settings.noPlugins')}</div>`;
     }
     return state.data.installedPlugins.map(p => `
       <label class="flex items-center gap-2 text-sm py-0.5">
@@ -220,38 +221,38 @@ export function mount(root: HTMLElement): void {
     return `
       <div class="space-y-5">
         <section>
-          <div class="text-xs uppercase tracking-wider opacity-60 mb-2">默认模型</div>
+          <div class="text-xs uppercase tracking-wider opacity-60 mb-2">${t('settings.defaultModel')}</div>
           <select id="f-model" class="w-full bg-transparent border border-current/20 rounded px-2 py-1.5 text-sm">
-            ${MODELS.map(m => `<option value="${m}" ${f.model === m ? 'selected' : ''}>${m || '(不覆盖 / 使用系统默认)'}</option>`).join('')}
+            ${MODELS.map(m => `<option value="${m}" ${f.model === m ? 'selected' : ''}>${m || t('settings.modelDefault')}</option>`).join('')}
           </select>
         </section>
 
         <section>
-          <div class="text-xs uppercase tracking-wider opacity-60 mb-2">权限模式</div>
+          <div class="text-xs uppercase tracking-wider opacity-60 mb-2">${t('settings.permissionMode')}</div>
           <select id="f-permissionMode" class="w-full bg-transparent border border-current/20 rounded px-2 py-1.5 text-sm">
-            ${PERMISSION_MODES.map(m => `<option value="${m}" ${f.permissionMode === m ? 'selected' : ''}>${m || '(不覆盖)'}</option>`).join('')}
+            ${PERMISSION_MODES.map(m => `<option value="${m}" ${f.permissionMode === m ? 'selected' : ''}>${m || t('settings.permissionModeDefault')}</option>`).join('')}
           </select>
         </section>
 
         <section>
-          <div class="text-xs uppercase tracking-wider opacity-60 mb-2">启用的插件</div>
+          <div class="text-xs uppercase tracking-wider opacity-60 mb-2">${t('settings.enabledPlugins')}</div>
           <div class="space-y-1">${renderPluginList()}</div>
-          <div class="text-[11px] opacity-50 mt-1">未勾选的会写入 <code>enabledPlugins: {"x": false}</code></div>
+          <div class="text-[11px] opacity-50 mt-1">${t('settings.pluginsHint')}</div>
         </section>
 
         <section>
-          <div class="text-xs uppercase tracking-wider opacity-60 mb-2">环境变量</div>
+          <div class="text-xs uppercase tracking-wider opacity-60 mb-2">${t('settings.envVars')}</div>
           <div class="space-y-2" id="env-rows">${renderEnvRows()}</div>
         </section>
 
         <section>
-          <div class="text-xs uppercase tracking-wider opacity-60 mb-2">其他</div>
+          <div class="text-xs uppercase tracking-wider opacity-60 mb-2">${t('settings.other')}</div>
           <label class="flex items-center gap-2 text-sm py-1">
             <input type="checkbox" id="f-coauthored" ${f.includeCoAuthoredBy ? 'checked' : ''} />
-            <span>包含 Co-authored-by 行（git commit）</span>
+            <span>${t('settings.includeCoAuthored')}</span>
           </label>
           <div class="flex items-center gap-2 text-sm py-1">
-            <label for="f-cleanup">会话清理天数</label>
+            <label for="f-cleanup">${t('settings.cleanupDays')}</label>
             <input type="number" id="f-cleanup" value="${f.cleanupPeriodDays === '' ? '' : f.cleanupPeriodDays}" min="0"
               class="w-20 bg-transparent border border-current/20 rounded px-2 py-1 text-sm" />
           </div>
@@ -262,14 +263,14 @@ export function mount(root: HTMLElement): void {
 
   function render() {
     if (!state.form || !state.data) {
-      root.innerHTML = `<div class="p-6 text-sm opacity-70">${state.loading ? '加载中...' : '准备中...'}</div>`;
+      root.innerHTML = `<div class="p-6 text-sm opacity-70">${state.loading ? t('common.loading') : t('common.preparing')}</div>`;
       return;
     }
     root.innerHTML = `
       <div class="p-6 max-w-3xl mx-auto space-y-5">
         <div class="flex items-center justify-between">
-          <h1 class="text-xl font-semibold">⚙️ Settings</h1>
-          ${state.dirty ? '<span class="text-xs px-2 py-0.5 rounded border border-current/30 opacity-80">未保存</span>' : ''}
+          <h1 class="text-xl font-semibold">⚙️ ${t('settings.title')}</h1>
+          ${state.dirty ? `<span class="text-xs px-2 py-0.5 rounded border border-current/30 opacity-80">${t('settings.unsaved')}</span>` : ''}
         </div>
 
         <div class="flex border-b border-current/15">
@@ -281,15 +282,15 @@ export function mount(root: HTMLElement): void {
         <div class="flex gap-2 pt-3 border-t border-current/10">
           <button id="save-btn" ${state.saving || !state.dirty ? 'disabled' : ''}
             class="px-4 py-1.5 rounded text-sm border border-current/40 bg-current/10 hover:bg-current/20 disabled:opacity-40">
-            ${state.saving ? '保存中...' : '保存'}
+            ${state.saving ? t('settings.saving') : t('settings.save')}
           </button>
           <button id="reset-btn" ${state.dirty ? '' : 'disabled'}
             class="px-4 py-1.5 rounded text-sm border border-current/20 hover:bg-current/10 disabled:opacity-40">
-            重置
+            ${t('settings.reset')}
           </button>
           <div class="flex-1"></div>
           <button id="json-btn" class="px-4 py-1.5 rounded text-sm opacity-70 hover:opacity-100">
-            以 JSON 编辑 →
+            ${t('settings.editJson')}
           </button>
         </div>
       </div>

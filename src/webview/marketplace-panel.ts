@@ -7,6 +7,21 @@ import type { RpcRequest, RpcResponse } from './messaging';
 let current: vscode.WebviewPanel | null = null;
 const refreshers: (() => void)[] = [];
 
+const MARKETPLACE_KEYS = [
+  'common.loading',
+  'common.refresh',
+  'marketplace.title',
+  'marketplace.searchPlaceholder',
+  'marketplace.allMarketplaces',
+  'marketplace.pluginCount',
+  'marketplace.totalCount',
+  'marketplace.noMarketplace',
+  'marketplace.noMatch',
+  'marketplace.noDescription',
+  'marketplace.install',
+  'marketplace.uninstall',
+];
+
 export function registerMarketplaceRefresh(cb: () => void): void {
   refreshers.push(cb);
 }
@@ -14,7 +29,7 @@ export function registerMarketplaceRefresh(cb: () => void): void {
 export function openMarketplacePanel(context: vscode.ExtensionContext): void {
   if (current) { current.reveal(); return; }
   const panel = vscode.window.createWebviewPanel(
-    'claudeCopilot.marketplace', 'Claude Marketplace', vscode.ViewColumn.One,
+    'claudeCopilot.marketplace', vscode.l10n.t('marketplace.title'), vscode.ViewColumn.One,
     {
       enableScripts: true,
       retainContextWhenHidden: true,
@@ -28,6 +43,11 @@ export function openMarketplacePanel(context: vscode.ExtensionContext): void {
   const cssUri = panel.webview.asWebviewUri(vscode.Uri.joinPath(distRoot, 'assets', 'src.css'));
   const csp = `default-src 'none'; img-src ${panel.webview.cspSource} data:; style-src ${panel.webview.cspSource} 'unsafe-inline'; script-src ${panel.webview.cspSource};`;
 
+  const strings: Record<string, string> = {};
+  for (const key of MARKETPLACE_KEYS) {
+    strings[key] = vscode.l10n.t(key);
+  }
+
   panel.webview.html = /* html */`
     <!doctype html>
     <html>
@@ -35,9 +55,10 @@ export function openMarketplacePanel(context: vscode.ExtensionContext): void {
         <meta charset="UTF-8" />
         <meta http-equiv="Content-Security-Policy" content="${csp}">
         <link rel="stylesheet" href="${cssUri}" />
-        <title>Claude Marketplace</title>
+        <title>${vscode.l10n.t('marketplace.title')}</title>
       </head>
       <body>
+        <script>window.__l10n = ${JSON.stringify(strings)};</script>
         <div id="root"></div>
         <script type="module" src="${scriptUri}"></script>
       </body>

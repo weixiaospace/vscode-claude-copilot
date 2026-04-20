@@ -7,10 +7,34 @@ import type { RpcRequest, RpcResponse } from './messaging';
 
 let current: vscode.WebviewPanel | null = null;
 
+const USAGE_KEYS = [
+  'common.loading',
+  'common.noData',
+  'common.refresh',
+  'dashboard.title',
+  'dashboard.inputTokens',
+  'dashboard.outputTokens',
+  'dashboard.estimatedCost',
+  'dashboard.totalSessions',
+  'dashboard.dailyTrend',
+  'dashboard.byModel',
+  'dashboard.scopeAll',
+  'dashboard.scopeProject',
+  'chart.input',
+  'chart.output',
+  'chart.cacheRead',
+  'chart.cacheCreate',
+  'table.model',
+  'table.calls',
+  'table.input',
+  'table.output',
+  'table.estimatedCost',
+];
+
 export function openUsagePanel(context: vscode.ExtensionContext): void {
   if (current) { current.reveal(); return; }
   const panel = vscode.window.createWebviewPanel(
-    'claudeCopilot.usage', 'Claude Usage', vscode.ViewColumn.One,
+    'claudeCopilot.usage', vscode.l10n.t('dashboard.title'), vscode.ViewColumn.One,
     {
       enableScripts: true,
       retainContextWhenHidden: true,
@@ -24,6 +48,11 @@ export function openUsagePanel(context: vscode.ExtensionContext): void {
   const cssUri = panel.webview.asWebviewUri(vscode.Uri.joinPath(distRoot, 'assets', 'src.css'));
   const csp = `default-src 'none'; img-src ${panel.webview.cspSource} data:; style-src ${panel.webview.cspSource} 'unsafe-inline'; script-src ${panel.webview.cspSource};`;
 
+  const strings: Record<string, string> = {};
+  for (const key of USAGE_KEYS) {
+    strings[key] = vscode.l10n.t(key);
+  }
+
   panel.webview.html = /* html */`
     <!doctype html>
     <html>
@@ -31,9 +60,10 @@ export function openUsagePanel(context: vscode.ExtensionContext): void {
         <meta charset="UTF-8" />
         <meta http-equiv="Content-Security-Policy" content="${csp}">
         <link rel="stylesheet" href="${cssUri}" />
-        <title>Claude Usage</title>
+        <title>${vscode.l10n.t('dashboard.title')}</title>
       </head>
       <body>
+        <script>window.__l10n = ${JSON.stringify(strings)};</script>
         <div id="root"></div>
         <script type="module" src="${scriptUri}"></script>
       </body>
