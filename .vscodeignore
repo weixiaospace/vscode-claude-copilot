@@ -9,7 +9,7 @@ tsconfig.json
 *.map
 webview-ui/node_modules
 webview-ui/src
-webview-ui/index.html
+webview-ui/*.html
 webview-ui/package.json
 webview-ui/tsconfig.json
 webview-ui/vite.config.ts
