@@ -141,6 +141,56 @@ VSCode 原生 l10n 的坑：**只自动加载 `bundle.l10n.<locale>.json`（带 
 - `.vscodeignore` 已排除 `src/`、`node_modules`、`pnpm-lock.yaml`、`webview-ui/src/`、`webview-ui/*.html`、`**/*.map`（注意 `**/` 前缀才能匹配 `out/extension.js.map`）、开发文档 `CLAUDE.md` / `TODO.md` 等
 - **必须保留** `!l10n`、`!package.nls.json`、`!package.nls.zh-cn.json`（`!` 前缀覆盖默认排除规则）
 - vsix 产物 ~90 KB（22 文件）
+- `*.vsix` 在 `.gitignore` 里，构建产物不进 git 仓库，走 GitHub Release 分发
+
+## 发版流程
+
+远程：`github`（weixiaospace/vscode-claude-copilot）+ `cnb`（镜像）。发版只推 `github` 然后走 GitHub Release。
+
+1. **改版本号 + 更新 CHANGELOG**（中英文两份 + 添加 `[x.y.z]` 尾部链接）
+   ```bash
+   # 编辑 package.json "version"
+   # 编辑 CHANGELOG.md 和 CHANGELOG.zh-CN.md 加新条目 + 尾部链接
+   ```
+
+2. **测试 + 打包**
+   ```bash
+   pnpm test && pnpm package
+   ```
+
+3. **提交 + 推 tag**
+   ```bash
+   git add -A && git commit -m "feat: x.y.z — <一句话概述>"
+   git push github main
+   git tag -a vX.Y.Z -m "Release X.Y.Z — <概述>"
+   git push github vX.Y.Z
+   ```
+
+4. **提取 release notes + 创建 GitHub Release**
+   ```bash
+   # 从 CHANGELOG 抽出本版本段落到 /tmp（sed 删除最后一行避免带进下一版本的标题）
+   sed -n '/## \[X.Y.Z\]/,/## \[/p' CHANGELOG.md | sed '$d' > /tmp/release-notes-X.Y.Z.md
+
+   gh release create vX.Y.Z claude-copilot-X.Y.Z.vsix \
+     --title "vX.Y.Z — <概述>" \
+     --notes-file /tmp/release-notes-X.Y.Z.md \
+     --repo weixiaospace/vscode-claude-copilot
+   ```
+
+5. **发布到 VSCode Marketplace**
+   ```bash
+   # 发上一步打好的同一个 vsix，不重新打包
+   pnpm exec vsce publish --packagePath claude-copilot-X.Y.Z.vsix
+
+   # 等效写法（vsce 会重新跑 pnpm package）
+   # pnpm exec vsce publish
+   ```
+   发布 1-2 分钟后生效：`https://marketplace.visualstudio.com/items?itemName=ky-studio.claude-copilot`
+
+前置：
+- `gh` CLI 已装并 `gh auth login` 过（ssh protocol）。当前活跃账号：`weixiaospace`
+- VSCode Marketplace 发布需要 Azure DevOps PAT（Marketplace → Manage 范围 All accessible organizations）。一次性 `pnpm exec vsce login ky-studio` 录入后持久保存；或每次用 `--pat <token>` 带上
+- `package.json` 的 `publisher` 字段必须是 `ky-studio`（与 Azure DevOps publisher 对得上）
 
 ## 不做的事
 
