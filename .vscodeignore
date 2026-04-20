@@ -6,7 +6,9 @@ src
 tsconfig.json
 .vscodeignore
 .gitignore
-*.map
+**/*.map
+CLAUDE.md
+TODO.md
 webview-ui/node_modules
 webview-ui/src
 webview-ui/*.html

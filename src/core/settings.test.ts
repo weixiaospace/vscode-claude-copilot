@@ -3,7 +3,7 @@ import { describe, it, before, after } from 'mocha';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as os from 'os';
-import { readUser, readProjectSettings, readLocalSettings, mergeSettings, writeUser, ensureFile } from './settings';
+import { readUser, readProjectSettings, readLocalSettings } from './settings';
 
 describe('settings', () => {
   let tmpHome: string;
@@ -24,33 +24,19 @@ describe('settings', () => {
     assert.deepEqual(result, {});
   });
 
-  it('writeUser then readUser roundtrips', async () => {
-    await writeUser(tmpHome, { foo: 'bar' });
-    const result = await readUser(tmpHome);
-    assert.deepEqual(result, { foo: 'bar' });
+  it('readProjectSettings / readLocalSettings return {} when files missing', async () => {
+    assert.deepEqual(await readProjectSettings(tmpProject), {});
+    assert.deepEqual(await readLocalSettings(tmpProject), {});
   });
 
-  it('mergeSettings layers user < project < local', async () => {
+  it('readers parse JSON when present', async () => {
+    await fs.writeFile(path.join(tmpHome, 'settings.json'), JSON.stringify({ foo: 'bar' }));
     await fs.mkdir(path.join(tmpProject, '.claude'), { recursive: true });
-    await fs.writeFile(path.join(tmpHome, 'settings.json'), JSON.stringify({ a: 1, b: 1 }));
-    await fs.writeFile(path.join(tmpProject, '.claude', 'settings.json'), JSON.stringify({ b: 2, c: 2 }));
-    await fs.writeFile(path.join(tmpProject, '.claude', 'settings.local.json'), JSON.stringify({ c: 3 }));
+    await fs.writeFile(path.join(tmpProject, '.claude', 'settings.json'), JSON.stringify({ a: 1 }));
+    await fs.writeFile(path.join(tmpProject, '.claude', 'settings.local.json'), JSON.stringify({ b: 2 }));
 
-    const merged = await mergeSettings(tmpHome, tmpProject);
-    assert.deepEqual(merged, { a: 1, b: 2, c: 3 });
-  });
-
-  it('ensureFile creates {} when missing', async () => {
-    const target = path.join(tmpProject, '.claude', 'new-settings.json');
-    await ensureFile(target);
-    const content = await fs.readFile(target, 'utf-8');
-    assert.equal(content, '{}\n');
-  });
-
-  it('ensureFile leaves existing files untouched', async () => {
-    const target = path.join(tmpProject, '.claude', 'settings.json');
-    await ensureFile(target);
-    const content = JSON.parse(await fs.readFile(target, 'utf-8'));
-    assert.deepEqual(content, { b: 2, c: 2 });
+    assert.deepEqual(await readUser(tmpHome), { foo: 'bar' });
+    assert.deepEqual(await readProjectSettings(tmpProject), { a: 1 });
+    assert.deepEqual(await readLocalSettings(tmpProject), { b: 2 });
   });
 });

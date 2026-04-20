@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import { listAvailablePlugins, listInstalledPlugins, listMarketplaces, installPlugin, uninstallPlugin } from '../core/plugins';
 import { CLAUDE_HOME } from '../lib/paths';
-import type { RpcRequest, RpcResponse } from './messaging';
+import { makeNonce, type RpcRequest, type RpcResponse } from './messaging';
 import { t } from '../lib/l10n';
 
 let current: vscode.WebviewPanel | null = null;
@@ -21,6 +21,8 @@ const MARKETPLACE_KEYS = [
   'marketplace.noDescription',
   'marketplace.install',
   'marketplace.uninstall',
+  'marketplace.installing',
+  'marketplace.uninstalling',
 ];
 
 export function registerMarketplaceRefresh(cb: () => void): void {
@@ -42,7 +44,8 @@ export function openMarketplacePanel(context: vscode.ExtensionContext): void {
   const distRoot = vscode.Uri.file(path.join(context.extensionPath, 'out', 'webview'));
   const scriptUri = panel.webview.asWebviewUri(vscode.Uri.joinPath(distRoot, 'assets', 'marketplace.js'));
   const cssUri = panel.webview.asWebviewUri(vscode.Uri.joinPath(distRoot, 'assets', 'src.css'));
-  const csp = `default-src 'none'; img-src ${panel.webview.cspSource} data:; style-src ${panel.webview.cspSource} 'unsafe-inline'; script-src ${panel.webview.cspSource};`;
+  const nonce = makeNonce();
+  const csp = `default-src 'none'; img-src ${panel.webview.cspSource} data:; style-src ${panel.webview.cspSource} 'unsafe-inline'; script-src ${panel.webview.cspSource} 'nonce-${nonce}';`;
 
   const strings: Record<string, string> = {};
   for (const key of MARKETPLACE_KEYS) {
@@ -59,9 +62,9 @@ export function openMarketplacePanel(context: vscode.ExtensionContext): void {
         <title>${t('marketplace.title')}</title>
       </head>
       <body>
-        <script>window.__l10n = ${JSON.stringify(strings)};</script>
+        <script nonce="${nonce}">window.__l10n = ${JSON.stringify(strings)};</script>
         <div id="root"></div>
-        <script type="module" src="${scriptUri}"></script>
+        <script type="module" nonce="${nonce}" src="${scriptUri}"></script>
       </body>
     </html>`;
 
@@ -89,11 +92,13 @@ export function openMarketplacePanel(context: vscode.ExtensionContext): void {
         const { name, marketplace } = req.params;
         await installPlugin(`${name}@${marketplace}`);
         refreshers.forEach(r => r());
+        vscode.window.showInformationMessage(t('toast.pluginInstalled', name));
         res = { id: req.id, result: 'ok' };
       } else if (req.method === 'marketplace:uninstall') {
         const { name, marketplace } = req.params;
         await uninstallPlugin(`${name}@${marketplace}`);
         refreshers.forEach(r => r());
+        vscode.window.showInformationMessage(t('toast.pluginUninstalled', name));
         res = { id: req.id, result: 'ok' };
       } else {
         res = { id: req.id, error: `unknown method ${req.method}` };

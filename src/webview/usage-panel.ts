@@ -3,7 +3,7 @@ import * as path from 'path';
 import { queryUsage } from '../core/usage';
 import { CLAUDE_HOME } from '../lib/paths';
 import { currentWorkspace } from '../lib/workspace';
-import type { RpcRequest, RpcResponse } from './messaging';
+import { makeNonce, type RpcRequest, type RpcResponse } from './messaging';
 import { t } from '../lib/l10n';
 
 let current: vscode.WebviewPanel | null = null;
@@ -17,8 +17,13 @@ const USAGE_KEYS = [
   'dashboard.outputTokens',
   'dashboard.estimatedCost',
   'dashboard.totalSessions',
+  'dashboard.trend',
   'dashboard.dailyTrend',
+  'dashboard.byDay',
+  'dashboard.byWeek',
+  'dashboard.byMonth',
   'dashboard.byModel',
+  'dashboard.byProject',
   'dashboard.scopeAll',
   'dashboard.scopeProject',
   'chart.input',
@@ -26,6 +31,8 @@ const USAGE_KEYS = [
   'chart.cacheRead',
   'chart.cacheCreate',
   'table.model',
+  'table.project',
+  'table.sessions',
   'table.calls',
   'table.input',
   'table.output',
@@ -47,7 +54,8 @@ export function openUsagePanel(context: vscode.ExtensionContext): void {
   const distRoot = vscode.Uri.file(path.join(context.extensionPath, 'out', 'webview'));
   const scriptUri = panel.webview.asWebviewUri(vscode.Uri.joinPath(distRoot, 'assets', 'usage.js'));
   const cssUri = panel.webview.asWebviewUri(vscode.Uri.joinPath(distRoot, 'assets', 'src.css'));
-  const csp = `default-src 'none'; img-src ${panel.webview.cspSource} data:; style-src ${panel.webview.cspSource} 'unsafe-inline'; script-src ${panel.webview.cspSource};`;
+  const nonce = makeNonce();
+  const csp = `default-src 'none'; img-src ${panel.webview.cspSource} data:; style-src ${panel.webview.cspSource} 'unsafe-inline'; script-src ${panel.webview.cspSource} 'nonce-${nonce}' https://cdn.jsdelivr.net; connect-src https://cdn.jsdelivr.net;`;
 
   const strings: Record<string, string> = {};
   for (const key of USAGE_KEYS) {
@@ -64,9 +72,10 @@ export function openUsagePanel(context: vscode.ExtensionContext): void {
         <title>${t('dashboard.title')}</title>
       </head>
       <body>
-        <script>window.__l10n = ${JSON.stringify(strings)};</script>
+        <script nonce="${nonce}">window.__l10n = ${JSON.stringify(strings)};</script>
         <div id="root"></div>
-        <script type="module" src="${scriptUri}"></script>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+        <script type="module" nonce="${nonce}" src="${scriptUri}"></script>
       </body>
     </html>`;
 

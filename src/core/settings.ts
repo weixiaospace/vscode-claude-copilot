@@ -31,22 +31,3 @@ export async function readProjectSettings(projectPath: string): Promise<Settings
 export async function readLocalSettings(projectPath: string): Promise<Settings> {
   return readJsonSafe(localSettingsPath(projectPath), {});
 }
-
-// Shallow merge — top-level keys only. Consumers that need nested keys
-// (permissions, env, mcpServers) should read individual layers and merge themselves.
-export async function mergeSettings(home: string, projectPath: string): Promise<Settings> {
-  const [user, project, local] = await Promise.all([
-    readUser(home), readProjectSettings(projectPath), readLocalSettings(projectPath),
-  ]);
-  return { ...user, ...project, ...local };
-}
-
-export async function writeUser(home: string, settings: Settings): Promise<void> {
-  await fs.writeFile(userSettingsPath(home), JSON.stringify(settings, null, 2), 'utf-8');
-}
-
-export async function ensureFile(filePath: string): Promise<void> {
-  try { await fs.access(filePath); return; } catch { /* fallthrough */ }
-  await fs.mkdir(path.dirname(filePath), { recursive: true });
-  await fs.writeFile(filePath, '{}\n', 'utf-8');
-}

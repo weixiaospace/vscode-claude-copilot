@@ -5,8 +5,6 @@ interface AvailablePlugin {
   name: string;
   description: string;
   marketplace: string;
-  category?: string;
-  homepage?: string;
 }
 
 interface InstalledPlugin {
@@ -70,6 +68,7 @@ export function mount(root: HTMLElement): void {
       await load();
     } catch (err: any) {
       console.error(err);
+    } finally {
       state.busy.delete(key);
       render();
     }
@@ -84,6 +83,7 @@ export function mount(root: HTMLElement): void {
       await load();
     } catch (err: any) {
       console.error(err);
+    } finally {
       state.busy.delete(key);
       render();
     }
@@ -107,7 +107,9 @@ export function mount(root: HTMLElement): void {
     const key = pluginKey(p);
     const installed = getInstalled(p.name, p.marketplace);
     const busy = state.busy.has(key);
-    const btnLabel = busy ? '...' : (installed ? t('marketplace.uninstall') : t('marketplace.install'));
+    const btnLabel = busy
+      ? (installed ? t('marketplace.uninstalling') : t('marketplace.installing'))
+      : (installed ? t('marketplace.uninstall') : t('marketplace.install'));
     const btnAction = busy ? 'busy' : (installed ? 'uninstall' : 'install');
     return `
       <div class="border border-current/15 rounded-lg p-4 flex flex-col min-h-32">
@@ -140,9 +142,9 @@ export function mount(root: HTMLElement): void {
     const items = filteredPlugins();
     const mpOptions = ['all', ...data.marketplaces];
     root.innerHTML = `
-      <div class="p-6 max-w-6xl mx-auto space-y-4">
+      <div class="p-6 max-w-5xl mx-auto space-y-4">
         <div class="flex items-center justify-between">
-          <h1 class="text-xl font-semibold">🏪 ${t('marketplace.title')}</h1>
+          <h1 class="text-2xl font-semibold flex items-center gap-2">🏪 ${t('marketplace.title')}</h1>
           <button id="refresh-btn" ${loading ? 'disabled' : ''}
             class="border border-current/20 rounded px-3 py-1 text-sm disabled:opacity-50">
             ${loading ? '...' : t('common.refresh')}

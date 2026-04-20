@@ -13,7 +13,27 @@ type Node =
 export class MemoryTreeProvider implements vscode.TreeDataProvider<Node> {
   private _onDidChange = new vscode.EventEmitter<void>();
   readonly onDidChangeTreeData = this._onDidChange.event;
-  refresh(): void { this._onDidChange.fire(); }
+  private cache: Memory[] | null = null;
+  private inflight: Promise<Memory[]> | null = null;
+
+  refresh(): void {
+    this.cache = null;
+    this.inflight = null;
+    this._onDidChange.fire();
+  }
+
+  private async loadAll(): Promise<Memory[]> {
+    if (this.cache) return this.cache;
+    if (this.inflight) return this.inflight;
+    const ws = currentWorkspace();
+    if (!ws) return [];
+    this.inflight = listMemories(CLAUDE_HOME, ws.fsPath).then(items => {
+      this.cache = items;
+      this.inflight = null;
+      return items;
+    });
+    return this.inflight;
+  }
 
   getTreeItem(node: Node): vscode.TreeItem {
     if (node.kind === 'group') {
@@ -46,10 +66,11 @@ export class MemoryTreeProvider implements vscode.TreeDataProvider<Node> {
   async getChildren(node?: Node): Promise<Node[]> {
     const ws = currentWorkspace();
     if (!node) {
+      if (ws) this.loadAll().catch(() => {});
       return [{ kind: 'group', available: !!ws, workspaceName: ws?.name }];
     }
     if (node.kind !== 'group' || !ws) return [];
-    const memories = await listMemories(CLAUDE_HOME, ws.fsPath);
+    const memories = await this.loadAll();
     return [{ kind: 'index' }, ...memories.map(m => ({ kind: 'memory', memory: m }) as Node)];
   }
 }

@@ -3,7 +3,7 @@ import { describe, it, before, after } from 'mocha';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as os from 'os';
-import { listSkills, createSkill, deleteSkill, SkillScope } from './skills';
+import { listSkills, createSkill, deleteSkill } from './skills';
 
 describe('skills', () => {
   let tmpHome: string;

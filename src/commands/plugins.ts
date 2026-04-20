@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import {
   installPlugin, uninstallPlugin, togglePlugin, listAvailablePlugins,
-  addMarketplace, removeMarketplace,
+  addMarketplace, removeMarketplace, updateMarketplace,
   type InstalledPlugin, type Marketplace,
 } from '../core/plugins';
 import { CLAUDE_HOME } from '../lib/paths';
@@ -69,6 +69,26 @@ export function registerPluginCommands(refresh: () => void): vscode.Disposable[]
       );
       if (confirm !== t('confirm.removeMarketplaceBtn')) return;
       await removeMarketplace(mp.name);
+      refresh();
+    }),
+
+    vscode.commands.registerCommand('claudeCopilot.marketplace.update', async (node: { mp: Marketplace }) => {
+      const mp = node?.mp;
+      if (!mp) return;
+      await vscode.window.withProgress(
+        { location: vscode.ProgressLocation.Notification, title: t('progress.updateMarketplace', mp.name) },
+        async () => { await updateMarketplace(mp.name); },
+      );
+      vscode.window.showInformationMessage(t('toast.marketplaceUpdated', mp.name));
+      refresh();
+    }),
+
+    vscode.commands.registerCommand('claudeCopilot.marketplace.updateAll', async () => {
+      await vscode.window.withProgress(
+        { location: vscode.ProgressLocation.Notification, title: t('progress.updateAllMarketplaces') },
+        async () => { await updateMarketplace(); },
+      );
+      vscode.window.showInformationMessage(t('toast.marketplacesUpdated'));
       refresh();
     }),
   ];

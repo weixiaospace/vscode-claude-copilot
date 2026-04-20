@@ -17,6 +17,8 @@
   "cmd.plugin.toggle": "切换启用",
   "cmd.marketplace.add": "添加 Marketplace...",
   "cmd.marketplace.remove": "移除 Marketplace",
+  "cmd.marketplace.update": "更新 Marketplace",
+  "cmd.marketplace.updateAll": "更新全部 Marketplaces",
   "cmd.mcp.addUser": "添加用户 MCP...",
   "cmd.mcp.addProject": "添加项目 MCP...",
   "cmd.mcp.remove": "移除 MCP Server",

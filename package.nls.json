@@ -17,6 +17,8 @@
   "cmd.plugin.toggle": "Toggle Enable",
   "cmd.marketplace.add": "Add Marketplace...",
   "cmd.marketplace.remove": "Remove Marketplace",
+  "cmd.marketplace.update": "Update Marketplace",
+  "cmd.marketplace.updateAll": "Update All Marketplaces",
   "cmd.mcp.addUser": "Add User MCP...",
   "cmd.mcp.addProject": "Add Project MCP...",
   "cmd.mcp.remove": "Remove MCP Server",

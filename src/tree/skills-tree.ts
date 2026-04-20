@@ -11,7 +11,26 @@ type Node =
 export class SkillsTreeProvider implements vscode.TreeDataProvider<Node> {
   private _onDidChange = new vscode.EventEmitter<void>();
   readonly onDidChangeTreeData = this._onDidChange.event;
-  refresh(): void { this._onDidChange.fire(); }
+  private cache: Skill[] | null = null;
+  private inflight: Promise<Skill[]> | null = null;
+
+  refresh(): void {
+    this.cache = null;
+    this.inflight = null;
+    this._onDidChange.fire();
+  }
+
+  private async loadAll(): Promise<Skill[]> {
+    if (this.cache) return this.cache;
+    if (this.inflight) return this.inflight;
+    const ws = currentWorkspace();
+    this.inflight = listSkills(CLAUDE_HOME, ws ? ws.fsPath : null).then(skills => {
+      this.cache = skills;
+      this.inflight = null;
+      return skills;
+    });
+    return this.inflight;
+  }
 
   getTreeItem(node: Node): vscode.TreeItem {
     if (node.kind === 'group') {
@@ -37,6 +56,8 @@ export class SkillsTreeProvider implements vscode.TreeDataProvider<Node> {
   async getChildren(node?: Node): Promise<Node[]> {
     if (!node) {
       const ws = currentWorkspace();
+      // Prime cache in background so children are instant when group is expanded
+      this.loadAll().catch(() => {});
       return [
         { kind: 'group', scope: 'user', available: true },
         { kind: 'group', scope: 'project', available: !!ws },
@@ -45,7 +66,7 @@ export class SkillsTreeProvider implements vscode.TreeDataProvider<Node> {
     if (node.kind !== 'group') return [];
     const ws = currentWorkspace();
     if (node.scope === 'project' && !ws) return [];
-    const skills = await listSkills(CLAUDE_HOME, ws ? ws.fsPath : null);
+    const skills = await this.loadAll();
     return skills.filter(s => s.scope === node.scope).map(s => ({ kind: 'skill', skill: s }) as Node);
   }
 }

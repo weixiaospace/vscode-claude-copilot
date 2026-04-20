@@ -9,18 +9,15 @@ export interface InstalledPlugin {
   enabled: boolean;
   marketplace: string;
   installPath?: string;
-  installedAt?: string;
-  skills: string[];
-  agents: string[];
-  hasMcp: boolean;
+  types: PluginType[];
 }
+
+export type PluginType = 'skills' | 'agents' | 'hooks' | 'mcp' | 'commands';
 
 export interface AvailablePlugin {
   name: string;
   description: string;
   marketplace: string;
-  category?: string;
-  homepage?: string;
 }
 
 export interface Marketplace {
@@ -54,29 +51,30 @@ export async function listInstalledPlugins(home: string): Promise<InstalledPlugi
     const entry = (entries as any[])[0];
     if (!entry) continue;
     const [name, marketplace] = key.split('@');
-    let skills: string[] = [];
-    let agents: string[] = [];
-    let hasMcp = false;
-    if (entry.installPath && await exists(entry.installPath)) {
-      try {
-        const items = await fs.readdir(path.join(entry.installPath, 'skills'), { withFileTypes: true });
-        skills = items.filter(e => e.isDirectory()).map(e => e.name);
-      } catch {}
-      try {
-        const items = await fs.readdir(path.join(entry.installPath, 'agents'));
-        agents = items.filter(f => f.endsWith('.md')).map(f => f.replace('.md', ''));
-      } catch {}
-      hasMcp = await exists(path.join(entry.installPath, '.mcp.json'));
+    const types: PluginType[] = [];
+    if (entry.installPath) {
+      const [hasSkills, hasAgents, hasHooks, hasMcp, hasCommands] = await Promise.all([
+        exists(path.join(entry.installPath, 'skills')),
+        exists(path.join(entry.installPath, 'agents')),
+        exists(path.join(entry.installPath, 'hooks'))
+          .then(ok => ok || exists(path.join(entry.installPath, 'hooks.json'))),
+        exists(path.join(entry.installPath, '.mcp.json')),
+        exists(path.join(entry.installPath, 'commands')),
+      ]);
+      if (hasSkills) types.push('skills');
+      if (hasAgents) types.push('agents');
+      if (hasHooks) types.push('hooks');
+      if (hasMcp) types.push('mcp');
+      if (hasCommands) types.push('commands');
     }
     plugins.push({
       name: name || key,
       version: entry.version || 'unknown',
       scope: entry.scope || 'user',
       enabled: enabledPlugins[key] !== false,
-      installPath: entry.installPath,
       marketplace: marketplace || '',
-      installedAt: entry.installedAt,
-      skills, agents, hasMcp,
+      installPath: entry.installPath,
+      types,
     });
   }
   return plugins;
@@ -103,8 +101,6 @@ export async function listAvailablePlugins(home: string): Promise<AvailablePlugi
           name: p.name,
           description: p.description || '',
           marketplace: mpName,
-          category: p.category,
-          homepage: p.homepage,
         });
       }
       continue;
@@ -141,4 +137,9 @@ export async function addMarketplace(source: string): Promise<string> {
 }
 export async function removeMarketplace(name: string): Promise<string> {
   return runClaude(['plugin', 'marketplace', 'remove', name]);
+}
+export async function updateMarketplace(name?: string): Promise<string> {
+  const args = ['plugin', 'marketplace', 'update'];
+  if (name) args.push(name);
+  return runClaude(args, 120000);
 }
