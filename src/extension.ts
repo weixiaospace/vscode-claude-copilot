@@ -11,6 +11,7 @@ import { registerSkillCommands } from './commands/skills';
 import { registerMemoryCommands } from './commands/memory';
 import { registerWatchers } from './lib/watchers';
 import { openUsagePanel } from './webview/usage-panel';
+import { openMarketplacePanel, registerMarketplaceRefresh } from './webview/marketplace-panel';
 import { runClaude } from './core/claude-cli';
 
 export function activate(context: vscode.ExtensionContext): void {
@@ -36,6 +37,7 @@ export function activate(context: vscode.ExtensionContext): void {
     }),
     vscode.commands.registerCommand('claudeCopilot.openSettings', openSettingsFile),
     vscode.commands.registerCommand('claudeCopilot.openUsage', () => openUsagePanel(context)),
+    vscode.commands.registerCommand('claudeCopilot.openMarketplace', () => openMarketplacePanel(context)),
     ...registerPluginCommands(() => plugins.refresh()),
     ...registerMcpCommands(() => mcp.refresh()),
     ...registerSkillCommands(() => skills.refresh()),
@@ -48,6 +50,8 @@ export function activate(context: vscode.ExtensionContext): void {
       settings: () => settings.refresh(),
     }),
   );
+
+  registerMarketplaceRefresh(() => plugins.refresh());
 
   runClaude(['--version'], 5000).catch(() => {
     vscode.window.showWarningMessage('未检测到 Claude CLI。请先安装 claude，然后用命令面板执行 "Claude Copilot: Refresh All"。');

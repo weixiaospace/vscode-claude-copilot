@@ -8,7 +8,10 @@ export default defineConfig({
     outDir: '../out/webview',
     emptyOutDir: true,
     rollupOptions: {
-      input: { usage: path.resolve(__dirname, 'index.html') },
+      input: {
+        usage: path.resolve(__dirname, 'usage.html'),
+        marketplace: path.resolve(__dirname, 'marketplace.html'),
+      },
       output: { entryFileNames: 'assets/[name].js', chunkFileNames: 'assets/[name].js', assetFileNames: 'assets/[name].[ext]' },
     },
   },

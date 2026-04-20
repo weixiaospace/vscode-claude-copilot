@@ -34,6 +34,7 @@
       { "command": "claudeCopilot.openFile", "title": "Claude Copilot: Open File" },
       { "command": "claudeCopilot.openSettings", "title": "Claude Copilot: Open Settings File" },
       { "command": "claudeCopilot.openUsage", "title": "Claude Copilot: Open Usage Dashboard" },
+      { "command": "claudeCopilot.openMarketplace", "title": "Claude Copilot: Browse Marketplace", "icon": "$(extensions)" },
       { "command": "claudeCopilot.plugin.install", "title": "Install Plugin...", "icon": "$(add)" },
       { "command": "claudeCopilot.plugin.uninstall", "title": "Uninstall" },
       { "command": "claudeCopilot.plugin.toggle", "title": "Toggle Enable" },
@@ -53,6 +54,7 @@
         { "command": "claudeCopilot.openFile", "when": "false" }
       ],
       "view/title": [
+        { "command": "claudeCopilot.openMarketplace", "when": "view == claudeCopilot.plugins", "group": "navigation@0" },
         { "command": "claudeCopilot.plugin.install", "when": "view == claudeCopilot.plugins", "group": "navigation@1" },
         { "command": "claudeCopilot.refresh", "when": "view == claudeCopilot.plugins", "group": "navigation@2" },
         { "command": "claudeCopilot.skill.create", "when": "view == claudeCopilot.skills", "group": "navigation@1" },
