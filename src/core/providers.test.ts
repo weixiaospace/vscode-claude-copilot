@@ -115,3 +115,65 @@ function makeSecrets(init: Record<string, string>) {
     async delete(k: string) { store.delete(k); },
   };
 }
+
+import { detectLegacyProfile } from './providers';
+
+describe('detectLegacyProfile', () => {
+  it('returns null when no provider env present', () => {
+    assert.equal(detectLegacyProfile({ env: { HTTPS_PROXY: 'http://p' } }), null);
+    assert.equal(detectLegacyProfile({}), null);
+    assert.equal(detectLegacyProfile({ env: {} }), null);
+  });
+
+  it('detects ANTHROPIC_API_KEY → anthropic apiKey profile', () => {
+    const p = detectLegacyProfile({ env: { ANTHROPIC_API_KEY: 'sk-1', ANTHROPIC_BASE_URL: 'https://x' } });
+    assert.ok(p);
+    assert.equal(p.kind, 'anthropic');
+    if (p.kind === 'anthropic') {
+      assert.equal(p.authMode, 'apiKey');
+      assert.equal(p.hasApiKey, true);
+      assert.equal(p.baseUrl, 'https://x');
+    }
+  });
+
+  it('detects ANTHROPIC_AUTH_TOKEN → anthropic authToken profile', () => {
+    const p = detectLegacyProfile({ env: { ANTHROPIC_AUTH_TOKEN: 'tk-1' } });
+    assert.ok(p && p.kind === 'anthropic');
+    if (p?.kind === 'anthropic') assert.equal(p.authMode, 'authToken');
+  });
+
+  it('detects top-level apiKeyHelper → anthropic helper profile', () => {
+    const p = detectLegacyProfile({ apiKeyHelper: '/tmp/k.sh' });
+    assert.ok(p && p.kind === 'anthropic');
+    if (p?.kind === 'anthropic') {
+      assert.equal(p.authMode, 'helper');
+      assert.equal(p.apiKeyHelper, '/tmp/k.sh');
+    }
+  });
+
+  it('detects CLAUDE_CODE_USE_BEDROCK=1 → bedrock profile', () => {
+    const p = detectLegacyProfile({ env: { CLAUDE_CODE_USE_BEDROCK: '1', CLAUDE_CODE_SKIP_BEDROCK_AUTH: '1' } });
+    assert.ok(p && p.kind === 'bedrock');
+    if (p?.kind === 'bedrock') assert.equal(p.skipAuth, true);
+  });
+
+  it('detects CLAUDE_CODE_USE_VERTEX=1 → vertex profile', () => {
+    const p = detectLegacyProfile({ env: { CLAUDE_CODE_USE_VERTEX: '1', ANTHROPIC_VERTEX_PROJECT_ID: 'gcp-1' } });
+    assert.ok(p && p.kind === 'vertex');
+    if (p?.kind === 'vertex') assert.equal(p.projectId, 'gcp-1');
+  });
+
+  it('detects CLAUDE_CODE_USE_FOUNDRY=1 → foundry profile with hasApiKey flag when key present', () => {
+    const p = detectLegacyProfile({ env: { CLAUDE_CODE_USE_FOUNDRY: '1', ANTHROPIC_FOUNDRY_API_KEY: 'fk', ANTHROPIC_FOUNDRY_RESOURCE: 'r' } });
+    assert.ok(p && p.kind === 'foundry');
+    if (p?.kind === 'foundry') {
+      assert.equal(p.hasApiKey, true);
+      assert.equal(p.resource, 'r');
+    }
+  });
+
+  it('assigns a non-empty id and the name "Default"', () => {
+    const p = detectLegacyProfile({ env: { ANTHROPIC_API_KEY: 'sk' } });
+    assert.ok(p && p.id.length >= 8 && p.name === 'Default');
+  });
+});

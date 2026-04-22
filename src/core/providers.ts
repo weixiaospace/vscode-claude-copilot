@@ -132,3 +132,59 @@ export async function profileToPartial(profile: Profile, secrets: SecretsGateway
 
   return { env, apiKeyHelper };
 }
+
+import { randomUUID } from 'crypto';
+
+export function newId(): string {
+  return randomUUID();
+}
+
+/**
+ * Detect a legacy provider config embedded in user settings.json, so we can
+ * migrate upgraders to the new profile system without losing their setup.
+ * Returns a Profile matching the current env, or null if no provider env present.
+ * Secret material (api keys, tokens) is NOT captured here — the migration caller
+ * is responsible for moving those values into SecretStorage under secretKey(id, ...).
+ */
+export function detectLegacyProfile(settings: Record<string, unknown>): Profile | null {
+  const env = (settings.env ?? {}) as Record<string, string>;
+  const helper = typeof settings.apiKeyHelper === 'string' ? settings.apiKeyHelper : '';
+  const id = newId();
+  const name = 'Default';
+
+  if (env.CLAUDE_CODE_USE_BEDROCK === '1') {
+    return {
+      id, name, kind: 'bedrock',
+      baseUrl: env.ANTHROPIC_BEDROCK_BASE_URL || undefined,
+      hasBearerToken: !!env.AWS_BEARER_TOKEN_BEDROCK,
+      skipAuth: env.CLAUDE_CODE_SKIP_BEDROCK_AUTH === '1' || undefined,
+    };
+  }
+  if (env.CLAUDE_CODE_USE_VERTEX === '1') {
+    return {
+      id, name, kind: 'vertex',
+      projectId: env.ANTHROPIC_VERTEX_PROJECT_ID || undefined,
+      baseUrl: env.ANTHROPIC_VERTEX_BASE_URL || undefined,
+      skipAuth: env.CLAUDE_CODE_SKIP_VERTEX_AUTH === '1' || undefined,
+    };
+  }
+  if (env.CLAUDE_CODE_USE_FOUNDRY === '1') {
+    return {
+      id, name, kind: 'foundry',
+      hasApiKey: !!env.ANTHROPIC_FOUNDRY_API_KEY,
+      resource: env.ANTHROPIC_FOUNDRY_RESOURCE || undefined,
+      baseUrl: env.ANTHROPIC_FOUNDRY_BASE_URL || undefined,
+      skipAuth: env.CLAUDE_CODE_SKIP_FOUNDRY_AUTH === '1' || undefined,
+    };
+  }
+  if (helper) {
+    return { id, name, kind: 'anthropic', authMode: 'helper', apiKeyHelper: helper, baseUrl: env.ANTHROPIC_BASE_URL || undefined };
+  }
+  if (env.ANTHROPIC_API_KEY) {
+    return { id, name, kind: 'anthropic', authMode: 'apiKey', hasApiKey: true, baseUrl: env.ANTHROPIC_BASE_URL || undefined };
+  }
+  if (env.ANTHROPIC_AUTH_TOKEN) {
+    return { id, name, kind: 'anthropic', authMode: 'authToken', hasAuthToken: true, baseUrl: env.ANTHROPIC_BASE_URL || undefined };
+  }
+  return null;
+}
