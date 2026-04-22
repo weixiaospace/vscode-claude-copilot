@@ -1,5 +1,6 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
+import { mergeForSave } from './settings';
 
 export type ProviderKind = 'anthropic' | 'bedrock' | 'vertex' | 'foundry';
 export type AuthMode = 'subscription' | 'apiKey' | 'authToken' | 'helper';
@@ -187,4 +188,38 @@ export function detectLegacyProfile(settings: Record<string, unknown>): Profile 
     return { id, name, kind: 'anthropic', authMode: 'authToken', hasAuthToken: true, baseUrl: env.ANTHROPIC_BASE_URL || undefined };
   }
   return null;
+}
+
+function stripManagedEnv(env: Record<string, string> = {}): Record<string, string> {
+  const next: Record<string, string> = {};
+  for (const [k, v] of Object.entries(env)) {
+    if (!PROVIDER_MANAGED_ENV_KEYS.includes(k as any)) {
+      next[k] = v;
+    }
+  }
+  return next;
+}
+
+export async function applyProfileToSettings(
+  existing: Record<string, unknown>,
+  profile: Profile,
+  secrets: SecretsGateway,
+): Promise<Record<string, unknown>> {
+  const partial = await profileToPartial(profile, secrets);
+  const existingEnv = (existing.env ?? {}) as Record<string, string>;
+  const cleanEnv = stripManagedEnv(existingEnv);
+  const mergedEnv = { ...cleanEnv, ...partial.env };
+
+  const update: Record<string, unknown> = { env: mergedEnv };
+  if (partial.apiKeyHelper !== undefined) {
+    update.apiKeyHelper = partial.apiKeyHelper;
+  }
+
+  return mergeForSave(existing, update, ['env', ...PROVIDER_MANAGED_SETTINGS_KEYS]);
+}
+
+export function deactivateFromSettings(existing: Record<string, unknown>): Record<string, unknown> {
+  const existingEnv = (existing.env ?? {}) as Record<string, string>;
+  const strippedEnv = stripManagedEnv(existingEnv);
+  return mergeForSave(existing, { env: strippedEnv }, ['env', ...PROVIDER_MANAGED_SETTINGS_KEYS]);
 }

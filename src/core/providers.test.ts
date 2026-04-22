@@ -116,7 +116,7 @@ function makeSecrets(init: Record<string, string>) {
   };
 }
 
-import { detectLegacyProfile } from './providers';
+import { detectLegacyProfile, applyProfileToSettings, deactivateFromSettings } from './providers';
 
 describe('detectLegacyProfile', () => {
   it('returns null when no provider env present', () => {
@@ -175,5 +175,61 @@ describe('detectLegacyProfile', () => {
   it('assigns a non-empty id and the name "Default"', () => {
     const p = detectLegacyProfile({ env: { ANTHROPIC_API_KEY: 'sk' } });
     assert.ok(p && p.id.length >= 8 && p.name === 'Default');
+  });
+});
+
+describe('applyProfileToSettings', () => {
+  it('merges partial env on top of existing non-managed env', async () => {
+    const existing = { env: { HTTPS_PROXY: 'http://p', ANTHROPIC_API_KEY: 'old' } };
+    const profile: Profile = { id: 'a', name: 'A', kind: 'anthropic', authMode: 'subscription' };
+    const out = await applyProfileToSettings(existing, profile, makeSecrets({}));
+    assert.equal((out.env as any).HTTPS_PROXY, 'http://p');
+    assert.ok(!('ANTHROPIC_API_KEY' in (out.env as any)));
+  });
+
+  it('overwrites existing managed env keys with profile values', async () => {
+    const existing = { env: { ANTHROPIC_API_KEY: 'old', HTTPS_PROXY: 'http://p' } };
+    const profile: Profile = { id: 'a', name: 'A', kind: 'anthropic', authMode: 'apiKey', hasApiKey: true };
+    const out = await applyProfileToSettings(existing, profile, makeSecrets({ 'claude-copilot.provider.a.apiKey': 'new' }));
+    assert.equal((out.env as any).ANTHROPIC_API_KEY, 'new');
+    assert.equal((out.env as any).HTTPS_PROXY, 'http://p');
+  });
+
+  it('sets apiKeyHelper when profile uses helper mode', async () => {
+    const existing = {};
+    const profile: Profile = { id: 'h', name: 'H', kind: 'anthropic', authMode: 'helper', apiKeyHelper: '/tmp/k.sh' };
+    const out = await applyProfileToSettings(existing, profile, makeSecrets({}));
+    assert.equal(out.apiKeyHelper, '/tmp/k.sh');
+  });
+
+  it('removes apiKeyHelper when switching from helper to apiKey', async () => {
+    const existing = { apiKeyHelper: '/tmp/old.sh', env: {} };
+    const profile: Profile = { id: 'a', name: 'A', kind: 'anthropic', authMode: 'apiKey', hasApiKey: true };
+    const out = await applyProfileToSettings(existing, profile, makeSecrets({ 'claude-copilot.provider.a.apiKey': 'sk' }));
+    assert.ok(!('apiKeyHelper' in out));
+    assert.equal((out.env as any).ANTHROPIC_API_KEY, 'sk');
+  });
+});
+
+describe('deactivateFromSettings', () => {
+  it('strips all managed env keys and preserves non-managed env', () => {
+    const existing = {
+      env: { ANTHROPIC_API_KEY: 'sk', HTTPS_PROXY: 'http://p', CLAUDE_CODE_USE_BEDROCK: '1' },
+      apiKeyHelper: '/tmp/k.sh',
+      hooks: { PreToolUse: 'echo' },
+    };
+    const out = deactivateFromSettings(existing);
+    assert.equal((out.env as any).HTTPS_PROXY, 'http://p');
+    assert.ok(!('ANTHROPIC_API_KEY' in (out.env as any)));
+    assert.ok(!('CLAUDE_CODE_USE_BEDROCK' in (out.env as any)));
+    assert.ok(!('apiKeyHelper' in out));
+    assert.deepEqual(out.hooks, { PreToolUse: 'echo' });
+  });
+
+  it('removes apiKeyHelper and preserves unrelated top-level keys', () => {
+    const existing = { apiKeyHelper: '/tmp/k.sh', autoMemoryEnabled: true };
+    const out = deactivateFromSettings(existing);
+    assert.ok(!('apiKeyHelper' in out));
+    assert.equal(out.autoMemoryEnabled, true);
   });
 });
