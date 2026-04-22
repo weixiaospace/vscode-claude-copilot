@@ -8,6 +8,7 @@ export interface RefreshHandlers {
   skills(): void;
   memory(): void;
   settings(): void;
+  providers(): void;
 }
 
 function watch(pattern: vscode.GlobPattern, cb: () => void): vscode.Disposable {
@@ -24,6 +25,7 @@ export function registerWatchers(handlers: RefreshHandlers): vscode.Disposable[]
   out.push(watch(new vscode.RelativePattern(CLAUDE_HOME, 'settings.json'), () => { handlers.plugins(); handlers.settings(); }));
   out.push(watch(new vscode.RelativePattern(CLAUDE_HOME, 'skills/**/SKILL.md'), handlers.skills));
   out.push(watch(new vscode.RelativePattern(CLAUDE_HOME, 'projects/**/memory/*.md'), handlers.memory));
+  out.push(watch(new vscode.RelativePattern(CLAUDE_HOME, 'claude-copilot/providers.json'), handlers.providers));
 
   // Project-level
   const ws = currentWorkspace();

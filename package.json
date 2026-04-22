@@ -53,7 +53,12 @@
       { "command": "claudeCopilot.skill.create", "title": "%cmd.skill.create%", "icon": "$(add)" },
       { "command": "claudeCopilot.skill.delete", "title": "%cmd.skill.delete%" },
       { "command": "claudeCopilot.memory.create", "title": "%cmd.memory.create%", "icon": "$(add)" },
-      { "command": "claudeCopilot.memory.delete", "title": "%cmd.memory.delete%" }
+      { "command": "claudeCopilot.memory.delete", "title": "%cmd.memory.delete%" },
+      { "command": "claudeCopilot.providers.quickSwitch", "title": "%cmd.providers.quickSwitch%", "icon": "$(rocket)" },
+      { "command": "claudeCopilot.providers.create", "title": "%cmd.providers.create%", "icon": "$(add)" },
+      { "command": "claudeCopilot.providers.edit", "title": "%cmd.providers.edit%" },
+      { "command": "claudeCopilot.providers.delete", "title": "%cmd.providers.delete%" },
+      { "command": "claudeCopilot.providers.deactivate", "title": "%cmd.providers.deactivate%" }
     ],
     "menus": {
       "commandPalette": [

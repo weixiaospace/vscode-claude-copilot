@@ -25,5 +25,10 @@
   "cmd.skill.create": "创建 Skill...",
   "cmd.skill.delete": "删除 Skill",
   "cmd.memory.create": "新建记忆...",
-  "cmd.memory.delete": "删除记忆"
+  "cmd.memory.delete": "删除记忆",
+  "cmd.providers.quickSwitch": "Claude Copilot: 切换接入 Profile",
+  "cmd.providers.create": "Claude Copilot: 新建接入 Profile...",
+  "cmd.providers.edit": "Claude Copilot: 编辑接入 Profile...",
+  "cmd.providers.delete": "Claude Copilot: 删除接入 Profile...",
+  "cmd.providers.deactivate": "Claude Copilot: 停用 Profile（订阅模式）"
 }

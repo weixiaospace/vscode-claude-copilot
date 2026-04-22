@@ -9,7 +9,10 @@ import { registerPluginCommands } from './commands/plugins';
 import { registerMcpCommands } from './commands/mcp';
 import { registerSkillCommands } from './commands/skills';
 import { registerMemoryCommands } from './commands/memory';
+import { registerProviderCommands } from './commands/providers';
 import { registerWatchers } from './lib/watchers';
+import { makeSecretsGateway } from './lib/secrets';
+import { createProviderStatusBar } from './lib/status-bar';
 import { openUsagePanel } from './webview/usage-panel';
 import { openMarketplacePanel, registerMarketplaceRefresh } from './webview/marketplace-panel';
 import { openSettingsPanel } from './webview/settings-panel';
@@ -23,7 +26,13 @@ export function activate(context: vscode.ExtensionContext): void {
   const memory = new MemoryTreeProvider();
   const settings = new SettingsTreeProvider();
   const usage = new UsageTreeProvider();
+
+  const secrets = makeSecretsGateway(context);
+  const statusBar = createProviderStatusBar();
+  void statusBar.update();
+
   context.subscriptions.push(
+    { dispose: () => statusBar.dispose() },
     vscode.window.registerTreeDataProvider('claudeCopilot.plugins', plugins),
     vscode.window.registerTreeDataProvider('claudeCopilot.mcp', mcp),
     vscode.window.registerTreeDataProvider('claudeCopilot.skills', skills),
@@ -44,12 +53,17 @@ export function activate(context: vscode.ExtensionContext): void {
     ...registerMcpCommands(() => mcp.refresh()),
     ...registerSkillCommands(() => skills.refresh()),
     ...registerMemoryCommands(() => memory.refresh()),
+    ...registerProviderCommands(secrets, () => {
+      void statusBar.update();
+      settings.refresh();
+    }),
     ...registerWatchers({
       plugins: () => plugins.refresh(),
       mcp: () => mcp.refresh(),
       skills: () => skills.refresh(),
       memory: () => memory.refresh(),
       settings: () => settings.refresh(),
+      providers: () => { void statusBar.update(); settings.refresh(); },
     }),
   );
 
