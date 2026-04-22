@@ -254,6 +254,7 @@
   "tree.group.memory": "Memory",
   "tree.group.noWorkspace": "(no workspace)",
   "tree.layer.local": "Local",
+  "tree.providers.label": "API Provider",
   "tree.mp.installedCount": "{0}/{1} installed",
   "tree.mp.updatedAt": "updated {0}",
 

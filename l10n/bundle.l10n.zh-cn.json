@@ -254,6 +254,7 @@
   "tree.group.memory": "记忆",
   "tree.group.noWorkspace": "(未打开工作区)",
   "tree.layer.local": "本地",
+  "tree.providers.label": "API 接入方",
   "tree.mp.installedCount": "已装 {0}/{1}",
   "tree.mp.updatedAt": "{0}更新",
 
