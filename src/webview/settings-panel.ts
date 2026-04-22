@@ -8,6 +8,8 @@ import {
   type Settings,
 } from '../core/settings';
 import { listInstalledPlugins } from '../core/plugins';
+import { readProviders, writeProviders, applyProfileToSettings, deactivateFromSettings } from '../core/providers';
+import { makeSecretsGateway } from '../lib/secrets';
 import { CLAUDE_HOME } from '../lib/paths';
 import { currentWorkspace } from '../lib/workspace';
 import { makeNonce, type RpcRequest, type RpcResponse } from './messaging';
@@ -185,6 +187,13 @@ const SETTINGS_KEYS = [
   'tree.group.project',
   'tree.layer.local',
   'tree.group.noWorkspace',
+  'providers.webview.header',
+  'providers.webview.active',
+  'providers.webview.none',
+  'providers.webview.switch',
+  'providers.webview.create',
+  'providers.webview.manage',
+  'providers.statusBar.subscription',
 ];
 
 async function readLayer(layer: Layer): Promise<{ settings: Settings; filePath: string } | null> {
@@ -281,6 +290,26 @@ export function openSettingsPanel(context: vscode.ExtensionContext): void {
           const doc = await vscode.workspace.openTextDocument(vscode.Uri.file(existing.filePath));
           await vscode.window.showTextDocument(doc, vscode.ViewColumn.Beside);
         }
+        res = { id: req.id, result: 'ok' };
+      } else if (req.method === 'providers:list') {
+        const doc = await readProviders(CLAUDE_HOME);
+        res = { id: req.id, result: doc };
+      } else if (req.method === 'providers:activate') {
+        const { id } = req.params as { id: string | null };
+        const secrets = makeSecretsGateway(context);
+        const doc = await readProviders(CLAUDE_HOME);
+        doc.active = id;
+        const user = await readUser(CLAUDE_HOME);
+        const next = id
+          ? await applyProfileToSettings(user, doc.profiles.find(p => p.id === id)!, secrets)
+          : deactivateFromSettings(user);
+        await fs.mkdir(path.dirname(userSettingsPath(CLAUDE_HOME)), { recursive: true });
+        await fs.writeFile(userSettingsPath(CLAUDE_HOME), JSON.stringify(next, null, 2) + '\n', 'utf-8');
+        await writeProviders(CLAUDE_HOME, doc);
+        res = { id: req.id, result: 'ok' };
+      } else if (req.method === 'commands:execute') {
+        const { command } = req.params as { command: string };
+        await vscode.commands.executeCommand(command);
         res = { id: req.id, result: 'ok' };
       } else {
         res = { id: req.id, error: `unknown method ${req.method}` };

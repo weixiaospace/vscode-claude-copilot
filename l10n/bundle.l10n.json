@@ -255,6 +255,12 @@
   "tree.group.noWorkspace": "(no workspace)",
   "tree.layer.local": "Local",
   "tree.providers.label": "API Provider",
+  "providers.webview.header": "API Provider",
+  "providers.webview.active": "Active profile",
+  "providers.webview.none": "Subscription mode (no active profile)",
+  "providers.webview.switch": "Switch",
+  "providers.webview.create": "+ New profile",
+  "providers.webview.manage": "Open providers.json",
   "tree.mp.installedCount": "{0}/{1} installed",
   "tree.mp.updatedAt": "updated {0}",
 

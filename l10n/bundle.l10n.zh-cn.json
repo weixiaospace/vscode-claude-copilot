@@ -255,6 +255,12 @@
   "tree.group.noWorkspace": "(未打开工作区)",
   "tree.layer.local": "本地",
   "tree.providers.label": "API 接入方",
+  "providers.webview.header": "API 接入方",
+  "providers.webview.active": "当前 Profile",
+  "providers.webview.none": "订阅模式（未激活 Profile）",
+  "providers.webview.switch": "切换",
+  "providers.webview.create": "+ 新建 Profile",
+  "providers.webview.manage": "打开 providers.json",
   "tree.mp.installedCount": "已装 {0}/{1}",
   "tree.mp.updatedAt": "{0}更新",
 

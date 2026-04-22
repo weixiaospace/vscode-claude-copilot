@@ -141,10 +141,13 @@ interface FormState {
   _rawEnabledPlugins: Record<string, boolean>;
 }
 
+interface ProvidersData { active: string | null; profiles: Array<{ id: string; name: string; kind: string }> }
+
 interface State {
   layer: Layer;
   data: SettingsData | null;
   form: FormState | null;
+  providers: ProvidersData | null;
   dirty: boolean;
   loading: boolean;
   saving: boolean;
@@ -360,7 +363,7 @@ function toggleGroup(id: string, options: { value: string; label: string }[], ac
 
 export function mount(root: HTMLElement): void {
   const state: State = {
-    layer: 'user', data: null, form: null, dirty: false, loading: false, saving: false,
+    layer: 'user', data: null, form: null, providers: null, dirty: false, loading: false, saving: false,
     allowInput: '', denyInput: '', askInput: '', dirInput: '',
     showApiKey: false, showAuthToken: false, showAdvancedEnv: false,
   };
@@ -370,6 +373,7 @@ export function mount(root: HTMLElement): void {
     try {
       state.data = await call<SettingsData>('settings:read', { layer: state.layer });
       state.form = settingsToForm(state.data.settings, state.data.installedPlugins);
+      state.providers = await call<ProvidersData>('providers:list').catch(() => null);
       state.dirty = false;
     } catch (err: any) {
       console.error('settings:read failed', err);
@@ -483,6 +487,28 @@ export function mount(root: HTMLElement): void {
         <span class="text-xs opacity-50">(${escapeHtml(p.marketplace)})</span>
       </label>
     `).join('');
+  }
+
+  function providerStrip(p: ProvidersData): string {
+    const active = p.profiles.find(x => x.id === p.active);
+    const name = active ? active.name : t('providers.webview.none');
+    const options = p.profiles.map(x =>
+      `<option value="${escapeHtml(x.id)}" ${x.id === p.active ? 'selected' : ''}>${escapeHtml(x.name)} · ${escapeHtml(x.kind)}</option>`
+    ).join('');
+    return `
+      <section class="rounded-lg border border-current/15 p-4 flex flex-wrap items-center gap-3 bg-current/[0.04]">
+        <span class="text-sm font-semibold opacity-80">🚀 ${escapeHtml(t('providers.webview.header'))}</span>
+        <span class="text-xs opacity-60">${escapeHtml(t('providers.webview.active'))}:</span>
+        <span class="text-sm font-medium">${escapeHtml(name)}</span>
+        <div class="flex-1"></div>
+        <select id="providers-switch" class="bg-transparent border border-current/20 rounded px-2 py-1 text-sm">
+          <option value="">${escapeHtml(t('providers.webview.none'))}</option>
+          ${options}
+        </select>
+        <button id="providers-new" class="text-xs px-2 py-1 border border-current/20 rounded hover:bg-current/5">${escapeHtml(t('providers.webview.create'))}</button>
+        <button id="providers-manage" class="text-xs px-2 py-1 opacity-70 hover:opacity-100">${escapeHtml(t('providers.webview.manage'))}</button>
+      </section>
+    `;
   }
 
   function section(title: string, inner: string, desc?: string): string {
@@ -709,6 +735,8 @@ export function mount(root: HTMLElement): void {
           ${state.dirty ? `<span class="text-xs px-2 py-0.5 rounded border border-current/30 opacity-80">${t('settings.unsaved')}</span>` : ''}
         </div>
 
+        ${state.providers ? providerStrip(state.providers) : ''}
+
         <div class="flex border-b border-current/15">${renderTabs()}</div>
 
         <div class="rounded-md border border-current/15 bg-current/[0.03] p-3 text-xs space-y-1.5">
@@ -872,6 +900,23 @@ export function mount(root: HTMLElement): void {
     root.querySelector<HTMLButtonElement>('#save-btn')?.addEventListener('click', () => save());
     root.querySelector<HTMLButtonElement>('#reset-btn')?.addEventListener('click', () => reset());
     root.querySelector<HTMLButtonElement>('#json-btn')?.addEventListener('click', () => openJson());
+
+    root.querySelector<HTMLSelectElement>('#providers-switch')?.addEventListener('change', async (e) => {
+      const id = (e.target as HTMLSelectElement).value || null;
+      try {
+        await call('providers:activate', { id });
+        state.providers = await call('providers:list');
+        load();
+      } catch (err: any) {
+        alert('Switch failed: ' + (err?.message ?? err));
+      }
+    });
+    root.querySelector<HTMLButtonElement>('#providers-new')?.addEventListener('click', () => {
+      call('commands:execute', { command: 'claudeCopilot.providers.create' }).catch(() => {});
+    });
+    root.querySelector<HTMLButtonElement>('#providers-manage')?.addEventListener('click', () => {
+      call('commands:execute', { command: 'claudeCopilot.providers.edit' }).catch(() => {});
+    });
   }
 
   load();
