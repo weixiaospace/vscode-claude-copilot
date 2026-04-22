@@ -13,6 +13,7 @@ import { registerProviderCommands } from './commands/providers';
 import { registerWatchers } from './lib/watchers';
 import { makeSecretsGateway } from './lib/secrets';
 import { createProviderStatusBar } from './lib/status-bar';
+import { migrateProvidersOnce } from './lib/migrate-providers';
 import { openUsagePanel } from './webview/usage-panel';
 import { openMarketplacePanel, registerMarketplaceRefresh } from './webview/marketplace-panel';
 import { openSettingsPanel } from './webview/settings-panel';
@@ -29,7 +30,11 @@ export function activate(context: vscode.ExtensionContext): void {
 
   const secrets = makeSecretsGateway(context);
   const statusBar = createProviderStatusBar();
-  void statusBar.update();
+  void (async () => {
+    try { await migrateProvidersOnce(secrets); }
+    catch (err) { console.error('providers migration failed', err); }
+    await statusBar.update();
+  })();
 
   context.subscriptions.push(
     { dispose: () => statusBar.dispose() },
