@@ -81,3 +81,54 @@ export async function writeProviders(home: string, doc: ProvidersFile): Promise<
   await fs.mkdir(path.dirname(p), { recursive: true });
   await fs.writeFile(p, JSON.stringify(doc, null, 2) + '\n', 'utf-8');
 }
+
+export function secretKey(profileId: string, field: string): string {
+  return `claude-copilot.provider.${profileId}.${field}`;
+}
+
+export interface ProfilePartial {
+  env: Record<string, string>;
+  apiKeyHelper?: string;
+}
+
+export async function profileToPartial(profile: Profile, secrets: SecretsGateway): Promise<ProfilePartial> {
+  const env: Record<string, string> = {};
+  let apiKeyHelper: string | undefined;
+
+  if (profile.kind === 'anthropic') {
+    if (profile.baseUrl) env.ANTHROPIC_BASE_URL = profile.baseUrl;
+    if (profile.authMode === 'apiKey' && profile.hasApiKey) {
+      const v = await secrets.get(secretKey(profile.id, 'apiKey'));
+      if (v) env.ANTHROPIC_API_KEY = v;
+    } else if (profile.authMode === 'authToken' && profile.hasAuthToken) {
+      const v = await secrets.get(secretKey(profile.id, 'authToken'));
+      if (v) env.ANTHROPIC_AUTH_TOKEN = v;
+    } else if (profile.authMode === 'helper' && profile.apiKeyHelper) {
+      apiKeyHelper = profile.apiKeyHelper;
+    }
+  } else if (profile.kind === 'bedrock') {
+    env.CLAUDE_CODE_USE_BEDROCK = '1';
+    if (profile.baseUrl) env.ANTHROPIC_BEDROCK_BASE_URL = profile.baseUrl;
+    if (profile.skipAuth) env.CLAUDE_CODE_SKIP_BEDROCK_AUTH = '1';
+    if (profile.hasBearerToken) {
+      const v = await secrets.get(secretKey(profile.id, 'bedrockToken'));
+      if (v) env.AWS_BEARER_TOKEN_BEDROCK = v;
+    }
+  } else if (profile.kind === 'vertex') {
+    env.CLAUDE_CODE_USE_VERTEX = '1';
+    if (profile.projectId) env.ANTHROPIC_VERTEX_PROJECT_ID = profile.projectId;
+    if (profile.baseUrl) env.ANTHROPIC_VERTEX_BASE_URL = profile.baseUrl;
+    if (profile.skipAuth) env.CLAUDE_CODE_SKIP_VERTEX_AUTH = '1';
+  } else if (profile.kind === 'foundry') {
+    env.CLAUDE_CODE_USE_FOUNDRY = '1';
+    if (profile.resource) env.ANTHROPIC_FOUNDRY_RESOURCE = profile.resource;
+    if (profile.baseUrl) env.ANTHROPIC_FOUNDRY_BASE_URL = profile.baseUrl;
+    if (profile.skipAuth) env.CLAUDE_CODE_SKIP_FOUNDRY_AUTH = '1';
+    if (profile.hasApiKey) {
+      const v = await secrets.get(secretKey(profile.id, 'foundryApiKey'));
+      if (v) env.ANTHROPIC_FOUNDRY_API_KEY = v;
+    }
+  }
+
+  return { env, apiKeyHelper };
+}
