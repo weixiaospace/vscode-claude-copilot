@@ -148,6 +148,7 @@ interface State {
   data: SettingsData | null;
   form: FormState | null;
   providers: ProvidersData | null;
+  providersExpanded: boolean;
   dirty: boolean;
   loading: boolean;
   saving: boolean;
@@ -363,7 +364,7 @@ function toggleGroup(id: string, options: { value: string; label: string }[], ac
 
 export function mount(root: HTMLElement): void {
   const state: State = {
-    layer: 'user', data: null, form: null, providers: null, dirty: false, loading: false, saving: false,
+    layer: 'user', data: null, form: null, providers: null, providersExpanded: false, dirty: false, loading: false, saving: false,
     allowInput: '', denyInput: '', askInput: '', dirInput: '',
     showApiKey: false, showAuthToken: false, showAdvancedEnv: false,
   };
@@ -491,22 +492,51 @@ export function mount(root: HTMLElement): void {
 
   function providerStrip(p: ProvidersData): string {
     const active = p.profiles.find(x => x.id === p.active);
-    const name = active ? active.name : t('providers.webview.none');
-    const options = p.profiles.map(x =>
-      `<option value="${escapeHtml(x.id)}" ${x.id === p.active ? 'selected' : ''}>${escapeHtml(x.name)} · ${escapeHtml(x.kind)}</option>`
-    ).join('');
+    const activeName = active ? active.name : t('providers.webview.none');
+    const expanded = state.providersExpanded;
+    const chevron = expanded ? '▼' : '▶';
+
+    const profileRows = p.profiles.map(x => {
+      const isActive = x.id === p.active;
+      return `
+        <div class="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-current/5" data-profile-id="${escapeHtml(x.id)}">
+          <span class="w-4 text-center text-sm ${isActive ? 'text-[var(--vscode-textLink-foreground)]' : 'opacity-40'}">${isActive ? '●' : '○'}</span>
+          <span class="text-sm flex-1">${escapeHtml(x.name)}</span>
+          <span class="text-xs opacity-50">${escapeHtml(x.kind)}</span>
+          ${isActive ? '' : `<button class="provider-switch-btn text-[11px] px-1.5 py-0.5 border border-current/20 rounded opacity-70 hover:opacity-100 hover:bg-current/5" data-profile-id="${escapeHtml(x.id)}">${escapeHtml(t('providers.webview.switch'))}</button>`}
+          <button class="provider-edit-btn text-[11px] px-1.5 py-0.5 border border-current/20 rounded opacity-70 hover:opacity-100 hover:bg-current/5" data-profile-id="${escapeHtml(x.id)}">Edit</button>
+          <button class="provider-delete-btn text-[11px] px-1.5 py-0.5 border border-current/20 rounded opacity-70 hover:opacity-100 hover:bg-current/5" data-profile-id="${escapeHtml(x.id)}">Delete</button>
+        </div>
+      `;
+    }).join('');
+
+    const subscriptionRow = `
+      <div class="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-current/5 cursor-pointer" data-profile-id="">
+        <span class="w-4 text-center text-sm ${p.active === null ? 'text-[var(--vscode-textLink-foreground)]' : 'opacity-40'}">${p.active === null ? '●' : '○'}</span>
+        <span class="text-sm flex-1">${escapeHtml(t('providers.statusBar.subscription'))}</span>
+        <span class="text-xs opacity-50">subscription</span>
+      </div>
+    `;
+
     return `
-      <section class="rounded-lg border border-current/15 p-4 flex flex-wrap items-center gap-3 bg-current/[0.04]">
-        <span class="text-sm font-semibold opacity-80">🚀 ${escapeHtml(t('providers.webview.header'))}</span>
-        <span class="text-xs opacity-60">${escapeHtml(t('providers.webview.active'))}:</span>
-        <span class="text-sm font-medium">${escapeHtml(name)}</span>
-        <div class="flex-1"></div>
-        <select id="providers-switch" class="bg-transparent border border-current/20 rounded px-2 py-1 text-sm">
-          <option value="">${escapeHtml(t('providers.webview.none'))}</option>
-          ${options}
-        </select>
-        <button id="providers-new" class="text-xs px-2 py-1 border border-current/20 rounded hover:bg-current/5">${escapeHtml(t('providers.webview.create'))}</button>
-        <button id="providers-manage" class="text-xs px-2 py-1 opacity-70 hover:opacity-100">${escapeHtml(t('providers.webview.manage'))}</button>
+      <section class="rounded-lg border border-current/15 p-4 bg-current/[0.04]">
+        <div id="providers-toggle" class="flex items-center justify-between cursor-pointer select-none">
+          <div class="flex items-center gap-2">
+            <span class="text-sm font-semibold opacity-80">🚀 ${escapeHtml(t('providers.webview.header'))}</span>
+            <span class="text-xs opacity-60">${escapeHtml(t('providers.webview.active'))}: ${escapeHtml(activeName)}</span>
+          </div>
+          <span class="text-xs opacity-60">${chevron}</span>
+        </div>
+        ${expanded ? `
+        <div id="providers-list" class="mt-3 space-y-0.5">
+          ${subscriptionRow}
+          ${profileRows}
+        </div>
+        <div class="mt-3 pt-2 border-t border-current/10 flex gap-2">
+          <button id="providers-new" class="text-xs px-2 py-1 border border-current/20 rounded hover:bg-current/5">${escapeHtml(t('providers.webview.create'))}</button>
+          <button id="providers-manage" class="text-xs px-2 py-1 opacity-70 hover:opacity-100">${escapeHtml(t('providers.webview.manage'))}</button>
+        </div>
+        ` : ''}
       </section>
     `;
   }
@@ -901,16 +931,67 @@ export function mount(root: HTMLElement): void {
     root.querySelector<HTMLButtonElement>('#reset-btn')?.addEventListener('click', () => reset());
     root.querySelector<HTMLButtonElement>('#json-btn')?.addEventListener('click', () => openJson());
 
-    root.querySelector<HTMLSelectElement>('#providers-switch')?.addEventListener('change', async (e) => {
-      const id = (e.target as HTMLSelectElement).value || null;
-      try {
-        await call('providers:activate', { id });
-        state.providers = await call('providers:list');
-        load();
-      } catch (err: any) {
-        alert('Switch failed: ' + (err?.message ?? err));
-      }
+    // provider strip: expand/collapse
+    root.querySelector<HTMLElement>('#providers-toggle')?.addEventListener('click', () => {
+      state.providersExpanded = !state.providersExpanded;
+      render();
     });
+
+    // provider list: click row to switch
+    root.querySelectorAll<HTMLElement>('#providers-list > div[data-profile-id]').forEach(row => {
+      row.addEventListener('click', async (e) => {
+        if ((e.target as HTMLElement).tagName === 'BUTTON') return;
+        const id = row.dataset.profileId || null;
+        if (id === (state.providers?.active ?? null)) return;
+        try {
+          await call('providers:activate', { id });
+          state.providers = await call('providers:list');
+          load();
+        } catch (err: any) {
+          alert('Switch failed: ' + (err?.message ?? err));
+        }
+      });
+    });
+
+    // provider switch button (for inactive profiles)
+    root.querySelectorAll<HTMLButtonElement>('.provider-switch-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = btn.dataset.profileId || null;
+        try {
+          await call('providers:activate', { id });
+          state.providers = await call('providers:list');
+          load();
+        } catch (err: any) {
+          alert('Switch failed: ' + (err?.message ?? err));
+        }
+      });
+    });
+
+    // provider edit button
+    root.querySelectorAll<HTMLButtonElement>('.provider-edit-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        call('commands:execute', { command: 'claudeCopilot.providers.edit' }).catch(() => {});
+      });
+    });
+
+    // provider delete button
+    root.querySelectorAll<HTMLButtonElement>('.provider-delete-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = btn.dataset.profileId;
+        if (!id) return;
+        const profile = state.providers?.profiles.find(p => p.id === id);
+        if (!profile) return;
+        if (!confirm(t('providers.delete.confirm', profile.name))) return;
+        try {
+          await call('providers:delete', { id });
+          state.providers = await call('providers:list');
+          load();
+        } catch (err: any) {
+          alert('Delete failed: ' + (err?.message ?? err));
+        }
+      });
+    });
+
     root.querySelector<HTMLButtonElement>('#providers-new')?.addEventListener('click', () => {
       call('commands:execute', { command: 'claudeCopilot.providers.create' }).catch(() => {});
     });

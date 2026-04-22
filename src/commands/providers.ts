@@ -68,7 +68,6 @@ async function promptCreateProfile(secrets: SecretsGateway): Promise<Profile | n
   if (kindPick.value === 'anthropic') {
     const modePick = await vscode.window.showQuickPick(
       [
-        { label: t('settings.authMode.subscription'), value: 'subscription' as AuthMode },
         { label: t('settings.authMode.apiKey'), value: 'apiKey' as AuthMode },
         { label: t('settings.authMode.authToken'), value: 'authToken' as AuthMode },
         { label: t('settings.authMode.helper'), value: 'helper' as AuthMode },
@@ -120,7 +119,7 @@ export function registerProviderCommands(secrets: SecretsGateway, onChange: () =
   return [
     vscode.commands.registerCommand('claudeCopilot.providers.quickSwitch', async () => {
       const doc = await readProviders(CLAUDE_HOME);
-      type Item = vscode.QuickPickItem & { action: 'activate' | 'create' | 'manage' | 'deactivate'; id?: string };
+      type Item = vscode.QuickPickItem & { action: 'activate' | 'create' | 'manage'; id?: string };
       const items: Item[] = [];
       for (const p of doc.profiles) {
         const active = p.id === doc.active;
@@ -131,8 +130,14 @@ export function registerProviderCommands(secrets: SecretsGateway, onChange: () =
           action: 'activate', id: p.id,
         });
       }
+      const isSubscription = doc.active === null;
+      items.push({
+        label: `${isSubscription ? '$(check) ' : '    '}${t('providers.statusBar.subscription')}`,
+        description: isSubscription ? t('providers.quickPick.active') : undefined,
+        detail: t('settings.authMode.subscription'),
+        action: 'activate',
+      });
       items.push({ label: t('providers.quickPick.createNew'), action: 'create' });
-      if (doc.active) items.push({ label: t('providers.quickPick.deactivate'), action: 'deactivate' });
       if (doc.profiles.length) items.push({ label: t('providers.quickPick.manage'), action: 'manage' });
 
       const pick = await vscode.window.showQuickPick(items, {
@@ -141,14 +146,15 @@ export function registerProviderCommands(secrets: SecretsGateway, onChange: () =
       });
       if (!pick) return;
 
-      if (pick.action === 'activate' && pick.id) {
-        await setActive(pick.id, secrets);
-        const name = doc.profiles.find(p => p.id === pick.id)?.name ?? '';
-        vscode.window.showInformationMessage(t('providers.activated', name));
-        await fire();
-      } else if (pick.action === 'deactivate') {
-        await setActive(null, secrets);
-        vscode.window.showInformationMessage(t('providers.deactivated'));
+      if (pick.action === 'activate') {
+        if (pick.id) {
+          await setActive(pick.id, secrets);
+          const name = doc.profiles.find(p => p.id === pick.id)?.name ?? '';
+          vscode.window.showInformationMessage(t('providers.activated', name));
+        } else {
+          await setActive(null, secrets);
+          vscode.window.showInformationMessage(t('providers.deactivated'));
+        }
         await fire();
       } else if (pick.action === 'create') {
         await vscode.commands.executeCommand('claudeCopilot.providers.create');
@@ -168,15 +174,21 @@ export function registerProviderCommands(secrets: SecretsGateway, onChange: () =
       await fire();
     }),
 
-    vscode.commands.registerCommand('claudeCopilot.providers.delete', async () => {
+    vscode.commands.registerCommand('claudeCopilot.providers.delete', async (arg?: { id?: string }) => {
+      let id: string | undefined = arg?.id;
+      if (!id) {
+        const doc = await readProviders(CLAUDE_HOME);
+        if (!doc.profiles.length) return;
+        const pick = await vscode.window.showQuickPick(
+          doc.profiles.map(p => ({ label: p.name, description: p.kind, id: p.id })),
+          { title: t('providers.delete.pickTarget') },
+        );
+        if (!pick) return;
+        id = pick.id;
+      }
       const doc = await readProviders(CLAUDE_HOME);
-      if (!doc.profiles.length) return;
-      const pick = await vscode.window.showQuickPick(
-        doc.profiles.map(p => ({ label: p.name, description: p.kind, id: p.id })),
-        { title: t('providers.delete.pickTarget') },
-      );
-      if (!pick) return;
-      const target = doc.profiles.find(p => p.id === pick.id)!;
+      const target = doc.profiles.find(p => p.id === id);
+      if (!target) return;
       const confirm = await vscode.window.showWarningMessage(
         t('providers.delete.confirm', target.name),
         { modal: true },
@@ -187,7 +199,7 @@ export function registerProviderCommands(secrets: SecretsGateway, onChange: () =
       await fire();
     }),
 
-    vscode.commands.registerCommand('claudeCopilot.providers.edit', async () => {
+    vscode.commands.registerCommand('claudeCopilot.providers.edit', async (arg?: { id?: string }) => {
       const p = providersFilePath(CLAUDE_HOME);
       try { await fs.access(p); }
       catch { await writeProviders(CLAUDE_HOME, { version: 1, active: null, profiles: [] }); }
@@ -195,9 +207,14 @@ export function registerProviderCommands(secrets: SecretsGateway, onChange: () =
       await vscode.window.showTextDocument(doc);
     }),
 
-    vscode.commands.registerCommand('claudeCopilot.providers.deactivate', async () => {
-      await setActive(null, secrets);
-      vscode.window.showInformationMessage(t('providers.deactivated'));
+    vscode.commands.registerCommand('claudeCopilot.providers.activateById', async (arg?: { id?: string | null }) => {
+      let id: string | null = null;
+      if (arg && typeof arg === 'object') {
+        if (arg.id === '__subscription__') id = null;
+        else if (typeof arg.id === 'string') id = arg.id;
+        else if (arg.id === null) id = null;
+      }
+      await setActive(id, secrets);
       await fire();
     }),
   ];

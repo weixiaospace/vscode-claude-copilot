@@ -8,7 +8,7 @@ import {
   type Settings,
 } from '../core/settings';
 import { listInstalledPlugins } from '../core/plugins';
-import { readProviders, writeProviders, applyProfileToSettings, deactivateFromSettings } from '../core/providers';
+import { readProviders, writeProviders, applyProfileToSettings, deactivateFromSettings, secretKey } from '../core/providers';
 import { makeSecretsGateway } from '../lib/secrets';
 import { CLAUDE_HOME } from '../lib/paths';
 import { currentWorkspace } from '../lib/workspace';
@@ -306,6 +306,27 @@ export function openSettingsPanel(context: vscode.ExtensionContext): void {
         await fs.mkdir(path.dirname(userSettingsPath(CLAUDE_HOME)), { recursive: true });
         await fs.writeFile(userSettingsPath(CLAUDE_HOME), JSON.stringify(next, null, 2) + '\n', 'utf-8');
         await writeProviders(CLAUDE_HOME, doc);
+        res = { id: req.id, result: 'ok' };
+      } else if (req.method === 'providers:delete') {
+        const { id } = req.params as { id: string };
+        const secrets = makeSecretsGateway(context);
+        const doc = await readProviders(CLAUDE_HOME);
+        const target = doc.profiles.find(p => p.id === id);
+        if (target) {
+          for (const field of ['apiKey', 'authToken', 'bedrockToken', 'foundryApiKey']) {
+            await secrets.delete(secretKey(id, field));
+          }
+          doc.profiles = doc.profiles.filter(p => p.id !== id);
+          const wasActive = doc.active === id;
+          if (wasActive) {
+            doc.active = null;
+            const user = await readUser(CLAUDE_HOME);
+            const next = deactivateFromSettings(user);
+            await fs.mkdir(path.dirname(userSettingsPath(CLAUDE_HOME)), { recursive: true });
+            await fs.writeFile(userSettingsPath(CLAUDE_HOME), JSON.stringify(next, null, 2) + '\n', 'utf-8');
+          }
+          await writeProviders(CLAUDE_HOME, doc);
+        }
         res = { id: req.id, result: 'ok' };
       } else if (req.method === 'commands:execute') {
         const { command } = req.params as { command: string };

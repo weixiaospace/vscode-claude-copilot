@@ -2,7 +2,7 @@
   "name": "claude-copilot",
   "displayName": "%displayName%",
   "description": "%description%",
-  "version": "0.1.16",
+  "version": "0.1.17",
   "l10n": "./l10n",
   "publisher": "weixiao-space",
   "repository": { "type": "git", "url": "https://github.com/weixiaospace/vscode-claude-copilot.git" },
@@ -56,13 +56,14 @@
       { "command": "claudeCopilot.memory.delete", "title": "%cmd.memory.delete%" },
       { "command": "claudeCopilot.providers.quickSwitch", "title": "%cmd.providers.quickSwitch%", "icon": "$(rocket)" },
       { "command": "claudeCopilot.providers.create", "title": "%cmd.providers.create%", "icon": "$(add)" },
-      { "command": "claudeCopilot.providers.edit", "title": "%cmd.providers.edit%" },
-      { "command": "claudeCopilot.providers.delete", "title": "%cmd.providers.delete%" },
-      { "command": "claudeCopilot.providers.deactivate", "title": "%cmd.providers.deactivate%" }
+      { "command": "claudeCopilot.providers.edit", "title": "%cmd.providers.edit%", "icon": "$(edit)" },
+      { "command": "claudeCopilot.providers.delete", "title": "%cmd.providers.delete%", "icon": "$(trash)" },
+      { "command": "claudeCopilot.providers.activateById", "title": "%cmd.providers.activateById%" }
     ],
     "menus": {
       "commandPalette": [
-        { "command": "claudeCopilot.openFile", "when": "false" }
+        { "command": "claudeCopilot.openFile", "when": "false" },
+        { "command": "claudeCopilot.providers.activateById", "when": "false" }
       ],
       "view/title": [
         { "command": "claudeCopilot.openMarketplace", "when": "view == claudeCopilot.plugins", "group": "navigation@0" },
@@ -82,7 +83,12 @@
         { "command": "claudeCopilot.mcp.addProject", "when": "view == claudeCopilot.mcp && viewItem == group:mcp:project", "group": "inline" },
         { "command": "claudeCopilot.mcp.remove", "when": "view == claudeCopilot.mcp && viewItem =~ /^mcp:/" },
         { "command": "claudeCopilot.skill.delete", "when": "view == claudeCopilot.skills && viewItem =~ /^skill:/" },
-        { "command": "claudeCopilot.memory.delete", "when": "view == claudeCopilot.memory && viewItem == memory:item" }
+        { "command": "claudeCopilot.memory.delete", "when": "view == claudeCopilot.memory && viewItem == memory:item" },
+        { "command": "claudeCopilot.providers.create", "when": "view == claudeCopilot.settings && viewItem == profile-group", "group": "inline@0" },
+        { "command": "claudeCopilot.providers.activateById", "when": "view == claudeCopilot.settings && viewItem == profile-subscription:inactive", "group": "inline@0" },
+        { "command": "claudeCopilot.providers.activateById", "when": "view == claudeCopilot.settings && viewItem == profile:inactive", "group": "inline@0" },
+        { "command": "claudeCopilot.providers.edit", "when": "view == claudeCopilot.settings && (viewItem == profile:active || viewItem == profile:inactive)", "group": "inline@1" },
+        { "command": "claudeCopilot.providers.delete", "when": "view == claudeCopilot.settings && (viewItem == profile:active || viewItem == profile:inactive)", "group": "inline@2" }
       ]
     }
   },

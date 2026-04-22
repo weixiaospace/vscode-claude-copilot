@@ -30,5 +30,5 @@
   "cmd.providers.create": "Claude Copilot: 新建接入 Profile...",
   "cmd.providers.edit": "Claude Copilot: 编辑接入 Profile...",
   "cmd.providers.delete": "Claude Copilot: 删除接入 Profile...",
-  "cmd.providers.deactivate": "Claude Copilot: 停用 Profile（订阅模式）"
+  "cmd.providers.activateById": "切换"
 }

@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 **[English](CHANGELOG.md) | [中文](CHANGELOG.zh-CN.md)**
 
+## [0.1.17] - 2026-04-22
+
+### Added
+
+**Provider profiles — save and switch API provider configs instantly**
+- Save multiple Anthropic-compatible / Bedrock / Vertex / Foundry configs as named profiles
+- **Settings tree — expandable provider group**: sidebar shows an expandable "API Provider" group listing subscription mode + all saved profiles. Active profile marked with a check icon. Inactive profiles show inline hover buttons for switch/edit/delete. Subscription mode shows only a switch button (no edit/delete). The group node itself shows a hover "+" button to create a new profile
+- **Settings webview — expandable provider strip**: a collapsible section at the top of the settings panel showing the active profile name. When expanded, lists subscription mode + all profiles with switch/edit/delete buttons. Clicking a row or the switch button activates that profile without any toast notification
+- Switch instantly from three entry points: status bar (rocket icon), Settings tree (expandable group), or Settings webview (top strip)
+- Credentials stored in VSCode SecretStorage (OS keychain), never in `settings.json`
+- Auto-migration: existing provider env in `settings.json` becomes a "Default" profile on first launch; existing behavior preserved
+- Deleting the active profile falls back to subscription mode and cleans up env automatically
+- New commands: Switch Provider Profile, Add Provider Profile, Edit Provider Profile, Delete Provider Profile, Activate Provider Profile (by ID)
+
 ## [0.1.16] - 2026-04-20
 
 ### Added
@@ -95,7 +109,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Usage dashboard with token analytics
 - English + Simplified Chinese bilingual support
 
-[Unreleased]: https://github.com/weixiaospace/vscode-claude-copilot/compare/v0.1.16...HEAD
+[Unreleased]: https://github.com/weixiaospace/vscode-claude-copilot/compare/v0.1.17...HEAD
+[0.1.17]: https://github.com/weixiaospace/vscode-claude-copilot/releases/tag/v0.1.17
 [0.1.16]: https://github.com/weixiaospace/vscode-claude-copilot/releases/tag/v0.1.16
 [0.1.15]: https://github.com/weixiaospace/vscode-claude-copilot/releases/tag/v0.1.15
 [0.1.14]: https://github.com/weixiaospace/vscode-claude-copilot/releases/tag/v0.1.14

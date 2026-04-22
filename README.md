@@ -2,7 +2,7 @@
 
 # Claude Copilot
 
-[![Version](https://img.shields.io/badge/version-0.1.16-blue.svg)](https://github.com/weixiaospace/vscode-claude-copilot/releases)
+[![Version](https://img.shields.io/badge/version-0.1.17-blue.svg)](https://github.com/weixiaospace/vscode-claude-copilot/releases)
 [![VS Code](https://img.shields.io/badge/VS%20Code-%5E1.90.0-blue.svg?logo=visual-studio-code)](https://code.visualstudio.com/updates/v1_90)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
@@ -49,7 +49,7 @@ A VS Code extension that provides a visual management interface for [Claude Code
 | 🧩 **MCP Servers** | Manage user-level (via CLI) and project-level (`.claude/settings.json`) servers. Separate trees per scope. |
 | 🪄 **Skills** | Browse `~/.claude/skills` and `.claude/skills`. Instant expand (cached). Click any skill to edit `SKILL.md`. |
 | 🧠 **Memory** | Browse memory files under `~/.claude/projects/<slug>/memory`. Dedicated MEMORY.md index link. |
-| ⚙️ **Settings** | Fully visual editor for User / Project / Local. Switches, toggles, selects and tag lists for **~50 settings** — including provider switching (Anthropic / Bedrock / Vertex / Foundry), auth mode switching (Subscription / API Key / Auth Token / Helper script), permissions allow/ask/deny/additionalDirectories, 15 feature flags, 6 numeric limits, memory & dream toggles, and more. Credentials auto-clear on provider/mode switch. |
+| ⚙️ **Settings** | Fully visual editor for User / Project / Local. Switches, toggles, selects and tag lists for **~50 settings** — including provider switching (Anthropic / Bedrock / Vertex / Foundry), auth mode switching (Subscription / API Key / Auth Token / Helper script), permissions allow/ask/deny/additionalDirectories, 15 feature flags, 6 numeric limits, memory & dream toggles, and more. Credentials auto-clear on provider/mode switch. **Provider profiles** — save multiple API configs as named profiles, credentials stored in VSCode SecretStorage (OS keychain). Expandable provider group in the sidebar with inline switch/edit/delete buttons. |
 | 📊 **Usage Dashboard** | Parses session jsonl. Interactive **Chart.js** stacked bars and doughnut charts. Switch by day / week / month granularity, filter by project, per-model breakdown. Cost estimate uses official Anthropic pricing (Opus / Sonnet / Haiku 4.x and 3.5). |
 
 ---
@@ -88,6 +88,8 @@ Open the Command Palette (`Cmd+Shift+P` / `Ctrl+Shift+P`) and type "Claude Copil
 | `Claude Copilot: Open Settings Panel` | Open the visual settings editor |
 | `Claude Copilot: Open Usage Dashboard` | Open token usage analytics |
 | `Claude Copilot: Browse Marketplace` | Browse available plugins |
+| `Switch Provider Profile` | QuickPick to switch between saved profiles or subscription mode |
+| `Add Provider Profile... / Edit / Delete` | Manage provider profiles |
 | `Install Plugin... / Update / Update All / Add Marketplace...` | Marketplace operations (via tree hover buttons or right-click) |
 | `Create Skill... / Delete Skill` | Manage skills |
 | `New Memory... / Delete Memory` | Manage memory files |

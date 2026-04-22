@@ -30,5 +30,5 @@
   "cmd.providers.create": "Claude Copilot: Add Provider Profile...",
   "cmd.providers.edit": "Claude Copilot: Edit Provider Profile...",
   "cmd.providers.delete": "Claude Copilot: Delete Provider Profile...",
-  "cmd.providers.deactivate": "Claude Copilot: Deactivate Provider (Subscription Mode)"
+  "cmd.providers.activateById": "Switch"
 }

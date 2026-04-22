@@ -53,7 +53,7 @@ src/
 │   ├── mcp-tree.ts      User + Project MCP server
 │   ├── skills-tree.ts   User + Project skill；缓存首次加载结果
 │   ├── memory-tree.ts   项目记忆列表；缓存首次加载
-│   ├── settings-tree.ts 三层 settings 文件入口
+│   ├── settings-tree.ts  Provider 可展开组（订阅模式 + Profile 列表，带 inline 切换/编辑/删除按钮）+ 三层 settings 文件入口
 │   └── usage-tree.ts    单一入口打开 usage WebView
 ├── commands/      4 个 CRUD 命令模块（plugins/mcp/skills/memory）
 ├── webview/       3 个 WebViewPanel host（usage/marketplace/settings）
@@ -77,7 +77,7 @@ webview-ui/
 - **三层 settings 独立读取，不做自动 merge** —— `settings.ts` 只暴露 `readUser` / `readProjectSettings` / `readLocalSettings` 三个读接口 + `mergeForSave(existing, partial, knownKeys)` 写辅助。settings-panel 分层读写，运行时不 merge，避免 shallow merge 吞掉嵌套键（hooks/mcpServers/env/permissions）。
 - **`mergeForSave` 语义**：partial 里的 key 会替换 existing；knownKeys 里但 partial 没写的 key 会被删除（默认值规范化）；未列入 knownKeys 的 key 全部保留（`hooks`/`statusLine`/`sandbox`/自定义等不会被动）。
 - **`_rawPermissions` / `_rawEnabledPlugins` shadow** —— 我们只管一部分子字段，其他原样回写，不吞掉用户自己加的或其他工具写入的条目。
-- **Provider × authMode 感知写入** —— settings-form 根据 `provider` 和 `authMode` 只写入当前选择对应的 env 变量，切换时旧凭证自动清除。
+- **Provider Profile 系统** —— 多份 API 接入方配置作为命名 Profile 保存，凭证存入 VSCode SecretStorage（系统 keychain）。支持 Anthropic / Bedrock / Vertex / Foundry 四种 provider。Settings 侧边栏可展开显示所有 Profile + 订阅模式，带 inline 切换/编辑/删除按钮；Settings WebView 顶部也有可展开的 provider strip。切换 Profile 时自动清理旧凭证。
 - **WebView ↔ Extension 通信** —— `postMessage` + `RpcRequest/RpcResponse` 协议（`messaging.ts`）。每个 panel 独立处理 `req.method`。
 - **WebView CSP + nonce** —— `<script>window.__l10n = ...</script>` 是内联脚本，CSP 必须带 `'nonce-{nonce}'` 否则被拒；module script 也要带同一个 nonce；`makeNonce()` 在 `src/webview/messaging.ts`。
 - **WebView 没有框架** —— 用纯 DOM + innerHTML 重渲染。每次状态变 → `render()` 整段重绘 → 重新绑事件。bundle 小（~5–12 KB）。
@@ -117,18 +117,19 @@ VSCode 原生 l10n 的坑：**只自动加载 `bundle.l10n.<locale>.json`（带 
 
 ## Settings 面板分区
 
-9 大分区，全部控件化，几乎无自由文本输入：
-1. **权限** —— defaultMode toggle / allow・ask・deny・additionalDirectories tag 列表 / skipDangerousModePermissionPrompt / disableBypassPermissionsMode
-2. **AI 行为** —— 模型 select / effort toggle / alwaysThinkingEnabled / showThinkingSummaries / verbose
-3. **接入与鉴权** —— provider toggle（Anthropic / Bedrock / Vertex / Foundry）+ provider-specific 凭证字段
+10 大分区，全部控件化，几乎无自由文本输入：
+1. **Provider Profile 管理** —— 侧边栏可展开显示所有 Profile + 订阅模式，带 inline 切换/编辑/删除按钮；WebView 顶部也有可展开列表。新建 Profile 支持 Anthropic / Bedrock / Vertex / Foundry 四种 provider
+2. **权限** —— defaultMode toggle / allow・ask・deny・additionalDirectories tag 列表 / skipDangerousModePermissionPrompt / disableBypassPermissionsMode
+3. **AI 行为** —— 模型 select / effort toggle / alwaysThinkingEnabled / showThinkingSummaries / verbose
+4. **接入与鉴权** —— provider toggle（Anthropic / Bedrock / Vertex / Foundry）+ provider-specific 凭证字段
    - Anthropic 下再有 authMode 四选一（订阅 / API Key / Auth Token / Helper 脚本）
-4. **功能开关** —— 15 个 `DISABLE_*` / `CLAUDE_CODE_*` / `DISABLE_*` env flag 开关
-5. **数值限制** —— 6 个 number input（MAX_OUTPUT_TOKENS 等）
-6. **显示与 UI** —— 语言 select / viewMode / tui / autoUpdatesChannel / reducedMotion / spinnerTips / awaySummary
-7. **记忆与梦境** —— autoMemoryEnabled / autoDreamEnabled / autoMemoryDirectory
-8. **文件、Git 与会话** —— respectGitignore / includeGitInstructions / includeCoAuthoredBy / enableAllProjectMcpServers / cleanupPeriodDays
-9. **插件** —— enabledPlugins 复选
-10. **高级** —— 自定义 env（默认折叠）
+5. **功能开关** —— 15 个 `DISABLE_*` / `CLAUDE_CODE_*` / `DISABLE_*` env flag 开关
+6. **数值限制** —— 6 个 number input（MAX_OUTPUT_TOKENS 等）
+7. **显示与 UI** —— 语言 select / viewMode / tui / autoUpdatesChannel / reducedMotion / spinnerTips / awaySummary
+8. **记忆与梦境** —— autoMemoryEnabled / autoDreamEnabled / autoMemoryDirectory
+9. **文件、Git 与会话** —— respectGitignore / includeGitInstructions / includeCoAuthoredBy / enableAllProjectMcpServers / cleanupPeriodDays
+10. **插件** —— enabledPlugins 复选
+11. **高级** —— 自定义 env（默认折叠）
 
 ## 文件命名约定
 

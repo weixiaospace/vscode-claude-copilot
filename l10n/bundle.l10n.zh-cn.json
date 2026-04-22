@@ -305,7 +305,7 @@
   "providers.delete.pickTarget": "选择要删除的 Profile",
   "providers.delete.confirm": "删除 Profile \"{0}\"？已存储的凭证也会一并抹除。",
   "providers.delete.confirmBtn": "删除",
-  "providers.migrated": "已把现有接入配置迁移为 Profile \"Default"。",
+  "providers.migrated": "已把现有接入配置迁移为 Profile \"Default\"。",
   "providers.activated": "已激活 Profile：{0}",
   "providers.deactivated": "已停用。回落订阅模式。"
 }

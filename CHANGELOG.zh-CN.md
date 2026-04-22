@@ -6,6 +6,20 @@
 
 **[English](CHANGELOG.md) | [中文](CHANGELOG.zh-CN.md)**
 
+## [0.1.17] - 2026-04-22
+
+### 新增
+
+**接入 Profile —— 保存并秒切 API 接入方配置**
+- Anthropic / Bedrock / Vertex / Foundry 的多份配置可作为命名 Profile 保存
+- **Settings 侧边栏 —— 可展开的 API Provider 组**：显示订阅模式 + 所有已保存的 Profile。当前激活的 Profile 带勾选图标。非激活 Profile hover 时显示 inline 按钮：切换 / 编辑 / 删除。订阅模式只显示切换按钮（无编辑/删除）。组节点本身 hover 显示 "+" 按钮用于新建 Profile
+- **Settings WebView —— 可展开的 provider strip**：settings 面板顶部有一个可折叠区块，显示当前激活的 Profile 名称。展开后列出订阅模式 + 所有 Profile，每行带切换/编辑/删除按钮。点击行或切换按钮即可激活，不弹 toast
+- 三个入口秒切：状态栏（火箭图标）、Settings 树（可展开组）、Settings WebView（顶部可展开 strip）
+- 凭证写入 VSCode SecretStorage（系统 keychain），不再明文落入 `settings.json`
+- 自动迁移：首次启动时，`settings.json` 中已有的 provider env 会被转成 "Default" Profile，保留原行为
+- 删除激活中的 Profile 会清空相关 env 并回落到订阅模式
+- 新增命令：切换接入 Profile、新建接入 Profile、编辑接入 Profile、删除接入 Profile、按 ID 激活 Profile
+
 ## [0.1.16] - 2026-04-20
 
 ### 新增
@@ -94,7 +108,8 @@
 - Usage Dashboard 用量统计与成本估算
 - 中英文双语支持
 
-[Unreleased]: https://github.com/weixiaospace/vscode-claude-copilot/compare/v0.1.16...HEAD
+[Unreleased]: https://github.com/weixiaospace/vscode-claude-copilot/compare/v0.1.17...HEAD
+[0.1.17]: https://github.com/weixiaospace/vscode-claude-copilot/releases/tag/v0.1.17
 [0.1.16]: https://github.com/weixiaospace/vscode-claude-copilot/releases/tag/v0.1.16
 [0.1.15]: https://github.com/weixiaospace/vscode-claude-copilot/releases/tag/v0.1.15
 [0.1.14]: https://github.com/weixiaospace/vscode-claude-copilot/releases/tag/v0.1.14
