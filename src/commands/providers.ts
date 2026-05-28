@@ -3,8 +3,8 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import {
   readProviders, writeProviders, newId, secretKey, providersFilePath,
-  applyProfileToSettings, deactivateFromSettings,
-  type Profile, type ProviderKind, type AuthMode, type SecretsGateway,
+  applyProfileToSettings, deactivateFromSettings, PROVIDER_PRESETS,
+  type Profile, type ProviderKind, type AuthMode, type ProviderPreset, type SecretsGateway,
 } from '../core/providers';
 import { readUser, userSettingsPath } from '../core/settings';
 import { CLAUDE_HOME } from '../lib/paths';
@@ -47,17 +47,39 @@ async function deleteProfile(id: string, secrets: SecretsGateway): Promise<void>
   }
 }
 
+async function createFromPreset(preset: ProviderPreset, secrets: SecretsGateway): Promise<Profile | null> {
+  const name = await vscode.window.showInputBox({ prompt: t('providers.create.name'), value: preset.label });
+  if (!name) return null;
+  const key = await vscode.window.showInputBox({ prompt: t('providers.create.presetKey', preset.label), password: true });
+  if (!key) return null;
+
+  const id = newId();
+  await secrets.set(secretKey(id, preset.credentialField), key);
+  const p: Profile = { id, name, kind: 'anthropic', authMode: preset.authMode, baseUrl: preset.baseUrl };
+  if (preset.credentialField === 'apiKey') p.hasApiKey = true;
+  else p.hasAuthToken = true;
+  return p;
+}
+
 async function promptCreateProfile(secrets: SecretsGateway): Promise<Profile | null> {
-  const kindPick = await vscode.window.showQuickPick(
-    [
-      { label: t('providers.create.kind.anthropic'), value: 'anthropic' as ProviderKind },
-      { label: t('providers.create.kind.bedrock'), value: 'bedrock' as ProviderKind },
-      { label: t('providers.create.kind.vertex'), value: 'vertex' as ProviderKind },
-      { label: t('providers.create.kind.foundry'), value: 'foundry' as ProviderKind },
-    ],
-    { title: t('providers.create.chooseKind') },
+  type KindItem = vscode.QuickPickItem & { preset?: ProviderPreset; value?: ProviderKind };
+  const items: KindItem[] = [];
+  for (const preset of PROVIDER_PRESETS) {
+    items.push({ label: preset.label, description: preset.baseUrl, preset });
+  }
+  if (PROVIDER_PRESETS.length) {
+    items.push({ label: t('providers.create.customGroup'), kind: vscode.QuickPickItemKind.Separator });
+  }
+  items.push(
+    { label: t('providers.create.kind.anthropic'), value: 'anthropic' },
+    { label: t('providers.create.kind.bedrock'), value: 'bedrock' },
+    { label: t('providers.create.kind.vertex'), value: 'vertex' },
+    { label: t('providers.create.kind.foundry'), value: 'foundry' },
   );
+
+  const kindPick = await vscode.window.showQuickPick(items, { title: t('providers.create.chooseKind') });
   if (!kindPick) return null;
+  if (kindPick.preset) return createFromPreset(kindPick.preset, secrets);
 
   const name = await vscode.window.showInputBox({ prompt: t('providers.create.name') });
   if (!name) return null;
