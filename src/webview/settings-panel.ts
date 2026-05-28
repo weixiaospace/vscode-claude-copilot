@@ -8,8 +8,9 @@ import {
   type Settings,
 } from '../core/settings';
 import { listInstalledPlugins } from '../core/plugins';
-import { readProviders, writeProviders, applyProfileToSettings, deactivateFromSettings, secretKey } from '../core/providers';
+import { readProviders, matchProfileIdByEnv } from '../core/providers';
 import { makeSecretsGateway } from '../lib/secrets';
+import { applyToLayer } from '../lib/provider-apply';
 import { CLAUDE_HOME } from '../lib/paths';
 import { currentWorkspace } from '../lib/workspace';
 import { makeNonce, type RpcRequest, type RpcResponse } from './messaging';
@@ -195,6 +196,10 @@ const SETTINGS_KEYS = [
   'providers.webview.create',
   'providers.webview.manage',
   'providers.statusBar.subscription',
+  'settings.activeProvider',
+  'settings.activeProvider.desc',
+  'settings.activeProvider.none',
+  'settings.activeProvider.projectHint',
 ];
 
 async function readLayer(layer: Layer): Promise<{ settings: Settings; filePath: string } | null> {
@@ -275,13 +280,17 @@ export function openSettingsPanel(context: vscode.ExtensionContext, layer: Layer
         const layer = req.params?.layer as Layer;
         const existing = await readLayer(layer);
         const installed = await listInstalledPlugins(CLAUDE_HOME);
+        const doc = await readProviders(CLAUDE_HOME);
+        const settingsObj = existing?.settings ?? {};
         res = {
           id: req.id,
           result: {
             layer,
-            settings: existing?.settings ?? {},
+            settings: settingsObj,
             availableLayers: availability(),
             installedPlugins: installed.map(p => ({ key: `${p.name}@${p.marketplace}`, name: p.name, marketplace: p.marketplace })),
+            profiles: doc.profiles.map(p => ({ id: p.id, name: p.name, kind: p.kind, baseUrl: (p as any).baseUrl ?? '' })),
+            activeProfileId: matchProfileIdByEnv(settingsObj, doc.profiles),
           },
         };
       } else if (req.method === 'settings:write') {
@@ -296,42 +305,10 @@ export function openSettingsPanel(context: vscode.ExtensionContext, layer: Layer
           await vscode.window.showTextDocument(doc, vscode.ViewColumn.Beside);
         }
         res = { id: req.id, result: 'ok' };
-      } else if (req.method === 'providers:list') {
-        const doc = await readProviders(CLAUDE_HOME);
-        res = { id: req.id, result: doc };
-      } else if (req.method === 'providers:activate') {
-        const { id } = req.params as { id: string | null };
+      } else if (req.method === 'settings:setLayerProvider') {
+        const { layer, id } = req.params as { layer: Layer; id: string | null };
         const secrets = makeSecretsGateway(context);
-        const doc = await readProviders(CLAUDE_HOME);
-        doc.active = id;
-        const user = await readUser(CLAUDE_HOME);
-        const next = id
-          ? await applyProfileToSettings(user, doc.profiles.find(p => p.id === id)!, secrets)
-          : deactivateFromSettings(user);
-        await fs.mkdir(path.dirname(userSettingsPath(CLAUDE_HOME)), { recursive: true });
-        await fs.writeFile(userSettingsPath(CLAUDE_HOME), JSON.stringify(next, null, 2) + '\n', 'utf-8');
-        await writeProviders(CLAUDE_HOME, doc);
-        res = { id: req.id, result: 'ok' };
-      } else if (req.method === 'providers:delete') {
-        const { id } = req.params as { id: string };
-        const secrets = makeSecretsGateway(context);
-        const doc = await readProviders(CLAUDE_HOME);
-        const target = doc.profiles.find(p => p.id === id);
-        if (target) {
-          for (const field of ['apiKey', 'authToken', 'bedrockToken', 'foundryApiKey']) {
-            await secrets.delete(secretKey(id, field));
-          }
-          doc.profiles = doc.profiles.filter(p => p.id !== id);
-          const wasActive = doc.active === id;
-          if (wasActive) {
-            doc.active = null;
-            const user = await readUser(CLAUDE_HOME);
-            const next = deactivateFromSettings(user);
-            await fs.mkdir(path.dirname(userSettingsPath(CLAUDE_HOME)), { recursive: true });
-            await fs.writeFile(userSettingsPath(CLAUDE_HOME), JSON.stringify(next, null, 2) + '\n', 'utf-8');
-          }
-          await writeProviders(CLAUDE_HOME, doc);
-        }
+        await applyToLayer(layer, id, secrets);
         res = { id: req.id, result: 'ok' };
       } else if (req.method === 'commands:execute') {
         const { command } = req.params as { command: string };
