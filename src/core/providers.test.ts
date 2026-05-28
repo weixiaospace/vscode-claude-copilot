@@ -240,6 +240,9 @@ describe('matchProfileIdByEnv', () => {
     { id: 'kimi', name: 'KIMI', kind: 'anthropic', authMode: 'authToken', baseUrl: 'https://api.kimi.com/coding/', hasAuthToken: true },
     { id: 'key', name: 'KeyProxy', kind: 'anthropic', authMode: 'apiKey', baseUrl: 'https://proxy/', hasApiKey: true },
     { id: 'bed', name: 'Bed', kind: 'bedrock', baseUrl: 'https://b/' },
+    { id: 'vtx', name: 'Vtx', kind: 'vertex', projectId: 'proj-1' },
+    { id: 'fdy', name: 'Fdy', kind: 'foundry', resource: 'res-1', hasApiKey: true },
+    { id: 'hlp', name: 'Hlp', kind: 'anthropic', authMode: 'helper', apiKeyHelper: '/bin/helper.sh' },
   ];
 
   it('returns null when no managed provider env present', () => {
@@ -267,7 +270,22 @@ describe('matchProfileIdByEnv', () => {
     assert.equal(matchProfileIdByEnv({ env }, profiles), 'bed');
   });
 
-  it('never matches a subscription-mode profile (no signature)', () => {
+  it('matches vertex by USE flag + project id', () => {
+    const env = { CLAUDE_CODE_USE_VERTEX: '1', ANTHROPIC_VERTEX_PROJECT_ID: 'proj-1' };
+    assert.equal(matchProfileIdByEnv({ env }, profiles), 'vtx');
+  });
+
+  it('matches foundry by USE flag + resource', () => {
+    const env = { CLAUDE_CODE_USE_FOUNDRY: '1', ANTHROPIC_FOUNDRY_RESOURCE: 'res-1' };
+    assert.equal(matchProfileIdByEnv({ env }, profiles), 'fdy');
+  });
+
+  it('matches anthropic helper mode by apiKeyHelper value', () => {
+    assert.equal(matchProfileIdByEnv({ apiKeyHelper: '/bin/helper.sh' }, profiles), 'hlp');
+  });
+
+  it('skips subscription-mode profiles even when env is empty (no false match)', () => {
+    // profiles[0] is subscription-mode; empty env must still yield null, not 'off'
     assert.equal(matchProfileIdByEnv({ env: {} }, profiles), null);
   });
 });
