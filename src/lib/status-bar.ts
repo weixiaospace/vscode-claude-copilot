@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { readProviders } from '../core/providers';
+import { effectiveProfileId } from './provider-apply';
 import { CLAUDE_HOME } from './paths';
 import { t } from './l10n';
 
@@ -15,18 +16,16 @@ export function createProviderStatusBar(): ProviderStatusBar {
 
   async function update() {
     try {
+      const id = await effectiveProfileId();
       const doc = await readProviders(CLAUDE_HOME);
-      const active = doc.profiles.find(p => p.id === doc.active);
+      const active = doc.profiles.find(p => p.id === id);
       const label = active ? active.name : t('providers.statusBar.subscription');
       item.text = `$(rocket) ${label}`;
       item.tooltip = t('providers.statusBar.tooltip');
-    } catch (err) {
+    } catch {
       item.text = '$(rocket) —';
     }
   }
 
-  return {
-    update,
-    dispose: () => item.dispose(),
-  };
+  return { update, dispose: () => item.dispose() };
 }
