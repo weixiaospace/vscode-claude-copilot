@@ -7,7 +7,7 @@
 
 插件已有 Provider Profile 系统（多份 API 接入方 + 凭证存 SecretStorage）。经几轮讨论，确定**关注点分离**的架构：
 
-- **管理在一处**：新建一个**独立的 Provider 管理 webview**，作为维护 Profile 的唯一入口（增删改查 + 预设 + 凭证 + 设为用户默认）。
+- **管理在一处**：新建一个**独立的 Provider 管理 webview**，作为维护 Profile 的唯一入口（增删改查 + 预设 + 凭证 + 激活）。
 - **选用在 Settings**：Settings 页面只留一个轻量「本层启用哪个 Provider」的选择器。
 
 配合之前已落地的「Settings 按层（user/project/local）打开」修复，选择器**跟着层走**，项目级接入自然得出。
@@ -18,7 +18,7 @@
 2. 侧栏 API Provider 节点简化为**单个叶子节点** `API Provider · <生效名>`，点击开 webui；移除原来内联的 subscription / profile-item 子节点和行内切换按钮。
 3. Settings 选择器**跟当前层走**：在哪个层打开 Settings，选择器就把 Profile 的 env 物化进哪个层的 settings 文件。
 4. **三层一视同仁，project 层不禁用**。用户明确表示：写进会提交的 `.claude/settings.json` 导致密钥进 git 由用户自负，插件不做拦截。
-5. webui **可「设为用户默认」**（等价于 user 层激活）；项目/本地覆盖走 Settings 分层选择器。
+5. webui 里直接**「激活」**某个 Profile（激活中的打「● 激活中」badge，无按钮）。激活 = 设为基线生效（写 user 层 + `providers.json.active`）；项目/本地覆盖走 Settings 分层选择器。UI 不出现「用户默认」字样。
 6. 预设（KIMI CODE 等）在 webui 创建流程里一键添加，只填 key。
 
 ## 数据模型
@@ -26,10 +26,10 @@
 ### providers.json — 基本不动
 
 沿用现有 `{ version, active, profiles[] }`：
-- `active`：**用户默认** Profile id（webui「设为用户默认」写它；状态栏 fallback / 侧栏标签用它）。
+- `active`：**当前激活**（基线生效）Profile id（webui「激活」写它；状态栏 fallback / 侧栏标签用它）。
 - `profiles`：Profile 库。
 
-**不引入** `projectActive` / `scopes` 指针表。某层「当前选了哪个 Profile」一律由该层 settings 文件的 `env` 反查得出（见下）。`providers.json` 是「库 + 用户默认」的真源；各层 settings 文件的 env 是「该层选用什么」的真源。
+**不引入** `projectActive` / `scopes` 指针表。某层「当前选了哪个 Profile」一律由该层 settings 文件的 `env` 反查得出（见下）。`providers.json` 是「库 + 激活态(active)」的真源；各层 settings 文件的 env 是「该层选用什么」的真源。
 
 ### 新增纯函数（src/core/providers.ts，零 vscode）
 
@@ -57,8 +57,8 @@ export function matchProfileIdByEnv(
 新建 `src/lib/provider-apply.ts`（vscode-adjacent，命令 / settings-panel / provider-panel 共用），导出：
 - `applyToLayer(layer: Layer, profileId: string | null, secrets): Promise<void>`
   —— 读该层 settings，`profileId` 非空则 `applyProfileToSettings`，为空则 `deactivateFromSettings`，写回该层文件。layer→路径用 `userSettingsPath` / `projectSettingsPath(ws)` / `localSettingsPath(ws)`。
-- `setUserDefault(profileId: string | null, secrets): Promise<void>`
-  —— `applyToLayer('user', id, secrets)` + 更新 `providers.json.active = id`。
+- `activateProfile(profileId: string | null, secrets): Promise<void>`
+  —— `applyToLayer('user', id, secrets)` + 更新 `providers.json.active = id`。（即旧称「设为用户默认」，UI 统一叫「激活」。）
 - `deleteProfile(id, secrets): Promise<void>`
   —— 清 SecretStorage 各字段；从 `profiles` 移除；若它是 `active` 则置 null 并 `deactivateFromSettings` user 层；写 providers.json。（不主动清理 project/local 层残留 env —— 那是该层显式选择，留给用户/分层选择器处理；删除时给 toast 提示即可。）
 - `effectiveProfileId(secrets?): Promise<string | null>`
@@ -78,13 +78,13 @@ RPC 方法：
 - `providers:create` `{ profile-fields..., secret }` → 通用新建（四种 kind 全字段表单）。
 - `providers:update` `{ id, fields..., secret? }` → 编辑（secret 为空表示不改凭证）。
 - `providers:delete` `{ id }` → 调 `deleteProfile`。
-- `providers:setDefault` `{ id | null }` → 调 `setUserDefault`（webui 内激活用户默认）。
+- `providers:activate` `{ id | null }` → 调 `activateProfile`（webui 内激活某 Profile / `null` 回落订阅）。
 - `providers:openJson` → 打开 providers.json。
 
 ### Webview UI：webview-ui/src/provider.{html,ts} + provider-app.ts（vanilla + Tailwind）
 
 - 顶部：预设快加按钮行（KIMI CODE …）→ 点击内联 mini-form（名称预填 + 单 key）→ createFromPreset。
-- Profile 库列表：每行 `name (kind)` + 「设为用户默认」（当前默认打 badge）/ 编辑 / 删除。
+- Profile 库列表：每行 `name (kind) · baseUrl` + 「激活」（激活中的打「● 激活中」badge、无按钮）/ 编辑 / 删除。
 - 「+ 新建 Profile（高级）」→ 完整表单（四种 provider，沿用 settings-form 里的 provider 字段渲染逻辑，可抽共享）。
 - 「打开 providers.json」。
 - 新增 vite 入口（多入口 build：usage / marketplace / settings / **provider**）。
@@ -94,7 +94,7 @@ RPC 方法：
 
 - `profile-group` 节点：`CollapsibleState.None`，label `API Provider · <生效名>`，`item.command = openProviderPanel`。
 - 移除 `profile-subscription` / `profile-item` 子节点与其 `getChildren` 分支。
-- 生效名用 `effectiveProfileId()` 解析（无 ws 时即用户默认）。
+- 生效名用 `effectiveProfileId()` 解析（无 ws 时即 `active`）。
 - package.json 里原行内切换相关的 view/item context menu（若有）随之清理；保留命令本身（状态栏 quickSwitch 仍用）。
 
 ## Settings 页面改动（webview-ui/src/settings-form.ts）
@@ -107,13 +107,13 @@ RPC 方法：
 
 ## 状态栏（src/lib/status-bar.ts）
 
-显示 `effectiveProfileId()` 解析出的生效 Profile 名（无匹配 → 订阅）。点击保持现状触发 quickSwitch（作用于用户默认）。
+显示 `effectiveProfileId()` 解析出的生效 Profile 名（无匹配 → 订阅）。点击保持现状触发 quickSwitch（作用于 `active`）。
 
 ## i18n
 
 新增 key（en + zh-cn；webview 进对应白名单）：
 - 侧栏/通用：`providers.webview.title`（管理 webui 标题）、`providers.openManager`
-- 管理 webui：`providers.manage.library`、`providers.manage.setDefault`、`providers.manage.default`(badge)、`providers.manage.newAdvanced`、`providers.manage.quickAdd`、编辑/删除确认等
+- 管理 webui：`providers.manage.library`、`providers.manage.activate`、`providers.manage.active`(● 激活中 badge)、`providers.manage.newAdvanced`、`providers.manage.quickAdd`、编辑/删除确认等
 - Settings 选择器：`settings.activeProvider`、`settings.activeProvider.none`、`settings.activeProvider.projectHint`
 - 预设：`providers.create.presetKey` / `providers.create.customGroup`（已加）
 
@@ -125,7 +125,7 @@ RPC 方法：
   - 无 managed env → null
   - 签名相同多候选 → 返回首个
 - `applyToLayer` 经由现有 `applyProfileToSettings`/`deactivateFromSettings`（这俩已有/可补单测）：写入含 baseUrl + 物化密钥；deactivate 剥离 managed keys；不动非 managed 键（mergeForSave 语义）。
-- `setUserDefault`：更新 active + 写 user settings。
+- `activateProfile`：更新 active + 写 user settings。
 - `deleteProfile`：清 secret、移除 profile、若是 active 则 user 层 deactivate。
 
 webview / vscode 层不写单测（项目约定）。
@@ -143,7 +143,7 @@ webview / vscode 层不写单测（项目约定）。
 - `pnpm package` 产物干净（不含 .playwright-mcp 等开发副产物）。
 - 手动（Extension Dev Host，有 workspace）：
   1. 点侧栏 API Provider → 开管理 webui → 预设快加 KIMI CODE（只填 key）→ 库里出现。
-  2. webui 里「设为用户默认」→ ~/.claude/settings.json 写入、状态栏更新。
+  2. webui 里「激活」KIMI CODE → ~/.claude/settings.json 写入、状态栏更新。
   3. 侧栏 Local 层打开 Settings → 选另一个 Profile → `.claude/settings.local.json` 写入 → 状态栏生效名变为该 Profile。
-  4. Local 层选「未设置」→ 剥离本层 managed env → 回落用户默认。
+  4. Local 层选「未设置」→ 剥离本层 managed env → 回落 `active`。
   5. project 层选 Profile → 写进 `.claude/settings.json`（验证不被拦截，仅 hint）。
