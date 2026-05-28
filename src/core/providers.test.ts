@@ -116,7 +116,7 @@ function makeSecrets(init: Record<string, string>) {
   };
 }
 
-import { detectLegacyProfile, applyProfileToSettings, deactivateFromSettings } from './providers';
+import { detectLegacyProfile, applyProfileToSettings, deactivateFromSettings, matchProfileIdByEnv } from './providers';
 
 describe('detectLegacyProfile', () => {
   it('returns null when no provider env present', () => {
@@ -231,5 +231,43 @@ describe('deactivateFromSettings', () => {
     const out = deactivateFromSettings(existing);
     assert.ok(!('apiKeyHelper' in out));
     assert.equal(out.autoMemoryEnabled, true);
+  });
+});
+
+describe('matchProfileIdByEnv', () => {
+  const profiles: Profile[] = [
+    { id: 'off', name: 'Official', kind: 'anthropic', authMode: 'subscription' },
+    { id: 'kimi', name: 'KIMI', kind: 'anthropic', authMode: 'authToken', baseUrl: 'https://api.kimi.com/coding/', hasAuthToken: true },
+    { id: 'key', name: 'KeyProxy', kind: 'anthropic', authMode: 'apiKey', baseUrl: 'https://proxy/', hasApiKey: true },
+    { id: 'bed', name: 'Bed', kind: 'bedrock', baseUrl: 'https://b/' },
+  ];
+
+  it('returns null when no managed provider env present', () => {
+    assert.equal(matchProfileIdByEnv({ env: {} }, profiles), null);
+    assert.equal(matchProfileIdByEnv({}, profiles), null);
+  });
+
+  it('matches anthropic authToken + baseUrl', () => {
+    const env = { ANTHROPIC_AUTH_TOKEN: 'x', ANTHROPIC_BASE_URL: 'https://api.kimi.com/coding/' };
+    assert.equal(matchProfileIdByEnv({ env }, profiles), 'kimi');
+  });
+
+  it('matches anthropic apiKey + baseUrl', () => {
+    const env = { ANTHROPIC_API_KEY: 'x', ANTHROPIC_BASE_URL: 'https://proxy/' };
+    assert.equal(matchProfileIdByEnv({ env }, profiles), 'key');
+  });
+
+  it('does not match apiKey profile when only authToken present', () => {
+    const env = { ANTHROPIC_AUTH_TOKEN: 'x', ANTHROPIC_BASE_URL: 'https://proxy/' };
+    assert.equal(matchProfileIdByEnv({ env }, profiles), null);
+  });
+
+  it('matches bedrock by USE flag + base url', () => {
+    const env = { CLAUDE_CODE_USE_BEDROCK: '1', ANTHROPIC_BEDROCK_BASE_URL: 'https://b/' };
+    assert.equal(matchProfileIdByEnv({ env }, profiles), 'bed');
+  });
+
+  it('never matches a subscription-mode profile (no signature)', () => {
+    assert.equal(matchProfileIdByEnv({ env: {} }, profiles), null);
   });
 });
