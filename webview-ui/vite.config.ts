@@ -12,6 +12,7 @@ export default defineConfig({
         usage: path.resolve(__dirname, 'usage.html'),
         marketplace: path.resolve(__dirname, 'marketplace.html'),
         settings: path.resolve(__dirname, 'settings.html'),
+        provider: path.resolve(__dirname, 'provider.html'),
       },
       output: { entryFileNames: 'assets/[name].js', chunkFileNames: 'assets/[name].js', assetFileNames: 'assets/[name].[ext]' },
     },
