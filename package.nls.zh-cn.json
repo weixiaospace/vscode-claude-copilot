@@ -10,6 +10,7 @@
   "cmd.refresh": "Claude Copilot: Refresh All",
   "cmd.openFile": "Claude Copilot: Open File",
   "cmd.openSettingsPanel": "Claude Copilot: Open Settings Panel",
+  "cmd.openProviderPanel": "管理 API 接入方",
   "cmd.openUsage": "Claude Copilot: Open Usage Dashboard",
   "cmd.openMarketplace": "Claude Copilot: Browse Marketplace",
   "cmd.plugin.install": "安装插件...",

@@ -38,6 +38,7 @@
       { "command": "claudeCopilot.refresh", "title": "%cmd.refresh%", "icon": "$(refresh)" },
       { "command": "claudeCopilot.openFile", "title": "%cmd.openFile%" },
       { "command": "claudeCopilot.openSettingsPanel", "title": "%cmd.openSettingsPanel%", "icon": "$(gear)" },
+      { "command": "claudeCopilot.openProviderPanel", "title": "%cmd.openProviderPanel%", "icon": "$(rocket)" },
       { "command": "claudeCopilot.openUsage", "title": "%cmd.openUsage%" },
       { "command": "claudeCopilot.openMarketplace", "title": "%cmd.openMarketplace%", "icon": "$(extensions)" },
       { "command": "claudeCopilot.plugin.install", "title": "%cmd.plugin.install%", "icon": "$(add)" },
