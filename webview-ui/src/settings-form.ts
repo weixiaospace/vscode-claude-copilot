@@ -363,8 +363,9 @@ function toggleGroup(id: string, options: { value: string; label: string }[], ac
 }
 
 export function mount(root: HTMLElement): void {
+  const initialLayer = ((window as any).__layer as Layer) ?? 'user';
   const state: State = {
-    layer: 'user', data: null, form: null, providers: null, providersExpanded: false, dirty: false, loading: false, saving: false,
+    layer: initialLayer, data: null, form: null, providers: null, providersExpanded: false, dirty: false, loading: false, saving: false,
     allowInput: '', denyInput: '', askInput: '', dirInput: '',
     showApiKey: false, showAuthToken: false, showAdvancedEnv: false,
   };
@@ -428,20 +429,26 @@ export function mount(root: HTMLElement): void {
 
   function markDirty() { state.dirty = true; }
 
-  function renderTabs(): string {
-    const layers: Array<{ key: Layer; label: string }> = [
-      { key: 'user', label: t('tree.group.user') },
-      { key: 'project', label: t('tree.group.project') },
-      { key: 'local', label: t('tree.layer.local') },
-    ];
-    return layers.map(l => {
-      const active = state.layer === l.key;
-      const avail = state.data?.availableLayers[l.key] ?? true;
-      const cls = active
-        ? 'border-b-2 border-current px-4 py-2 text-sm font-medium'
-        : `px-4 py-2 text-sm ${avail ? 'opacity-60 hover:opacity-100' : 'opacity-30 cursor-not-allowed'}`;
-      return `<button data-layer="${l.key}" class="${cls}" ${avail ? '' : 'disabled'}>${l.label}${!avail ? ' ' + t('tree.group.noWorkspace') : ''}</button>`;
-    }).join('');
+  const LAYER_LABEL: Record<Layer, string> = {
+    get user() { return t('tree.group.user'); },
+    get project() { return t('tree.group.project'); },
+    get local() { return t('tree.layer.local'); },
+  };
+  const LAYER_FILE: Record<Layer, string> = {
+    user: '~/.claude/settings.json',
+    project: '.claude/settings.json',
+    local: '.claude/settings.local.json',
+  };
+
+  function renderLayerBadge(): string {
+    return `
+      <div class="flex items-center gap-2 text-sm">
+        <span class="opacity-60">${escapeHtml(t('settings.editingLayer'))}</span>
+        <span class="inline-flex items-center gap-2 rounded border border-current/25 bg-current/10 px-2.5 py-1 font-medium">
+          ${escapeHtml(LAYER_LABEL[state.layer])}
+          <span class="opacity-55 font-mono text-xs">${escapeHtml(LAYER_FILE[state.layer])}</span>
+        </span>
+      </div>`;
   }
 
   function renderTagList(kind: 'allow' | 'deny' | 'ask' | 'dir', items: string[], inputValue: string, placeholder: string): string {
@@ -767,7 +774,7 @@ export function mount(root: HTMLElement): void {
 
         ${state.providers ? providerStrip(state.providers) : ''}
 
-        <div class="flex border-b border-current/15">${renderTabs()}</div>
+        ${renderLayerBadge()}
 
         <div class="rounded-md border border-current/15 bg-current/[0.03] p-3 text-xs space-y-1.5">
           <div class="flex gap-2"><span class="opacity-60 w-16 shrink-0">User</span><span class="opacity-80">${t('settings.scope.user')}</span></div>
@@ -799,9 +806,6 @@ export function mount(root: HTMLElement): void {
 
   function bind() {
     const f = state.form!;
-
-    root.querySelectorAll<HTMLButtonElement>('button[data-layer]').forEach(b =>
-      b.addEventListener('click', () => switchLayer(b.dataset.layer as Layer)));
 
     // toggle groups
     root.querySelectorAll<HTMLElement>('[data-toggle]').forEach(group => {
@@ -999,6 +1003,13 @@ export function mount(root: HTMLElement): void {
       call('commands:execute', { command: 'claudeCopilot.providers.edit' }).catch(() => {});
     });
   }
+
+  window.addEventListener('message', (e) => {
+    const msg = e.data as { push?: string; layer?: Layer };
+    if (msg?.push === 'layer:set' && msg.layer && msg.layer !== state.layer) {
+      switchLayer(msg.layer);
+    }
+  });
 
   load();
 }

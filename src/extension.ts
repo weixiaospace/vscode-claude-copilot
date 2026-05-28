@@ -51,7 +51,7 @@ export function activate(context: vscode.ExtensionContext): void {
       const doc = await vscode.workspace.openTextDocument(vscode.Uri.file(filePath));
       await vscode.window.showTextDocument(doc);
     }),
-    vscode.commands.registerCommand('claudeCopilot.openSettingsPanel', () => openSettingsPanel(context)),
+    vscode.commands.registerCommand('claudeCopilot.openSettingsPanel', (layer?: 'user' | 'project' | 'local') => openSettingsPanel(context, layer)),
     vscode.commands.registerCommand('claudeCopilot.openUsage', () => openUsagePanel(context)),
     vscode.commands.registerCommand('claudeCopilot.openMarketplace', () => openMarketplacePanel(context)),
     ...registerPluginCommands(() => plugins.refresh()),

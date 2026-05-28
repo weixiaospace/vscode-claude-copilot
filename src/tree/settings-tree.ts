@@ -59,7 +59,7 @@ export class SettingsTreeProvider implements vscode.TreeDataProvider<Node> {
     item.tooltip = node.path;
     item.description = node.available ? '' : t('tree.group.noWorkspace');
     if (node.available) {
-      item.command = { command: 'claudeCopilot.openSettingsPanel', title: 'Open Settings' };
+      item.command = { command: 'claudeCopilot.openSettingsPanel', title: 'Open Settings', arguments: [node.layer] };
     }
     item.contextValue = 'settings:layer';
     return item;

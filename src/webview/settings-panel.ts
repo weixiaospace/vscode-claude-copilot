@@ -28,6 +28,7 @@ const SETTINGS_KEYS = [
   'settings.scope.project',
   'settings.scope.local',
   'settings.scope.priority',
+  'settings.editingLayer',
   'settings.section.memory',
   'settings.section.memory.desc',
   'settings.autoMemory',
@@ -221,8 +222,12 @@ async function writeLayer(layer: Layer, partial: Record<string, unknown>, knownK
   await fs.writeFile(existing.filePath, JSON.stringify(next, null, 2) + '\n', 'utf-8');
 }
 
-export function openSettingsPanel(context: vscode.ExtensionContext): void {
-  if (current) { current.reveal(); return; }
+export function openSettingsPanel(context: vscode.ExtensionContext, layer: Layer = 'user'): void {
+  if (current) {
+    current.reveal();
+    current.webview.postMessage({ push: 'layer:set', layer });
+    return;
+  }
   const panel = vscode.window.createWebviewPanel(
     'claudeCopilot.settings', t('settings.title'), vscode.ViewColumn.One,
     {
@@ -254,7 +259,7 @@ export function openSettingsPanel(context: vscode.ExtensionContext): void {
         <title>${t('settings.title')}</title>
       </head>
       <body>
-        <script nonce="${nonce}">window.__l10n = ${JSON.stringify(strings)};</script>
+        <script nonce="${nonce}">window.__l10n = ${JSON.stringify(strings)}; window.__layer = ${JSON.stringify(layer)};</script>
         <div id="root"></div>
         <script type="module" nonce="${nonce}" src="${scriptUri}"></script>
       </body>
