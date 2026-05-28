@@ -85,11 +85,7 @@
         { "command": "claudeCopilot.mcp.remove", "when": "view == claudeCopilot.mcp && viewItem =~ /^mcp:/" },
         { "command": "claudeCopilot.skill.delete", "when": "view == claudeCopilot.skills && viewItem =~ /^skill:/" },
         { "command": "claudeCopilot.memory.delete", "when": "view == claudeCopilot.memory && viewItem == memory:item" },
-        { "command": "claudeCopilot.providers.create", "when": "view == claudeCopilot.settings && viewItem == profile-group", "group": "inline@0" },
-        { "command": "claudeCopilot.providers.activateById", "when": "view == claudeCopilot.settings && viewItem == profile-subscription:inactive", "group": "inline@0" },
-        { "command": "claudeCopilot.providers.activateById", "when": "view == claudeCopilot.settings && viewItem == profile:inactive", "group": "inline@0" },
-        { "command": "claudeCopilot.providers.edit", "when": "view == claudeCopilot.settings && (viewItem == profile:active || viewItem == profile:inactive)", "group": "inline@1" },
-        { "command": "claudeCopilot.providers.delete", "when": "view == claudeCopilot.settings && (viewItem == profile:active || viewItem == profile:inactive)", "group": "inline@2" }
+        { "command": "claudeCopilot.providers.create", "when": "view == claudeCopilot.settings && viewItem == profile-group", "group": "inline@0" }
       ]
     }
   },
