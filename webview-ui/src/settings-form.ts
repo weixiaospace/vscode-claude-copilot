@@ -25,7 +25,6 @@ const EFFORT_LEVELS = ['low', 'medium', 'high', 'xhigh', 'max'];
 const AUTO_UPDATES_CHANNELS = ['latest', 'stable'];
 const VIEW_MODES = ['default', 'verbose', 'focus'];
 const TUI_MODES = ['default', 'fullscreen'];
-const PROVIDERS = ['anthropic', 'bedrock', 'vertex', 'foundry'] as const;
 const LANGUAGES = [
   { value: '', labelKey: 'settings.lang.default' },
   { value: 'english', labelKey: 'settings.lang.en' },
@@ -80,6 +79,9 @@ const KNOWN_ENV_KEYS = new Set<string>([
   'ANTHROPIC_FOUNDRY_API_KEY', 'ANTHROPIC_FOUNDRY_BASE_URL', 'ANTHROPIC_FOUNDRY_RESOURCE', 'CLAUDE_CODE_SKIP_FOUNDRY_AUTH',
 ]);
 
+const FLAG_KEYS = new Set(ENV_FLAGS.map(f => f.key));
+const NUMBER_KEYS = new Set(ENV_NUMBERS.map(n => n.key));
+
 // ==================== Form state ====================
 
 interface FormState {
@@ -118,24 +120,8 @@ interface FormState {
   permAdditionalDirs: string[];
   permDisableBypass: boolean;
   _rawPermissions: Record<string, unknown>;
-  // Provider / connection
-  provider: typeof PROVIDERS[number];
-  authMode: 'subscription' | 'apiKey' | 'authToken' | 'helper';
-  envApiKey: string;
-  envAuthToken: string;
-  envBaseUrl: string;
-  envSubagentModel: string;
-  // Cloud provider credentials
-  bedrockToken: string;
-  bedrockBaseUrl: string;
-  bedrockSkipAuth: boolean;
-  vertexProjectId: string;
-  vertexBaseUrl: string;
-  vertexSkipAuth: boolean;
-  foundryApiKey: string;
-  foundryBaseUrl: string;
-  foundryResource: string;
-  foundrySkipAuth: boolean;
+  // Provider env passthrough (read-only shadow — never modified by this form)
+  _rawProviderEnv: Record<string, string>;
   // Env flags & numbers
   envFlags: Record<string, boolean>;
   envNumbers: Record<string, number | ''>;
@@ -156,8 +142,6 @@ interface State {
   denyInput: string;
   askInput: string;
   dirInput: string;
-  showApiKey: boolean;
-  showAuthToken: boolean;
   showAdvancedEnv: boolean;
 }
 
@@ -183,19 +167,7 @@ function settingsToForm(settings: Record<string, unknown>, installedPlugins: Ins
     envNumbers[n.key] = v && !Number.isNaN(Number(v)) ? Number(v) : '';
   }
 
-  let provider: typeof PROVIDERS[number] = 'anthropic';
-  if (envObj[PROVIDER_ENV.bedrock] === '1') provider = 'bedrock';
-  else if (envObj[PROVIDER_ENV.vertex] === '1') provider = 'vertex';
-  else if (envObj[PROVIDER_ENV.foundry] === '1') provider = 'foundry';
-
   const apiKeyHelperVal = typeof settings.apiKeyHelper === 'string' ? settings.apiKeyHelper : '';
-  const authMode: FormState['authMode'] = apiKeyHelperVal
-    ? 'helper'
-    : envObj['ANTHROPIC_API_KEY']
-      ? 'apiKey'
-      : envObj['ANTHROPIC_AUTH_TOKEN']
-        ? 'authToken'
-        : 'subscription';
 
   const envCustom = Object.entries(envObj)
     .filter(([k]) => !KNOWN_ENV_KEYS.has(k))
@@ -203,6 +175,11 @@ function settingsToForm(settings: Record<string, unknown>, installedPlugins: Ins
 
   const permObj = (settings.permissions ?? {}) as Record<string, unknown>;
   const { defaultMode, allow, deny, ask, additionalDirectories, disableBypassPermissionsMode, ...restPerm } = permObj;
+
+  const _rawProviderEnv: Record<string, string> = {};
+  for (const [k, v] of Object.entries(envObj)) {
+    if (KNOWN_ENV_KEYS.has(k) && !FLAG_KEYS.has(k) && !NUMBER_KEYS.has(k)) _rawProviderEnv[k] = String(v);
+  }
 
   return {
     model: typeof settings.model === 'string' ? settings.model : '',
@@ -234,22 +211,7 @@ function settingsToForm(settings: Record<string, unknown>, installedPlugins: Ins
     permAdditionalDirs: toStringArr(additionalDirectories),
     permDisableBypass: disableBypassPermissionsMode === 'disable' || disableBypassPermissionsMode === true,
     _rawPermissions: restPerm,
-    provider,
-    authMode,
-    envApiKey: envObj['ANTHROPIC_API_KEY'] ?? '',
-    envAuthToken: envObj['ANTHROPIC_AUTH_TOKEN'] ?? '',
-    envBaseUrl: envObj['ANTHROPIC_BASE_URL'] ?? '',
-    envSubagentModel: envObj['CLAUDE_CODE_SUBAGENT_MODEL'] ?? '',
-    bedrockToken: envObj['AWS_BEARER_TOKEN_BEDROCK'] ?? '',
-    bedrockBaseUrl: envObj['ANTHROPIC_BEDROCK_BASE_URL'] ?? '',
-    bedrockSkipAuth: envObj['CLAUDE_CODE_SKIP_BEDROCK_AUTH'] === '1',
-    vertexProjectId: envObj['ANTHROPIC_VERTEX_PROJECT_ID'] ?? '',
-    vertexBaseUrl: envObj['ANTHROPIC_VERTEX_BASE_URL'] ?? '',
-    vertexSkipAuth: envObj['CLAUDE_CODE_SKIP_VERTEX_AUTH'] === '1',
-    foundryApiKey: envObj['ANTHROPIC_FOUNDRY_API_KEY'] ?? '',
-    foundryBaseUrl: envObj['ANTHROPIC_FOUNDRY_BASE_URL'] ?? '',
-    foundryResource: envObj['ANTHROPIC_FOUNDRY_RESOURCE'] ?? '',
-    foundrySkipAuth: envObj['CLAUDE_CODE_SKIP_FOUNDRY_AUTH'] === '1',
+    _rawProviderEnv,
     envFlags,
     envNumbers,
     envCustom,
@@ -280,7 +242,7 @@ function formToPartial(form: FormState): Record<string, unknown> {
   if (!form.autoDreamEnabled) p.autoDreamEnabled = false;
   if (form.autoMemoryDirectory) p.autoMemoryDirectory = form.autoMemoryDirectory;
   if (typeof form.cleanupPeriodDays === 'number') p.cleanupPeriodDays = form.cleanupPeriodDays;
-  if (form.authMode === 'helper' && form.apiKeyHelper) p.apiKeyHelper = form.apiKeyHelper;
+  if (form.apiKeyHelper) p.apiKeyHelper = form.apiKeyHelper;
   if (form.skipDangerousModePermissionPrompt) p.skipDangerousModePermissionPrompt = true;
 
   // permissions (preserve unknown nested keys)
@@ -297,30 +259,7 @@ function formToPartial(form: FormState): Record<string, unknown> {
   const envOut: Record<string, string> = {};
   for (const [k, v] of Object.entries(form.envFlags)) if (v) envOut[k] = '1';
   for (const [k, v] of Object.entries(form.envNumbers)) if (typeof v === 'number') envOut[k] = String(v);
-  if (form.envSubagentModel) envOut['CLAUDE_CODE_SUBAGENT_MODEL'] = form.envSubagentModel;
-
-  if (form.provider === 'anthropic') {
-    if (form.authMode === 'apiKey' && form.envApiKey) envOut['ANTHROPIC_API_KEY'] = form.envApiKey;
-    if (form.authMode === 'authToken' && form.envAuthToken) envOut['ANTHROPIC_AUTH_TOKEN'] = form.envAuthToken;
-    if (form.envBaseUrl) envOut['ANTHROPIC_BASE_URL'] = form.envBaseUrl;
-  } else if (form.provider === 'bedrock') {
-    envOut[PROVIDER_ENV.bedrock] = '1';
-    if (form.bedrockToken) envOut['AWS_BEARER_TOKEN_BEDROCK'] = form.bedrockToken;
-    if (form.bedrockBaseUrl) envOut['ANTHROPIC_BEDROCK_BASE_URL'] = form.bedrockBaseUrl;
-    if (form.bedrockSkipAuth) envOut['CLAUDE_CODE_SKIP_BEDROCK_AUTH'] = '1';
-  } else if (form.provider === 'vertex') {
-    envOut[PROVIDER_ENV.vertex] = '1';
-    if (form.vertexProjectId) envOut['ANTHROPIC_VERTEX_PROJECT_ID'] = form.vertexProjectId;
-    if (form.vertexBaseUrl) envOut['ANTHROPIC_VERTEX_BASE_URL'] = form.vertexBaseUrl;
-    if (form.vertexSkipAuth) envOut['CLAUDE_CODE_SKIP_VERTEX_AUTH'] = '1';
-  } else if (form.provider === 'foundry') {
-    envOut[PROVIDER_ENV.foundry] = '1';
-    if (form.foundryApiKey) envOut['ANTHROPIC_FOUNDRY_API_KEY'] = form.foundryApiKey;
-    if (form.foundryBaseUrl) envOut['ANTHROPIC_FOUNDRY_BASE_URL'] = form.foundryBaseUrl;
-    if (form.foundryResource) envOut['ANTHROPIC_FOUNDRY_RESOURCE'] = form.foundryResource;
-    if (form.foundrySkipAuth) envOut['CLAUDE_CODE_SKIP_FOUNDRY_AUTH'] = '1';
-  }
-
+  Object.assign(envOut, form._rawProviderEnv);
   for (const { key, value } of form.envCustom) if (key.trim()) envOut[key.trim()] = value;
   if (Object.keys(envOut).length) p.env = envOut;
 
@@ -367,7 +306,7 @@ export function mount(root: HTMLElement): void {
   const state: State = {
     layer: initialLayer, data: null, form: null, dirty: false, loading: false, saving: false,
     allowInput: '', denyInput: '', askInput: '', dirInput: '',
-    showApiKey: false, showAuthToken: false, showAdvancedEnv: false,
+    showAdvancedEnv: false,
   };
 
   async function load() {
@@ -536,16 +475,6 @@ export function mount(root: HTMLElement): void {
     `;
   }
 
-  function secretInput(id: string, value: string, placeholder: string, shown: boolean, toggleId: string): string {
-    return `
-      <div class="flex gap-2">
-        <input type="${shown ? 'text' : 'password'}" id="${id}" value="${escapeHtml(value)}" placeholder="${escapeHtml(placeholder)}"
-          class="flex-1 bg-transparent border border-current/20 rounded px-2 py-1 text-sm font-mono" />
-        <button id="${toggleId}" class="text-xs px-2 py-1 border border-current/20 rounded hover:bg-current/5">${shown ? t('settings.env.apiKey.hide') : t('settings.env.apiKey.show')}</button>
-      </div>
-    `;
-  }
-
   function renderForm(): string {
     if (!state.form || !state.data) return '';
     const f = state.form;
@@ -596,74 +525,6 @@ export function mount(root: HTMLElement): void {
       switchControl('s-awaySummary', f.awaySummaryEnabled, t('settings.awaySummary'), t('settings.awaySummary.desc')),
     ].join(''));
 
-    // ---- Provider + auth ----
-    let providerBody = field(t('settings.provider'), t('settings.provider.desc'),
-      toggleGroup('provider', PROVIDERS.map(p => ({ value: p, label: t('settings.provider.' + p) })), f.provider));
-
-    if (f.provider === 'anthropic') {
-      const authModeOptions = [
-        { value: 'subscription', label: t('settings.authMode.subscription') },
-        { value: 'apiKey', label: t('settings.authMode.apiKey') },
-        { value: 'authToken', label: t('settings.authMode.authToken') },
-        { value: 'helper', label: t('settings.authMode.helper') },
-      ];
-      let credentialField = '';
-      if (f.authMode === 'subscription') {
-        credentialField = `<div class="rounded-md border border-current/15 bg-current/[0.03] p-3 text-xs opacity-80">${t('settings.authMode.subscription.hint')}</div>`;
-      } else if (f.authMode === 'apiKey') {
-        credentialField = field(t('settings.env.apiKey'), t('settings.env.apiKey.desc'),
-          secretInput('env-apiKey', f.envApiKey, 'sk-ant-...', state.showApiKey, 'toggle-apikey'));
-      } else if (f.authMode === 'authToken') {
-        credentialField = field(t('settings.env.authToken'), t('settings.env.authToken.desc'),
-          secretInput('env-authToken', f.envAuthToken, 'Bearer ...', state.showAuthToken, 'toggle-authtoken'));
-      } else {
-        credentialField = field(t('settings.env.apiKeyHelper'), t('settings.env.apiKeyHelper.desc'),
-          `<input type="text" id="f-apiKeyHelper" value="${escapeHtml(f.apiKeyHelper)}" placeholder="/path/to/helper.sh"
-            class="w-full bg-transparent border border-current/20 rounded px-2 py-1 text-sm font-mono" />`);
-      }
-      providerBody += field(t('settings.authMode'), t('settings.authMode.desc'),
-        toggleGroup('authMode', authModeOptions, f.authMode))
-        + credentialField
-        + field(t('settings.env.baseUrl'), t('settings.env.baseUrl.desc'),
-          `<input type="url" id="env-baseUrl" value="${escapeHtml(f.envBaseUrl)}" placeholder="https://api.anthropic.com"
-            class="w-full bg-transparent border border-current/20 rounded px-2 py-1 text-sm font-mono" />`);
-    } else if (f.provider === 'bedrock') {
-      providerBody += `<div class="rounded-md border border-current/15 bg-current/[0.03] p-3 text-xs opacity-80">${t('settings.provider.bedrock.hint')}</div>`
-        + field(t('settings.env.bedrockToken'), t('settings.env.bedrockToken.desc'),
-          secretInput('env-bedrockToken', f.bedrockToken, 'bedrock token...', state.showApiKey, 'toggle-apikey'))
-        + field(t('settings.env.bedrockBaseUrl'), t('settings.env.bedrockBaseUrl.desc'),
-          `<input type="url" id="env-bedrockBaseUrl" value="${escapeHtml(f.bedrockBaseUrl)}" placeholder="https://bedrock-runtime..."
-            class="w-full bg-transparent border border-current/20 rounded px-2 py-1 text-sm font-mono" />`)
-        + switchControl('s-bedrockSkipAuth', f.bedrockSkipAuth, t('settings.env.skipAuth'), t('settings.env.skipAuth.bedrock.desc'));
-    } else if (f.provider === 'vertex') {
-      providerBody += `<div class="rounded-md border border-current/15 bg-current/[0.03] p-3 text-xs opacity-80">${t('settings.provider.vertex.hint')}</div>`
-        + field(t('settings.env.vertexProjectId'), t('settings.env.vertexProjectId.desc'),
-          `<input type="text" id="env-vertexProjectId" value="${escapeHtml(f.vertexProjectId)}" placeholder="my-gcp-project"
-            class="w-full bg-transparent border border-current/20 rounded px-2 py-1 text-sm font-mono" />`)
-        + field(t('settings.env.vertexBaseUrl'), t('settings.env.vertexBaseUrl.desc'),
-          `<input type="url" id="env-vertexBaseUrl" value="${escapeHtml(f.vertexBaseUrl)}" placeholder="https://<region>-aiplatform.googleapis.com"
-            class="w-full bg-transparent border border-current/20 rounded px-2 py-1 text-sm font-mono" />`)
-        + switchControl('s-vertexSkipAuth', f.vertexSkipAuth, t('settings.env.skipAuth'), t('settings.env.skipAuth.vertex.desc'));
-    } else if (f.provider === 'foundry') {
-      providerBody += `<div class="rounded-md border border-current/15 bg-current/[0.03] p-3 text-xs opacity-80">${t('settings.provider.foundry.hint')}</div>`
-        + field(t('settings.env.foundryApiKey'), t('settings.env.foundryApiKey.desc'),
-          secretInput('env-foundryApiKey', f.foundryApiKey, 'foundry api key...', state.showApiKey, 'toggle-apikey'))
-        + field(t('settings.env.foundryResource'), t('settings.env.foundryResource.desc'),
-          `<input type="text" id="env-foundryResource" value="${escapeHtml(f.foundryResource)}" placeholder="my-resource"
-            class="w-full bg-transparent border border-current/20 rounded px-2 py-1 text-sm font-mono" />`)
-        + field(t('settings.env.foundryBaseUrl'), t('settings.env.foundryBaseUrl.desc'),
-          `<input type="url" id="env-foundryBaseUrl" value="${escapeHtml(f.foundryBaseUrl)}" placeholder="https://<resource>.inference.ml.azure.com"
-            class="w-full bg-transparent border border-current/20 rounded px-2 py-1 text-sm font-mono" />`)
-        + switchControl('s-foundrySkipAuth', f.foundrySkipAuth, t('settings.env.skipAuth'), t('settings.env.skipAuth.foundry.desc'));
-    }
-
-    providerBody += field(t('settings.env.subagentModel'), 'CLAUDE_CODE_SUBAGENT_MODEL',
-      `<select id="env-subagentModel" class="w-full bg-transparent border border-current/20 rounded px-2 py-1.5 text-sm">
-        ${MODELS.map(m => `<option value="${m}" ${f.envSubagentModel === m ? 'selected' : ''}>${m || t('settings.modelDefault')}</option>`).join('')}
-      </select>`);
-
-    const providerSection = section(t('settings.section.provider'), providerBody);
-
     // ---- Feature flags ----
     const flagsInner = ENV_FLAGS.map(fl =>
       switchControl('env-flag-' + fl.key, f.envFlags[fl.key] ?? false, t(fl.labelKey), fl.key)
@@ -708,7 +569,7 @@ export function mount(root: HTMLElement): void {
       : `<button id="show-advanced" class="text-xs px-3 py-1 border border-current/20 rounded hover:bg-current/5">${t('settings.advanced.show')} (${f.envCustom.length})</button>`;
     const advancedSection = section(t('settings.section.advanced'), advInner, t('settings.advanced.desc'));
 
-    return [permissionsSection, aiSection, providerSection, flagsSection, numbersSection, displaySection, memorySection, filesSection, pluginsSection, advancedSection].join('');
+    return [permissionsSection, aiSection, flagsSection, numbersSection, displaySection, memorySection, filesSection, pluginsSection, advancedSection].join('');
   }
 
   function commitTag(kind: 'allow' | 'deny' | 'ask' | 'dir') {
@@ -784,8 +645,6 @@ export function mount(root: HTMLElement): void {
           else if (id === 'viewMode') f.viewMode = v;
           else if (id === 'tui') f.tui = v;
           else if (id === 'autoUpdatesChannel') f.autoUpdatesChannel = v;
-          else if (id === 'provider') f.provider = v as any;
-          else if (id === 'authMode') f.authMode = v as any;
           markDirty(); render();
         });
       });
@@ -826,31 +685,8 @@ export function mount(root: HTMLElement): void {
       });
     });
 
-    root.querySelector<HTMLInputElement>('#env-apiKey')?.addEventListener('input', (e) => { f.envApiKey = (e.target as HTMLInputElement).value; markDirty(); });
-    root.querySelector<HTMLInputElement>('#env-authToken')?.addEventListener('input', (e) => { f.envAuthToken = (e.target as HTMLInputElement).value; markDirty(); });
-    root.querySelector<HTMLInputElement>('#env-baseUrl')?.addEventListener('input', (e) => { f.envBaseUrl = (e.target as HTMLInputElement).value; markDirty(); });
-    root.querySelector<HTMLSelectElement>('#env-subagentModel')?.addEventListener('change', (e) => { f.envSubagentModel = (e.target as HTMLSelectElement).value; markDirty(); render(); });
-    root.querySelector<HTMLButtonElement>('#toggle-apikey')?.addEventListener('click', () => { state.showApiKey = !state.showApiKey; render(); });
-    root.querySelector<HTMLButtonElement>('#toggle-authtoken')?.addEventListener('click', () => { state.showAuthToken = !state.showAuthToken; render(); });
-
-    // Bedrock/Vertex/Foundry fields
-    const input = (id: string, cb: (v: string) => void) => {
-      root.querySelector<HTMLInputElement>('#' + id)?.addEventListener('input', (e) => { cb((e.target as HTMLInputElement).value); markDirty(); });
-    };
-    input('env-bedrockToken', v => f.bedrockToken = v);
-    input('env-bedrockBaseUrl', v => f.bedrockBaseUrl = v);
-    input('env-vertexProjectId', v => f.vertexProjectId = v);
-    input('env-vertexBaseUrl', v => f.vertexBaseUrl = v);
-    input('env-foundryApiKey', v => f.foundryApiKey = v);
-    input('env-foundryBaseUrl', v => f.foundryBaseUrl = v);
-    input('env-foundryResource', v => f.foundryResource = v);
-    sw('s-bedrockSkipAuth', c => f.bedrockSkipAuth = c);
-    sw('s-vertexSkipAuth', c => f.vertexSkipAuth = c);
-    sw('s-foundrySkipAuth', c => f.foundrySkipAuth = c);
-
     root.querySelector<HTMLSelectElement>('#f-model')?.addEventListener('change', (e) => { f.model = (e.target as HTMLSelectElement).value; markDirty(); render(); });
     root.querySelector<HTMLSelectElement>('#f-language')?.addEventListener('change', (e) => { f.language = (e.target as HTMLSelectElement).value; markDirty(); render(); });
-    root.querySelector<HTMLInputElement>('#f-apiKeyHelper')?.addEventListener('input', (e) => { f.apiKeyHelper = (e.target as HTMLInputElement).value; markDirty(); });
     root.querySelector<HTMLInputElement>('#f-cleanup')?.addEventListener('input', (e) => {
       const v = (e.target as HTMLInputElement).value.trim();
       f.cleanupPeriodDays = v === '' ? '' : Number(v);
