@@ -1,51 +1,13 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs/promises';
-import * as path from 'path';
 import {
   readProviders, writeProviders, newId, secretKey, providersFilePath,
-  applyProfileToSettings, deactivateFromSettings, PROVIDER_PRESETS,
+  PROVIDER_PRESETS,
   type Profile, type ProviderKind, type AuthMode, type ProviderPreset, type SecretsGateway,
 } from '../core/providers';
-import { readUser, userSettingsPath } from '../core/settings';
+import { activateProfile, deleteProfile } from '../lib/provider-apply';
 import { CLAUDE_HOME } from '../lib/paths';
 import { t } from '../lib/l10n';
-
-async function writeUserSettings(next: Record<string, unknown>): Promise<void> {
-  const p = userSettingsPath(CLAUDE_HOME);
-  await fs.mkdir(path.dirname(p), { recursive: true });
-  await fs.writeFile(p, JSON.stringify(next, null, 2) + '\n', 'utf-8');
-}
-
-async function setActive(id: string | null, secrets: SecretsGateway): Promise<void> {
-  const doc = await readProviders(CLAUDE_HOME);
-  doc.active = id;
-  const user = await readUser(CLAUDE_HOME);
-  const next = id
-    ? await applyProfileToSettings(user, doc.profiles.find(p => p.id === id)!, secrets)
-    : deactivateFromSettings(user);
-  await writeUserSettings(next as Record<string, unknown>);
-  await writeProviders(CLAUDE_HOME, doc);
-}
-
-async function deleteProfile(id: string, secrets: SecretsGateway): Promise<void> {
-  const doc = await readProviders(CLAUDE_HOME);
-  const target = doc.profiles.find(p => p.id === id);
-  if (!target) return;
-
-  for (const field of ['apiKey', 'authToken', 'bedrockToken', 'foundryApiKey']) {
-    await secrets.delete(secretKey(id, field));
-  }
-
-  doc.profiles = doc.profiles.filter(p => p.id !== id);
-  const wasActive = doc.active === id;
-  if (wasActive) doc.active = null;
-  await writeProviders(CLAUDE_HOME, doc);
-
-  if (wasActive) {
-    const user = await readUser(CLAUDE_HOME);
-    await writeUserSettings(deactivateFromSettings(user) as Record<string, unknown>);
-  }
-}
 
 async function createFromPreset(preset: ProviderPreset, secrets: SecretsGateway): Promise<Profile | null> {
   const name = await vscode.window.showInputBox({ prompt: t('providers.create.name'), value: preset.label });
@@ -170,11 +132,11 @@ export function registerProviderCommands(secrets: SecretsGateway, onChange: () =
 
       if (pick.action === 'activate') {
         if (pick.id) {
-          await setActive(pick.id, secrets);
+          await activateProfile(pick.id, secrets);
           const name = doc.profiles.find(p => p.id === pick.id)?.name ?? '';
           vscode.window.showInformationMessage(t('providers.activated', name));
         } else {
-          await setActive(null, secrets);
+          await activateProfile(null, secrets);
           vscode.window.showInformationMessage(t('providers.deactivated'));
         }
         await fire();
@@ -192,7 +154,7 @@ export function registerProviderCommands(secrets: SecretsGateway, onChange: () =
       doc.profiles.push(profile);
       if (!doc.active) doc.active = profile.id;
       await writeProviders(CLAUDE_HOME, doc);
-      if (doc.active === profile.id) await setActive(profile.id, secrets);
+      if (doc.active === profile.id) await activateProfile(profile.id, secrets);
       await fire();
     }),
 
@@ -236,7 +198,7 @@ export function registerProviderCommands(secrets: SecretsGateway, onChange: () =
         else if (typeof arg.id === 'string') id = arg.id;
         else if (arg.id === null) id = null;
       }
-      await setActive(id, secrets);
+      await activateProfile(id, secrets);
       await fire();
     }),
   ];
