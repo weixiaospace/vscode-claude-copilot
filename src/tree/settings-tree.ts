@@ -1,15 +1,14 @@
 import * as vscode from 'vscode';
-import { userSettingsPath, projectSettingsPath, localSettingsPath } from '../core/settings';
-import { readProviders } from '../core/providers';
+import { userSettingsPath, projectSettingsPath, localSettingsPath, readUser, readProjectSettings, readLocalSettings } from '../core/settings';
+import { readProviders, matchProfileIdByEnv } from '../core/providers';
 import { CLAUDE_HOME } from '../lib/paths';
 import { currentWorkspace } from '../lib/workspace';
 import { t } from '../lib/l10n';
-import { effectiveProfileId } from '../lib/provider-apply';
 
 type Layer = 'user' | 'project' | 'local';
 type Node =
-  | { kind: 'layer'; layer: Layer; path: string; available: boolean }
-  | { kind: 'profile-group'; activeName: string };
+  | { kind: 'layer'; layer: Layer; path: string; available: boolean; profileName: string }
+  | { kind: 'profile-group' };
 
 const LAYER_META: Record<Layer, { labelKey: string; icon: string }> = {
   user: { labelKey: 'tree.group.user', icon: 'account' },
@@ -24,8 +23,7 @@ export class SettingsTreeProvider implements vscode.TreeDataProvider<Node> {
 
   getTreeItem(node: Node): vscode.TreeItem {
     if (node.kind === 'profile-group') {
-      const label = `${t('tree.providers.label')} · ${node.activeName}`;
-      const item = new vscode.TreeItem(label, vscode.TreeItemCollapsibleState.None);
+      const item = new vscode.TreeItem(t('tree.providers.label'), vscode.TreeItemCollapsibleState.None);
       item.iconPath = new vscode.ThemeIcon('rocket');
       item.tooltip = t('providers.openManager');
       item.contextValue = 'profile-group';
@@ -34,7 +32,8 @@ export class SettingsTreeProvider implements vscode.TreeDataProvider<Node> {
     }
 
     const meta = LAYER_META[node.layer];
-    const item = new vscode.TreeItem(t(meta.labelKey), vscode.TreeItemCollapsibleState.None);
+    const label = node.available ? `${t(meta.labelKey)} · ${node.profileName}` : t(meta.labelKey);
+    const item = new vscode.TreeItem(label, vscode.TreeItemCollapsibleState.None);
     item.iconPath = new vscode.ThemeIcon(meta.icon);
     item.tooltip = node.path;
     item.description = node.available ? '' : t('tree.group.noWorkspace');
@@ -47,16 +46,26 @@ export class SettingsTreeProvider implements vscode.TreeDataProvider<Node> {
 
   async getChildren(element?: Node): Promise<Node[]> {
     if (!element) {
-      const doc = await readProviders(CLAUDE_HOME);
-      const effId = await effectiveProfileId();
-      const active = doc.profiles.find(p => p.id === effId);
-      const profileName = active ? active.name : t('providers.statusBar.subscription');
       const ws = currentWorkspace();
+      const doc = await readProviders(CLAUDE_HOME);
+      const user = await readUser(CLAUDE_HOME);
+      const proj = ws ? await readProjectSettings(ws.fsPath) : {};
+      const local = ws ? await readLocalSettings(ws.fsPath) : {};
+
+      function nameFor(settings: Record<string, unknown>): string {
+        const id = matchProfileIdByEnv(settings, doc.profiles);
+        if (id) {
+          const p = doc.profiles.find(x => x.id === id);
+          return p ? p.name : t('providers.statusBar.subscription');
+        }
+        return t('providers.statusBar.subscription');
+      }
+
       return [
-        { kind: 'profile-group', activeName: profileName },
-        { kind: 'layer', layer: 'user', path: userSettingsPath(CLAUDE_HOME), available: true },
-        { kind: 'layer', layer: 'project', path: ws ? projectSettingsPath(ws.fsPath) : '', available: !!ws },
-        { kind: 'layer', layer: 'local', path: ws ? localSettingsPath(ws.fsPath) : '', available: !!ws },
+        { kind: 'profile-group' },
+        { kind: 'layer', layer: 'user', path: userSettingsPath(CLAUDE_HOME), available: true, profileName: nameFor(user) },
+        { kind: 'layer', layer: 'project', path: ws ? projectSettingsPath(ws.fsPath) : '', available: !!ws, profileName: ws ? nameFor(proj) : '—' },
+        { kind: 'layer', layer: 'local', path: ws ? localSettingsPath(ws.fsPath) : '', available: !!ws, profileName: ws ? nameFor(local) : '—' },
       ];
     }
     return [];
