@@ -1,5 +1,6 @@
 import { call } from './rpc';
 import { t } from './l10n';
+import { escapeHtml } from './ui';
 
 interface AvailablePlugin {
   name: string;
@@ -26,10 +27,6 @@ interface State {
   marketplaceFilter: 'all' | string;
   busy: Set<string>; // plugin keys currently installing/uninstalling
   loading: boolean;
-}
-
-function escapeHtml(s: string): string {
-  return s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
 }
 
 function pluginKey(p: { name: string; marketplace: string }): string {

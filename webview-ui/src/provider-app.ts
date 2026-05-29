@@ -1,5 +1,6 @@
 import { call } from './rpc';
 import { t } from './l10n';
+import { escapeHtml as esc } from './ui';
 
 type Kind = 'anthropic' | 'bedrock' | 'vertex' | 'foundry';
 type AuthMode = 'subscription' | 'apiKey' | 'authToken' | 'helper';
@@ -19,10 +20,6 @@ interface FormState {
   projectId: string; resource: string; skipAuth: boolean;
   secret: string;
   presetLabel?: string;
-}
-
-function esc(s: string): string {
-  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
 export function mount(root: HTMLElement): void {
