@@ -246,7 +246,7 @@ export function mount(root: HTMLElement): void {
     const q = state.search.trim().toLowerCase();
     const sections = SECTIONS.filter(sec => sectionMatches(sec, q));
     return `<nav class="space-y-0.5">${sections.map(sec => `
-      <button data-nav="${sec.id}" class="w-full text-left text-sm px-2 py-1.5 rounded transition-colors ${
+      <button data-nav="${sec.id}" ${state.activeSection === sec.id ? 'aria-current="true"' : ''} class="w-full text-left text-sm px-2 py-1.5 rounded transition-colors ${
         state.activeSection === sec.id ? 'bg-current/10 font-medium' : 'opacity-70 hover:bg-current/5'}">
         ${escapeHtml(t(sec.labelKey))}
       </button>`).join('')}</nav>`;
@@ -303,18 +303,23 @@ export function mount(root: HTMLElement): void {
     });
   }
 
+  function highlightNav(id: string) {
+    root.querySelectorAll<HTMLButtonElement>('button[data-nav]').forEach(b => {
+      const on = b.dataset.nav === id;
+      b.classList.toggle('bg-current/10', on);
+      b.classList.toggle('font-medium', on);
+      b.classList.toggle('opacity-70', !on);
+      if (on) b.setAttribute('aria-current', 'true'); else b.removeAttribute('aria-current');
+    });
+  }
+
   function bindNav() {
     root.querySelectorAll<HTMLButtonElement>('button[data-nav]').forEach(btn => {
       btn.addEventListener('click', () => {
         const id = btn.dataset.nav!;
         state.activeSection = id;
         root.querySelector(`#sec-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        root.querySelectorAll<HTMLButtonElement>('button[data-nav]').forEach(b => {
-          const on = b.dataset.nav === id;
-          b.classList.toggle('bg-current/10', on);
-          b.classList.toggle('font-medium', on);
-          b.classList.toggle('opacity-70', !on);
-        });
+        highlightNav(id);
       });
     });
 
@@ -325,12 +330,7 @@ export function mount(root: HTMLElement): void {
           if (e.isIntersecting) {
             const id = (e.target as HTMLElement).dataset.section!;
             state.activeSection = id;
-            root.querySelectorAll<HTMLButtonElement>('button[data-nav]').forEach(b => {
-              const on = b.dataset.nav === id;
-              b.classList.toggle('bg-current/10', on);
-              b.classList.toggle('font-medium', on);
-              b.classList.toggle('opacity-70', !on);
-            });
+            highlightNav(id);
           }
         }
       }, { root: scroller, rootMargin: '0px 0px -70% 0px', threshold: 0 });
