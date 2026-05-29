@@ -308,7 +308,6 @@
   "providers.manage.presetHint": "写入 {0} · 凭证存系统钥匙串 · 不会自动启用",
   "providers.manage.deleteConfirm": "删除 Profile「{0}」？已存的凭证也会一并清除。",
   "providers.manage.deleteActiveConfirm": "删除「{0}」？它是当前活动接入方——删除将回退到订阅模式。",
-  "providers.manage.secretUnchanged": "留空表示不修改",
   "providers.manage.secretSet": "已保存一个凭证——留空保留，输入新值替换。",
   "providers.manage.secretNone": "尚未保存凭证。",
   "providers.manage.newFromPreset": "从预设新建：{0}",

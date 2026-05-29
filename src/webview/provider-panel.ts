@@ -21,7 +21,7 @@ const PROVIDER_KEYS = [
   'providers.manage.effectiveNow', 'providers.manage.edit', 'providers.manage.delete', 'providers.manage.newAdvanced',
   'providers.manage.openJson', 'providers.manage.empty', 'providers.manage.name',
   'providers.manage.save', 'providers.manage.cancel', 'providers.manage.addToLibrary',
-  'providers.manage.presetHint', 'providers.manage.deleteConfirm', 'providers.manage.secretUnchanged',
+  'providers.manage.presetHint', 'providers.manage.deleteConfirm',
   'providers.manage.deleteActiveConfirm', 'providers.manage.secretSet',
   'providers.manage.secretNone', 'providers.manage.newFromPreset',
   'providers.statusBar.subscription',
