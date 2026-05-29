@@ -318,6 +318,7 @@
   "providers.manage.library": "Profile 库",
   "providers.manage.activate": "激活",
   "providers.manage.active": "● 激活中",
+  "providers.manage.effectiveNow": "当前生效",
   "providers.manage.edit": "编辑",
   "providers.manage.delete": "删除",
   "providers.manage.newAdvanced": "+ 新建 Profile（高级）",

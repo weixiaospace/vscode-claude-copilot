@@ -84,10 +84,11 @@ export function mount(root: HTMLElement): void {
 
   function renderList(): string {
     if (!data) return '';
-    const subActive = data.active === null;
-    const subRight = subActive
+    const subEffective = data.effectiveId === null;
+    const subShowBtn = data.active !== null;
+    const subRight = subEffective
       ? `<span class="text-[11px] px-2 py-0.5 rounded-full text-[var(--vscode-textLink-foreground)] border border-[var(--vscode-textLink-foreground)]/40">${esc(t('providers.manage.active'))}</span>`
-      : `<button id="act-sub" class="text-[11px] px-2 py-0.5 border border-current/20 rounded opacity-80 hover:opacity-100 hover:bg-current/5">${esc(t('providers.manage.activate'))}</button>`;
+      : (subShowBtn ? `<button id="act-sub" class="text-[11px] px-2 py-0.5 border border-current/20 rounded opacity-80 hover:opacity-100 hover:bg-current/5">${esc(t('providers.manage.activate'))}</button>` : '');
     const subRow = `
       <div class="flex items-center gap-3 px-3 py-2.5 border-b border-current/10">
         <span class="font-medium">${esc(t('providers.statusBar.subscription'))}</span>
@@ -98,10 +99,11 @@ export function mount(root: HTMLElement): void {
     const profileRows = data.profiles.length === 0
       ? `<div class="text-sm opacity-60 px-3 py-3">${esc(t('providers.manage.empty'))}</div>`
       : data.profiles.map(p => {
-          const isActive = p.id === data!.active;
-          const right = isActive
+          const isEffective = p.id === data!.effectiveId;
+          const showBtn = p.id !== data!.active;
+          const right = isEffective
             ? `<span class="text-[11px] px-2 py-0.5 rounded-full text-[var(--vscode-textLink-foreground)] border border-[var(--vscode-textLink-foreground)]/40">${esc(t('providers.manage.active'))}</span>`
-            : `<button data-act="${esc(p.id)}" class="text-[11px] px-2 py-0.5 border border-current/20 rounded opacity-80 hover:opacity-100 hover:bg-current/5">${esc(t('providers.manage.activate'))}</button>`;
+            : (showBtn ? `<button data-act="${esc(p.id)}" class="text-[11px] px-2 py-0.5 border border-current/20 rounded opacity-80 hover:opacity-100 hover:bg-current/5">${esc(t('providers.manage.activate'))}</button>` : '');
           return `
             <div class="flex items-center gap-3 px-3 py-2.5 border-b border-current/10">
               <span class="font-medium">${esc(p.name)}</span>
@@ -179,15 +181,28 @@ export function mount(root: HTMLElement): void {
       </div>`;
   }
 
+  function effectiveName(): string {
+    if (!data) return '';
+    if (data.effectiveId === null) return t('providers.statusBar.subscription');
+    const p = data.profiles.find(x => x.id === data!.effectiveId);
+    return p ? p.name : t('providers.statusBar.subscription');
+  }
+
   function render() {
     if (!data) { root.innerHTML = `<div class="p-6 text-sm opacity-70">${esc(t('common.loading'))}</div>`; return; }
     const presets = data.presets.map(p => `<button data-preset="${esc(p.id)}" class="text-sm px-3 py-1.5 border border-current/20 rounded-lg bg-current/[0.03] hover:bg-current/5">+ ${esc(p.label)}</button>`).join('');
+    const effName = effectiveName();
+    const effDiffer = data.effectiveId !== data.active;
+    const effBanner = effDiffer
+      ? `<div class="text-xs opacity-70 border border-current/15 rounded-md bg-current/[0.04] px-3 py-2">${esc(t('providers.manage.effectiveNow'))}: <strong>${esc(effName)}</strong></div>`
+      : '';
     root.innerHTML = `
       <div class="p-6 max-w-3xl mx-auto space-y-5">
         <div>
           <h1 class="text-2xl font-semibold flex items-center gap-2">🚀 ${esc(t('providers.manage.title'))}</h1>
           <p class="text-xs opacity-55 mt-1">${esc(t('providers.manage.subtitle'))}</p>
         </div>
+        ${effBanner}
         <section class="space-y-2">
           <div class="text-xs uppercase tracking-wider opacity-50">${esc(t('providers.manage.quickAdd'))}</div>
           <div class="flex gap-2 flex-wrap">${presets}</div>

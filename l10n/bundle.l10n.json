@@ -318,6 +318,7 @@
   "providers.manage.library": "Profile library",
   "providers.manage.activate": "Activate",
   "providers.manage.active": "● active",
+  "providers.manage.effectiveNow": "Currently effective",
   "providers.manage.edit": "Edit",
   "providers.manage.delete": "Delete",
   "providers.manage.newAdvanced": "+ New profile (advanced)",
