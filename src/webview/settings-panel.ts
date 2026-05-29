@@ -11,6 +11,7 @@ import { listInstalledPlugins } from '../core/plugins';
 import { readProviders, matchProfileIdByEnv } from '../core/providers';
 import { makeSecretsGateway } from '../lib/secrets';
 import { applyToLayer } from '../lib/provider-apply';
+import { refreshProviderPanel } from './provider-panel';
 import { CLAUDE_HOME } from '../lib/paths';
 import { currentWorkspace } from '../lib/workspace';
 import { makeNonce, type RpcRequest, type RpcResponse } from './messaging';
@@ -292,6 +293,7 @@ export function openSettingsPanel(context: vscode.ExtensionContext, layer: Layer
         const { layer, partial, knownKeys } = req.params;
         try {
           await writeLayer(layer, partial, knownKeys);
+          refreshProviderPanel();
           res = { id: req.id, result: 'ok' };
         } catch (e: any) {
           // Surface the failure natively — webviews can't show alert().
@@ -314,6 +316,7 @@ export function openSettingsPanel(context: vscode.ExtensionContext, layer: Layer
         const { layer, id } = req.params as { layer: Layer; id: string | null };
         const secrets = makeSecretsGateway(context);
         await applyToLayer(layer, id, secrets);
+        refreshProviderPanel();
         res = { id: req.id, result: 'ok' };
       } else if (req.method === 'commands:execute') {
         const { command } = req.params as { command: string };
