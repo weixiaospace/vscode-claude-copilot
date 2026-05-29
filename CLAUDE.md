@@ -190,7 +190,7 @@ VSCode 原生 l10n 的坑：**只自动加载 `bundle.l10n.<locale>.json`（带 
 
 前置：
 - `gh` CLI 已装并 `gh auth login` 过（ssh protocol）。当前活跃账号：`weixiaospace`
-- **网络坑**：本机代理可能把 `github.com` 解析到 fake-IP（如 `198.18.0.208`），SSH 22 端口不通但 HTTPS 443 正常。此时 push 改走 HTTPS + gh token：`git -c credential.helper='!gh auth git-credential' push https://github.com/weixiaospace/vscode-claude-copilot.git main`（tag 同理）
+- **网络坑（已规避）**：本机代理会把 `github.com` 解析到 fake-IP（如 `198.18.0.208`），SSH 22 端口不通但 HTTPS 443 正常。**所有 remote（`github` / `all` 的 fetch+push）已统一改为 HTTPS，凭证走 `git config credential.helper '!gh auth git-credential'`（gh token）**，因此正文里的 `git push github main` / `git push github vX.Y.Z` 直接可用，无需再带 `-c credential.helper=...` 前缀。若日后 remote 被重置回 SSH 再撞此坑，恢复办法：`git remote set-url github https://github.com/weixiaospace/vscode-claude-copilot.git`
 - VSCode Marketplace 发布需要 Azure DevOps PAT（Marketplace → Manage 范围 All accessible organizations）。一次性 `pnpm exec vsce login weixiao-space` 录入后持久保存；或每次用 `--pat <token>` 带上
 - `package.json` 的 `publisher` 字段必须是 `weixiao-space`（与 Azure DevOps publisher 对得上）
 
