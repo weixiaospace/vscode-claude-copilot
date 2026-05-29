@@ -186,12 +186,13 @@ VSCode 原生 l10n 的坑：**只自动加载 `bundle.l10n.<locale>.json`（带 
    # 等效写法（vsce 会重新跑 pnpm package）
    # pnpm exec vsce publish
    ```
-   发布 1-2 分钟后生效：`https://marketplace.visualstudio.com/items?itemName=ky-studio.claude-copilot`
+   发布 1-2 分钟后生效：`https://marketplace.visualstudio.com/items?itemName=weixiao-space.claude-copilot`
 
 前置：
 - `gh` CLI 已装并 `gh auth login` 过（ssh protocol）。当前活跃账号：`weixiaospace`
-- VSCode Marketplace 发布需要 Azure DevOps PAT（Marketplace → Manage 范围 All accessible organizations）。一次性 `pnpm exec vsce login ky-studio` 录入后持久保存；或每次用 `--pat <token>` 带上
-- `package.json` 的 `publisher` 字段必须是 `ky-studio`（与 Azure DevOps publisher 对得上）
+- **网络坑**：本机代理可能把 `github.com` 解析到 fake-IP（如 `198.18.0.208`），SSH 22 端口不通但 HTTPS 443 正常。此时 push 改走 HTTPS + gh token：`git -c credential.helper='!gh auth git-credential' push https://github.com/weixiaospace/vscode-claude-copilot.git main`（tag 同理）
+- VSCode Marketplace 发布需要 Azure DevOps PAT（Marketplace → Manage 范围 All accessible organizations）。一次性 `pnpm exec vsce login weixiao-space` 录入后持久保存；或每次用 `--pat <token>` 带上
+- `package.json` 的 `publisher` 字段必须是 `weixiao-space`（与 Azure DevOps publisher 对得上）
 
 ## 不做的事
 
