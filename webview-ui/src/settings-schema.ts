@@ -14,7 +14,7 @@ export type Field =
   | { kind: 'tagList'; id: 'allow' | 'deny' | 'ask' | 'dir'; labelKey: string; descKey?: string; placeholder: string; getList: (f: FormState) => string[] }
   | { kind: 'custom'; id: 'plugins' | 'advanced' };
 
-export interface SettingsSection { id: string; labelKey: string; icon: string; fields: Field[] }
+export interface SettingsSection { id: string; labelKey: string; descKey?: string; icon: string; fields: Field[] }
 
 // helper to build {value,label} option lists with a leading default option
 const opts = (values: string[], defaultLabel: string) =>
@@ -68,10 +68,10 @@ export const SECTIONS: SettingsSection[] = [
       { kind: 'switch', id: 's-awaySummary', labelKey: 'settings.awaySummary', descKey: 'settings.awaySummary.desc', get: f => f.awaySummaryEnabled, set: (f, v) => { f.awaySummaryEnabled = v; } },
     ],
   },
-  { id: 'flags', labelKey: 'settings.section.flags', icon: 'settings-gear', fields: flagFields },
+  { id: 'flags', labelKey: 'settings.section.flags', descKey: 'settings.section.flags.desc', icon: 'settings-gear', fields: flagFields },
   { id: 'limits', labelKey: 'settings.section.limits', icon: 'symbol-number', fields: numberFields },
   {
-    id: 'memory', labelKey: 'settings.section.memory', icon: 'database',
+    id: 'memory', labelKey: 'settings.section.memory', descKey: 'settings.section.memory.desc', icon: 'database',
     fields: [
       { kind: 'switch', id: 's-autoMemory', labelKey: 'settings.autoMemory', descKey: 'settings.autoMemory.desc', get: f => f.autoMemoryEnabled, set: (f, v) => { f.autoMemoryEnabled = v; } },
       { kind: 'switch', id: 's-autoDream', labelKey: 'settings.autoDream', descKey: 'settings.autoDream.desc', get: f => f.autoDreamEnabled, set: (f, v) => { f.autoDreamEnabled = v; } },
@@ -89,5 +89,5 @@ export const SECTIONS: SettingsSection[] = [
     ],
   },
   { id: 'plugins', labelKey: 'settings.section.plugins', icon: 'extensions', fields: [{ kind: 'custom', id: 'plugins' }] },
-  { id: 'advanced', labelKey: 'settings.section.advanced', icon: 'tools', fields: [{ kind: 'custom', id: 'advanced' }] },
+  { id: 'advanced', labelKey: 'settings.section.advanced', descKey: 'settings.advanced.desc', icon: 'tools', fields: [{ kind: 'custom', id: 'advanced' }] },
 ];
