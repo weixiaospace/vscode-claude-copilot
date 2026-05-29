@@ -292,6 +292,7 @@
   "providers.manage.subtitle": "在这里维护所有接入方；到 Settings 选择各层启用哪个",
   "providers.manage.quickAdd": "预设快加（只填 key）",
   "providers.manage.library": "Profile 库",
+  "providers.manage.activeLayerNote": "激活某个 Profile 会把它的环境变量写入用户层（~/.claude/settings.json）。这里标记的「激活」即用户层基线；项目层 / 本地层仍可在 Settings 中覆盖。",
   "providers.manage.activate": "激活",
   "providers.manage.active": "● 激活中",
   "providers.manage.effectiveNow": "当前生效",

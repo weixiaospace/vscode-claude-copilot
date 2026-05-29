@@ -17,7 +17,7 @@ const refreshers: (() => void)[] = [];
 const PROVIDER_KEYS = [
   'common.loading', 'common.preparing',
   'providers.manage.title', 'providers.manage.subtitle', 'providers.manage.quickAdd',
-  'providers.manage.library', 'providers.manage.activate', 'providers.manage.active',
+  'providers.manage.library', 'providers.manage.activeLayerNote', 'providers.manage.activate', 'providers.manage.active',
   'providers.manage.effectiveNow', 'providers.manage.edit', 'providers.manage.delete', 'providers.manage.newAdvanced',
   'providers.manage.openJson', 'providers.manage.empty', 'providers.manage.name',
   'providers.manage.save', 'providers.manage.cancel', 'providers.manage.addToLibrary',

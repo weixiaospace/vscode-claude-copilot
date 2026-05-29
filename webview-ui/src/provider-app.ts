@@ -210,6 +210,7 @@ export function mount(root: HTMLElement): void {
         </section>
         <section class="space-y-2">
           <div class="text-xs uppercase tracking-wider opacity-50">${esc(t('providers.manage.library'))}</div>
+          <p class="text-xs opacity-55 leading-relaxed">${esc(t('providers.manage.activeLayerNote'))}</p>
           <div class="rounded-lg border border-current/15 overflow-hidden">${renderList()}</div>
           <div class="flex gap-2 pt-1">
             <button id="p-new" class="text-xs px-3 py-1.5 border border-current/20 rounded hover:bg-current/5">${esc(t('providers.manage.newAdvanced'))}</button>

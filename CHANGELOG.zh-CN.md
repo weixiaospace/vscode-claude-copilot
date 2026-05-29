@@ -6,6 +6,24 @@
 
 **[English](CHANGELOG.md) | [中文](CHANGELOG.zh-CN.md)**
 
+## [0.1.18] - 2026-05-29
+
+### 变更
+
+**接入 Profile —— 独立管理面板、分层感知切换**
+- 侧边栏 "API Provider" 节点现在打开一个完整的 **Provider Manager WebView**，不再用树内 inline CRUD。支持预设快加（含 KIMI CODE）、Profile 库列表，以及弹窗式新建/编辑流程（名称必填校验 + 凭证已设提示）
+- Settings 面板的 provider 选择器改为**分层（layer-scoped）**：用户层 / 项目层 / 本地层各自选择自己的 provider。侧边栏树显示每层的 provider 名称，没有覆盖的层显示 "Inherited（继承）"
+- 状态栏显示跨所有层解析出的**生效（effective）** provider，作为只读状态展示，不再是 inline 切换器
+- 管理面板新增说明：激活某个 Profile 会把它的环境变量写入**用户层**（`~/.claude/settings.json`）；项目层 / 本地层仍可覆盖
+- Settings WebView 重做为**左侧导航 + 滚动联动（scrollspy）**两栏布局，带实时搜索/过滤，由声明式的分区/字段 schema 驱动
+
+### 修复
+
+- 删除 Profile 无反应 —— 确认改由 host 端处理
+- `effectiveProfileId` 误用合并后的 env，导致跨层匹配失败（如用户层 apiKey + 项目层 authToken）
+- 保存错误现在会被提示出来，未保存切换的确认走 host
+- 状态栏在 settings 写入 / `setLayerProvider` 时正确刷新
+
 ## [0.1.17] - 2026-04-22
 
 ### 新增
@@ -108,7 +126,8 @@
 - Usage Dashboard 用量统计与成本估算
 - 中英文双语支持
 
-[Unreleased]: https://github.com/weixiaospace/vscode-claude-copilot/compare/v0.1.17...HEAD
+[Unreleased]: https://github.com/weixiaospace/vscode-claude-copilot/compare/v0.1.18...HEAD
+[0.1.18]: https://github.com/weixiaospace/vscode-claude-copilot/releases/tag/v0.1.18
 [0.1.17]: https://github.com/weixiaospace/vscode-claude-copilot/releases/tag/v0.1.17
 [0.1.16]: https://github.com/weixiaospace/vscode-claude-copilot/releases/tag/v0.1.16
 [0.1.15]: https://github.com/weixiaospace/vscode-claude-copilot/releases/tag/v0.1.15

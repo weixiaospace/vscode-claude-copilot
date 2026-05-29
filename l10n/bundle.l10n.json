@@ -292,6 +292,7 @@
   "providers.manage.subtitle": "Maintain all providers here; pick which one each layer uses in Settings",
   "providers.manage.quickAdd": "Quick add (key only)",
   "providers.manage.library": "Profile library",
+  "providers.manage.activeLayerNote": "Activating a profile writes its env to the user layer (~/.claude/settings.json). The “active” mark here reflects the user-layer baseline; project / local layers can still override it in Settings.",
   "providers.manage.activate": "Activate",
   "providers.manage.active": "● active",
   "providers.manage.effectiveNow": "Currently effective",
