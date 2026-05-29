@@ -200,18 +200,35 @@ export function mount(root: HTMLElement): void {
     }
   }
 
-  function renderSectionBody(sec: SettingsSection, f: FormState): string {
-    return sec.fields.map(fld => renderField(fld, f)).join(sec.id === 'flags' ? '<div class="border-t border-current/10 my-1"></div>' : '');
+  function fieldMatches(fld: Field, q: string): boolean {
+    if (!q) return true;
+    if (fld.kind === 'custom') return false; // custom sections only show when query empty
+    const raw = ('descRaw' in fld && fld.descRaw) ? fld.descRaw : '';
+    const hay = [t(fld.labelKey), fld.id, raw].join(' ').toLowerCase();
+    return hay.includes(q);
+  }
+  function sectionMatches(sec: SettingsSection, q: string): boolean {
+    if (!q) return true;
+    if (t(sec.labelKey).toLowerCase().includes(q)) return true;
+    return sec.fields.some(fl => fieldMatches(fl, q));
   }
 
   function renderForm(): string {
     if (!state.form || !state.data) return '';
     const f = state.form;
-    return SECTIONS.map(sec => `
-      <section id="sec-${sec.id}" data-section="${sec.id}" class="rounded-lg border border-current/15 p-5 space-y-4 scroll-mt-4">
-        ${ui.sectionHeader(t(sec.labelKey), sec.descKey ? t(sec.descKey) : undefined)}
-        ${renderSectionBody(sec, f)}
-      </section>`).join('');
+    const q = state.search.trim().toLowerCase();
+    const visibleSections = SECTIONS.filter(sec => sectionMatches(sec, q));
+    if (visibleSections.length === 0) return ui.emptyState(t('settings.search.empty'));
+    return visibleSections.map(sec => {
+      // when query empty, show all fields (incl. custom); when searching, show only matching fields (custom excluded)
+      const fields = q ? sec.fields.filter(fl => fieldMatches(fl, q)) : sec.fields;
+      if (fields.length === 0) return '';
+      return `
+    <section id="sec-${sec.id}" data-section="${sec.id}" class="rounded-lg border border-current/15 p-5 space-y-4 scroll-mt-4">
+      ${ui.sectionHeader(t(sec.labelKey), sec.descKey ? t(sec.descKey) : undefined)}
+      ${fields.map(fl => renderField(fl, f)).join(sec.id === 'flags' ? '<div class="border-t border-current/10 my-1"></div>' : '')}
+    </section>`;
+    }).join('');
   }
 
   function commitTag(kind: 'allow' | 'deny' | 'ask' | 'dir') {
@@ -226,7 +243,9 @@ export function mount(root: HTMLElement): void {
   }
 
   function renderNav(): string {
-    return `<nav class="space-y-0.5">${SECTIONS.map(sec => `
+    const q = state.search.trim().toLowerCase();
+    const sections = SECTIONS.filter(sec => sectionMatches(sec, q));
+    return `<nav class="space-y-0.5">${sections.map(sec => `
       <button data-nav="${sec.id}" class="w-full text-left text-sm px-2 py-1.5 rounded transition-colors ${
         state.activeSection === sec.id ? 'bg-current/10 font-medium' : 'opacity-70 hover:bg-current/5'}">
         ${escapeHtml(t(sec.labelKey))}
@@ -269,6 +288,19 @@ export function mount(root: HTMLElement): void {
       </div>`;
     bind();
     bindNav();
+    bindSearch();
+  }
+
+  function bindSearch() {
+    const input = root.querySelector<HTMLInputElement>('#settings-search');
+    if (!input) return;
+    input.addEventListener('input', () => {
+      state.search = input.value;
+      const caret = input.selectionStart ?? input.value.length;
+      render();
+      const next = root.querySelector<HTMLInputElement>('#settings-search');
+      if (next) { next.focus(); try { next.setSelectionRange(caret, caret); } catch { /* non-text input */ } }
+    });
   }
 
   function bindNav() {
