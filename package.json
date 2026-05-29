@@ -84,8 +84,7 @@
         { "command": "claudeCopilot.mcp.addProject", "when": "view == claudeCopilot.mcp && viewItem == group:mcp:project", "group": "inline" },
         { "command": "claudeCopilot.mcp.remove", "when": "view == claudeCopilot.mcp && viewItem =~ /^mcp:/" },
         { "command": "claudeCopilot.skill.delete", "when": "view == claudeCopilot.skills && viewItem =~ /^skill:/" },
-        { "command": "claudeCopilot.memory.delete", "when": "view == claudeCopilot.memory && viewItem == memory:item" },
-        { "command": "claudeCopilot.providers.create", "when": "view == claudeCopilot.settings && viewItem == profile-group", "group": "inline@0" }
+        { "command": "claudeCopilot.memory.delete", "when": "view == claudeCopilot.memory && viewItem == memory:item" }
       ]
     }
   },

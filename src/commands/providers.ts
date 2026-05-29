@@ -1,101 +1,12 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs/promises';
 import {
-  readProviders, writeProviders, newId, secretKey, providersFilePath,
-  PROVIDER_PRESETS,
-  type Profile, type ProviderKind, type AuthMode, type ProviderPreset, type SecretsGateway,
+  readProviders, writeProviders, providersFilePath,
+  type SecretsGateway,
 } from '../core/providers';
 import { activateProfile, deleteProfile } from '../lib/provider-apply';
 import { CLAUDE_HOME } from '../lib/paths';
 import { t } from '../lib/l10n';
-
-async function createFromPreset(preset: ProviderPreset, secrets: SecretsGateway): Promise<Profile | null> {
-  const name = await vscode.window.showInputBox({ prompt: t('providers.create.name'), value: preset.label });
-  if (!name) return null;
-  const key = await vscode.window.showInputBox({ prompt: t('providers.create.presetKey', preset.label), password: true });
-  if (!key) return null;
-
-  const id = newId();
-  await secrets.set(secretKey(id, preset.credentialField), key);
-  const p: Profile = { id, name, kind: 'anthropic', authMode: preset.authMode, baseUrl: preset.baseUrl };
-  if (preset.credentialField === 'apiKey') p.hasApiKey = true;
-  else p.hasAuthToken = true;
-  return p;
-}
-
-async function promptCreateProfile(secrets: SecretsGateway): Promise<Profile | null> {
-  type KindItem = vscode.QuickPickItem & { preset?: ProviderPreset; value?: ProviderKind };
-  const items: KindItem[] = [];
-  for (const preset of PROVIDER_PRESETS) {
-    items.push({ label: preset.label, description: preset.baseUrl, preset });
-  }
-  if (PROVIDER_PRESETS.length) {
-    items.push({ label: t('providers.create.customGroup'), kind: vscode.QuickPickItemKind.Separator });
-  }
-  items.push(
-    { label: t('providers.create.kind.anthropic'), value: 'anthropic' },
-    { label: t('providers.create.kind.bedrock'), value: 'bedrock' },
-    { label: t('providers.create.kind.vertex'), value: 'vertex' },
-    { label: t('providers.create.kind.foundry'), value: 'foundry' },
-  );
-
-  const kindPick = await vscode.window.showQuickPick(items, { title: t('providers.create.chooseKind') });
-  if (!kindPick) return null;
-  if (kindPick.preset) return createFromPreset(kindPick.preset, secrets);
-
-  const name = await vscode.window.showInputBox({ prompt: t('providers.create.name') });
-  if (!name) return null;
-
-  const id = newId();
-  const baseUrl = await vscode.window.showInputBox({ prompt: t('providers.create.baseUrl'), value: '' }) ?? '';
-
-  if (kindPick.value === 'anthropic') {
-    const modePick = await vscode.window.showQuickPick(
-      [
-        { label: t('settings.authMode.apiKey'), value: 'apiKey' as AuthMode },
-        { label: t('settings.authMode.authToken'), value: 'authToken' as AuthMode },
-        { label: t('settings.authMode.helper'), value: 'helper' as AuthMode },
-      ],
-      { title: t('providers.create.authMode') },
-    );
-    if (!modePick) return null;
-
-    const p: Profile = { id, name, kind: 'anthropic', authMode: modePick.value, baseUrl: baseUrl || undefined };
-    if (modePick.value === 'apiKey') {
-      const k = await vscode.window.showInputBox({ prompt: t('providers.create.apiKey'), password: true });
-      if (k) { await secrets.set(secretKey(id, 'apiKey'), k); (p as any).hasApiKey = true; }
-    } else if (modePick.value === 'authToken') {
-      const tok = await vscode.window.showInputBox({ prompt: t('providers.create.authToken'), password: true });
-      if (tok) { await secrets.set(secretKey(id, 'authToken'), tok); (p as any).hasAuthToken = true; }
-    } else if (modePick.value === 'helper') {
-      const h = await vscode.window.showInputBox({ prompt: t('providers.create.apiKeyHelper') });
-      if (h) (p as any).apiKeyHelper = h;
-    }
-    return p;
-  }
-
-  if (kindPick.value === 'bedrock') {
-    const tok = await vscode.window.showInputBox({ prompt: t('providers.create.bedrockToken'), password: true, value: '' }) ?? '';
-    const skipStr = await vscode.window.showInputBox({ prompt: t('providers.create.skipAuth'), value: 'no' }) ?? 'no';
-    const p: Profile = { id, name, kind: 'bedrock', baseUrl: baseUrl || undefined, skipAuth: skipStr.toLowerCase().startsWith('y') || undefined };
-    if (tok) { await secrets.set(secretKey(id, 'bedrockToken'), tok); p.hasBearerToken = true; }
-    return p;
-  }
-
-  if (kindPick.value === 'vertex') {
-    const project = await vscode.window.showInputBox({ prompt: t('providers.create.vertexProjectId'), value: '' }) ?? '';
-    const skipStr = await vscode.window.showInputBox({ prompt: t('providers.create.skipAuth'), value: 'no' }) ?? 'no';
-    return { id, name, kind: 'vertex', projectId: project || undefined, baseUrl: baseUrl || undefined, skipAuth: skipStr.toLowerCase().startsWith('y') || undefined };
-  }
-
-  // foundry
-  const resource = await vscode.window.showInputBox({ prompt: t('providers.create.foundryResource'), value: '' }) ?? '';
-  const key = await vscode.window.showInputBox({ prompt: t('providers.create.foundryApiKey'), password: true, value: '' }) ?? '';
-  const skipStr = await vscode.window.showInputBox({ prompt: t('providers.create.skipAuth'), value: 'no' }) ?? 'no';
-  const p: Profile = { id, name, kind: 'foundry', resource: resource || undefined, baseUrl: baseUrl || undefined, skipAuth: skipStr.toLowerCase().startsWith('y') || undefined };
-  if (key) { await secrets.set(secretKey(id, 'foundryApiKey'), key); p.hasApiKey = true; }
-  return p;
-}
 
 export function registerProviderCommands(secrets: SecretsGateway, onChange: () => void): vscode.Disposable[] {
   const fire = async () => { onChange(); };
@@ -103,7 +14,7 @@ export function registerProviderCommands(secrets: SecretsGateway, onChange: () =
   return [
     vscode.commands.registerCommand('claudeCopilot.providers.quickSwitch', async () => {
       const doc = await readProviders(CLAUDE_HOME);
-      type Item = vscode.QuickPickItem & { action: 'activate' | 'create' | 'manage'; id?: string };
+      type Item = vscode.QuickPickItem & { action: 'activate' | 'manage'; id?: string };
       const items: Item[] = [];
       for (const p of doc.profiles) {
         const active = p.id === doc.active;
@@ -121,7 +32,6 @@ export function registerProviderCommands(secrets: SecretsGateway, onChange: () =
         detail: t('settings.authMode.subscription'),
         action: 'activate',
       });
-      items.push({ label: t('providers.quickPick.createNew'), action: 'create' });
       if (doc.profiles.length) items.push({ label: t('providers.quickPick.manage'), action: 'manage' });
 
       const pick = await vscode.window.showQuickPick(items, {
@@ -140,22 +50,13 @@ export function registerProviderCommands(secrets: SecretsGateway, onChange: () =
           vscode.window.showInformationMessage(t('providers.deactivated'));
         }
         await fire();
-      } else if (pick.action === 'create') {
-        await vscode.commands.executeCommand('claudeCopilot.providers.create');
       } else if (pick.action === 'manage') {
         await vscode.commands.executeCommand('claudeCopilot.openProviderPanel');
       }
     }),
 
     vscode.commands.registerCommand('claudeCopilot.providers.create', async () => {
-      const profile = await promptCreateProfile(secrets);
-      if (!profile) return;
-      const doc = await readProviders(CLAUDE_HOME);
-      doc.profiles.push(profile);
-      if (!doc.active) doc.active = profile.id;
-      await writeProviders(CLAUDE_HOME, doc);
-      if (doc.active === profile.id) await activateProfile(profile.id, secrets);
-      await fire();
+      await vscode.commands.executeCommand('claudeCopilot.openProviderPanel');
     }),
 
     vscode.commands.registerCommand('claudeCopilot.providers.delete', async (arg?: { id?: string }) => {
