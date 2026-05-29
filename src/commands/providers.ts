@@ -143,7 +143,7 @@ export function registerProviderCommands(secrets: SecretsGateway, onChange: () =
       } else if (pick.action === 'create') {
         await vscode.commands.executeCommand('claudeCopilot.providers.create');
       } else if (pick.action === 'manage') {
-        await vscode.commands.executeCommand('claudeCopilot.providers.edit');
+        await vscode.commands.executeCommand('claudeCopilot.openProviderPanel');
       }
     }),
 

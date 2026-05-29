@@ -17,7 +17,7 @@ import { migrateProvidersOnce } from './lib/migrate-providers';
 import { openUsagePanel } from './webview/usage-panel';
 import { openMarketplacePanel, registerMarketplaceRefresh } from './webview/marketplace-panel';
 import { openSettingsPanel } from './webview/settings-panel';
-import { openProviderPanel, registerProviderPanelRefresh } from './webview/provider-panel';
+import { openProviderPanel, registerProviderPanelRefresh, refreshProviderPanel } from './webview/provider-panel';
 import { runClaude } from './core/claude-cli';
 import { t } from './lib/l10n';
 
@@ -63,6 +63,7 @@ export function activate(context: vscode.ExtensionContext): void {
     ...registerProviderCommands(secrets, () => {
       void statusBar.update();
       settings.refresh();
+      refreshProviderPanel();
     }),
     ...registerWatchers({
       plugins: () => plugins.refresh(),

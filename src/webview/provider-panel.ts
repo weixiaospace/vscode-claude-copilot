@@ -31,6 +31,7 @@ const PROVIDER_KEYS = [
 ];
 
 export function registerProviderPanelRefresh(cb: () => void): void { refreshers.push(cb); }
+export function refreshProviderPanel(): void { refreshers.forEach(r => r()); }
 
 interface ProviderFormPayload {
   id?: string;
