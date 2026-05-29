@@ -28,8 +28,6 @@
   "cmd.memory.create": "新建记忆...",
   "cmd.memory.delete": "删除记忆",
   "cmd.providers.quickSwitch": "Claude Copilot: 切换接入 Profile",
-  "cmd.providers.create": "Claude Copilot: 新建接入 Profile...",
   "cmd.providers.edit": "Claude Copilot: 编辑接入 Profile...",
-  "cmd.providers.delete": "Claude Copilot: 删除接入 Profile...",
-  "cmd.providers.activateById": "切换"
+  "cmd.providers.delete": "Claude Copilot: 删除接入 Profile..."
 }

@@ -55,10 +55,6 @@ export function registerProviderCommands(secrets: SecretsGateway, onChange: () =
       }
     }),
 
-    vscode.commands.registerCommand('claudeCopilot.providers.create', async () => {
-      await vscode.commands.executeCommand('claudeCopilot.openProviderPanel');
-    }),
-
     vscode.commands.registerCommand('claudeCopilot.providers.delete', async (arg?: { id?: string }) => {
       const doc = await readProviders(CLAUDE_HOME);
       if (!doc.profiles.length) return;
@@ -92,15 +88,5 @@ export function registerProviderCommands(secrets: SecretsGateway, onChange: () =
       await vscode.window.showTextDocument(doc);
     }),
 
-    vscode.commands.registerCommand('claudeCopilot.providers.activateById', async (arg?: { id?: string | null }) => {
-      let id: string | null = null;
-      if (arg && typeof arg === 'object') {
-        if (arg.id === '__subscription__') id = null;
-        else if (typeof arg.id === 'string') id = arg.id;
-        else if (arg.id === null) id = null;
-      }
-      await activateProfile(id, secrets);
-      await fire();
-    }),
   ];
 }

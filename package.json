@@ -56,15 +56,12 @@
       { "command": "claudeCopilot.memory.create", "title": "%cmd.memory.create%", "icon": "$(add)" },
       { "command": "claudeCopilot.memory.delete", "title": "%cmd.memory.delete%" },
       { "command": "claudeCopilot.providers.quickSwitch", "title": "%cmd.providers.quickSwitch%", "icon": "$(rocket)" },
-      { "command": "claudeCopilot.providers.create", "title": "%cmd.providers.create%", "icon": "$(add)" },
       { "command": "claudeCopilot.providers.edit", "title": "%cmd.providers.edit%", "icon": "$(edit)" },
-      { "command": "claudeCopilot.providers.delete", "title": "%cmd.providers.delete%", "icon": "$(trash)" },
-      { "command": "claudeCopilot.providers.activateById", "title": "%cmd.providers.activateById%" }
+      { "command": "claudeCopilot.providers.delete", "title": "%cmd.providers.delete%", "icon": "$(trash)" }
     ],
     "menus": {
       "commandPalette": [
-        { "command": "claudeCopilot.openFile", "when": "false" },
-        { "command": "claudeCopilot.providers.activateById", "when": "false" }
+        { "command": "claudeCopilot.openFile", "when": "false" }
       ],
       "view/title": [
         { "command": "claudeCopilot.openMarketplace", "when": "view == claudeCopilot.plugins", "group": "navigation@0" },
