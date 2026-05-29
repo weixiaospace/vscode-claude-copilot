@@ -17,6 +17,8 @@ interface State {
   saving: boolean;
   tagInput: Record<'allow' | 'deny' | 'ask' | 'dir', string>;
   showAdvancedEnv: boolean;
+  activeSection: string;
+  search: string;
 }
 
 const FIELD_BY_ID = new Map<string, Field>();
@@ -24,12 +26,16 @@ for (const sec of SECTIONS) for (const fld of sec.fields) FIELD_BY_ID.set(fld.id
 
 // ==================== Render helpers ====================
 
+let scrollObserver: IntersectionObserver | null = null;
+
 export function mount(root: HTMLElement): void {
   const initialLayer = ((window as any).__layer as Layer) ?? 'user';
   const state: State = {
     layer: initialLayer, data: null, form: null, dirty: false, loading: false, saving: false,
     tagInput: { allow: '', deny: '', ask: '', dir: '' },
     showAdvancedEnv: false,
+    activeSection: SECTIONS[0].id,
+    search: '',
   };
 
   async function load() {
@@ -219,48 +225,85 @@ export function mount(root: HTMLElement): void {
     markDirty(); render();
   }
 
+  function renderNav(): string {
+    return `<nav class="space-y-0.5">${SECTIONS.map(sec => `
+      <button data-nav="${sec.id}" class="w-full text-left text-sm px-2 py-1.5 rounded transition-colors ${
+        state.activeSection === sec.id ? 'bg-current/10 font-medium' : 'opacity-70 hover:bg-current/5'}">
+        ${escapeHtml(t(sec.labelKey))}
+      </button>`).join('')}</nav>`;
+  }
+
   function render() {
+    if (scrollObserver) { scrollObserver.disconnect(); scrollObserver = null; }
     if (!state.form || !state.data) {
       root.innerHTML = `<div class="p-6 text-sm opacity-70">${state.loading ? t('common.loading') : t('common.preparing')}</div>`;
       return;
     }
     root.innerHTML = `
-      <div class="p-6 max-w-5xl mx-auto space-y-5">
-        <div class="flex items-center justify-between">
-          <h1 class="text-2xl font-semibold flex items-center gap-2">⚙️ ${t('settings.title')}</h1>
-          ${state.dirty ? `<span class="text-xs px-2 py-0.5 rounded border border-current/30 opacity-80">${t('settings.unsaved')}</span>` : ''}
+      <div class="flex flex-col h-screen">
+        <header class="shrink-0 border-b border-current/15 px-5 py-3 flex items-center justify-between gap-3">
+          <div class="flex items-center gap-3 min-w-0">
+            ${renderLayerBadge()}
+          </div>
+          <div class="flex items-center gap-2 shrink-0">
+            ${state.dirty ? `<span class="text-xs px-2 py-0.5 rounded border border-current/30 opacity-80">${t('settings.unsaved')}</span>` : ''}
+          </div>
+        </header>
+        <div class="flex-1 flex min-h-0">
+          <aside class="w-48 shrink-0 border-r border-current/15 p-3 overflow-y-auto space-y-3">
+            <input id="settings-search" type="text" placeholder="${escapeHtml(t('settings.search'))}" value="${escapeHtml(state.search)}"
+              class="w-full bg-transparent border border-current/20 rounded px-2 py-1 text-sm" />
+            ${renderNav()}
+          </aside>
+          <main id="settings-scroll" class="flex-1 overflow-y-auto p-5 space-y-4">
+            ${renderProviderSelect()}
+            <div class="space-y-4">${renderForm()}</div>
+          </main>
         </div>
-
-        ${renderLayerBadge()}
-
-        ${renderProviderSelect()}
-
-        <div class="rounded-md border border-current/15 bg-current/[0.03] p-3 text-xs space-y-1.5">
-          <div class="flex gap-2"><span class="opacity-60 w-16 shrink-0">User</span><span class="opacity-80">${t('settings.scope.user')}</span></div>
-          <div class="flex gap-2"><span class="opacity-60 w-16 shrink-0">Project</span><span class="opacity-80">${t('settings.scope.project')}</span></div>
-          <div class="flex gap-2"><span class="opacity-60 w-16 shrink-0">Local</span><span class="opacity-80">${t('settings.scope.local')}</span></div>
-          <div class="pt-1 opacity-55 text-[11px]">${t('settings.scope.priority')}</div>
-        </div>
-
-        <div class="space-y-5">${renderForm()}</div>
-
-        <div class="flex gap-2 pt-3 border-t border-current/10 sticky bottom-0 bg-[var(--vscode-editor-background)] pb-2 -mx-6 px-6">
-          <button id="save-btn" ${state.saving || !state.dirty ? 'disabled' : ''}
-            class="px-4 py-1.5 rounded text-sm border border-current/40 bg-current/10 hover:bg-current/20 disabled:opacity-40">
-            ${state.saving ? t('settings.saving') : t('settings.save')}
-          </button>
-          <button id="reset-btn" ${state.dirty ? '' : 'disabled'}
-            class="px-4 py-1.5 rounded text-sm border border-current/20 hover:bg-current/5 disabled:opacity-40">
-            ${t('settings.reset')}
-          </button>
+        <footer class="shrink-0 flex gap-2 px-5 py-2 border-t border-current/15 bg-[var(--vscode-editor-background)]">
+          ${ui.button({ id: 'save-btn', label: state.saving ? t('settings.saving') : t('settings.save'), variant: 'primary', disabled: state.saving || !state.dirty })}
+          ${ui.button({ id: 'reset-btn', label: t('settings.reset'), variant: 'secondary', disabled: !state.dirty })}
           <div class="flex-1"></div>
-          <button id="json-btn" class="px-4 py-1.5 rounded text-sm opacity-70 hover:opacity-100">
-            ${t('settings.editJson')}
-          </button>
-        </div>
-      </div>
-    `;
+          ${ui.button({ id: 'json-btn', label: t('settings.editJson'), variant: 'ghost' })}
+        </footer>
+      </div>`;
     bind();
+    bindNav();
+  }
+
+  function bindNav() {
+    root.querySelectorAll<HTMLButtonElement>('button[data-nav]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.nav!;
+        state.activeSection = id;
+        root.querySelector(`#sec-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        root.querySelectorAll<HTMLButtonElement>('button[data-nav]').forEach(b => {
+          const on = b.dataset.nav === id;
+          b.classList.toggle('bg-current/10', on);
+          b.classList.toggle('font-medium', on);
+          b.classList.toggle('opacity-70', !on);
+        });
+      });
+    });
+
+    const scroller = root.querySelector<HTMLElement>('#settings-scroll');
+    if (scroller) {
+      scrollObserver = new IntersectionObserver((entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting) {
+            const id = (e.target as HTMLElement).dataset.section!;
+            state.activeSection = id;
+            root.querySelectorAll<HTMLButtonElement>('button[data-nav]').forEach(b => {
+              const on = b.dataset.nav === id;
+              b.classList.toggle('bg-current/10', on);
+              b.classList.toggle('font-medium', on);
+              b.classList.toggle('opacity-70', !on);
+            });
+          }
+        }
+      }, { root: scroller, rootMargin: '0px 0px -70% 0px', threshold: 0 });
+      root.querySelectorAll<HTMLElement>('section[data-section]').forEach(s => scrollObserver!.observe(s));
+    }
   }
 
   function bind() {
