@@ -3,6 +3,7 @@ import * as path from 'path';
 import {
   readProviders, writeProviders, secretKey,
   applyProfileToSettings, deactivateFromSettings, matchProfileIdByEnv,
+  PROVIDER_MANAGED_ENV_KEYS,
   type SecretsGateway,
 } from '../core/providers';
 import {
@@ -85,4 +86,26 @@ export async function effectiveProfileId(): Promise<string | null> {
   }
   const matched = matchProfileIdByEnv({ env, apiKeyHelper: helper }, doc.profiles);
   return matched ?? doc.active;
+}
+
+function hasProviderEnv(s: Record<string, unknown>): boolean {
+  const env = (s.env ?? {}) as Record<string, string>;
+  if (PROVIDER_MANAGED_ENV_KEYS.some(k => k in env)) return true;
+  return typeof s.apiKeyHelper === 'string' && !!s.apiKeyHelper;
+}
+
+/**
+ * The effective profile id plus which layer it resolves from. Switching only
+ * writes the user layer, so the status bar uses this to tell the user whether
+ * the shown provider is the user baseline or a project/local override.
+ * 'none' means no managed provider env anywhere (subscription at user level).
+ */
+export async function effectiveProviderInfo(): Promise<{ id: string | null; sourceLayer: 'user' | 'project' | 'local' | 'none' }> {
+  const id = await effectiveProfileId();
+  if (currentWorkspace()) {
+    if (hasProviderEnv(await readLayer('local'))) return { id, sourceLayer: 'local' };
+    if (hasProviderEnv(await readLayer('project'))) return { id, sourceLayer: 'project' };
+  }
+  if (hasProviderEnv(await readLayer('user'))) return { id, sourceLayer: 'user' };
+  return { id, sourceLayer: 'none' };
 }

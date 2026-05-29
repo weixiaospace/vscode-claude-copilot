@@ -27,7 +27,7 @@
   "cmd.skill.delete": "Delete Skill",
   "cmd.memory.create": "New Memory...",
   "cmd.memory.delete": "Delete Memory",
-  "cmd.providers.quickSwitch": "Claude Copilot: Switch Provider Profile",
+  "cmd.providers.quickSwitch": "Claude Copilot: Provider Status",
   "cmd.providers.edit": "Claude Copilot: Edit Provider Profile...",
   "cmd.providers.delete": "Claude Copilot: Delete Provider Profile..."
 }

@@ -4,7 +4,7 @@ import {
   readProviders, writeProviders, providersFilePath,
   type SecretsGateway,
 } from '../core/providers';
-import { activateProfile, deleteProfile } from '../lib/provider-apply';
+import { deleteProfile, effectiveProviderInfo } from '../lib/provider-apply';
 import { CLAUDE_HOME } from '../lib/paths';
 import { t } from '../lib/l10n';
 
@@ -12,45 +12,30 @@ export function registerProviderCommands(secrets: SecretsGateway, onChange: () =
   const fire = async () => { onChange(); };
 
   return [
+    // Status-bar click: read-only status details (no inline switching — switching
+    // lives in the provider manager, since switching only affects the user layer
+    // while this shows the effective, possibly project/local-overridden, provider).
     vscode.commands.registerCommand('claudeCopilot.providers.quickSwitch', async () => {
       const doc = await readProviders(CLAUDE_HOME);
-      type Item = vscode.QuickPickItem & { action: 'activate' | 'manage'; id?: string };
-      const items: Item[] = [];
-      for (const p of doc.profiles) {
-        const active = p.id === doc.active;
-        items.push({
-          label: `${active ? '$(check) ' : '    '}${p.name}`,
-          description: active ? t('providers.quickPick.active') : undefined,
-          detail: p.kind + (p.kind === 'anthropic' ? ` · ${p.authMode}` : ''),
-          action: 'activate', id: p.id,
-        });
-      }
-      const isSubscription = doc.active === null;
-      items.push({
-        label: `${isSubscription ? '$(check) ' : '    '}${t('providers.statusBar.subscription')}`,
-        description: isSubscription ? t('providers.quickPick.active') : undefined,
-        detail: t('settings.authMode.subscription'),
-        action: 'activate',
-      });
-      if (doc.profiles.length) items.push({ label: t('providers.quickPick.manage'), action: 'manage' });
+      const { id, sourceLayer } = await effectiveProviderInfo();
+      const profile = id ? doc.profiles.find(p => p.id === id) : undefined;
+      const name = profile ? profile.name : t('providers.statusBar.subscription');
+      const detail = profile
+        ? profile.kind + (profile.kind === 'anthropic' ? ` · ${profile.authMode}` : '')
+        : t('settings.authMode.subscription');
+      const sourceText = sourceLayer === 'local' ? t('providers.status.source.local')
+        : sourceLayer === 'project' ? t('providers.status.source.project')
+        : t('providers.status.source.user');
 
-      const pick = await vscode.window.showQuickPick(items, {
-        title: t('providers.quickPick.title'),
-        placeHolder: t('providers.quickPick.placeholder'),
-      });
-      if (!pick) return;
-
-      if (pick.action === 'activate') {
-        if (pick.id) {
-          await activateProfile(pick.id, secrets);
-          const name = doc.profiles.find(p => p.id === pick.id)?.name ?? '';
-          vscode.window.showInformationMessage(t('providers.activated', name));
-        } else {
-          await activateProfile(null, secrets);
-          vscode.window.showInformationMessage(t('providers.deactivated'));
-        }
-        await fire();
-      } else if (pick.action === 'manage') {
+      type Item = vscode.QuickPickItem & { action?: 'manage' };
+      const items: Item[] = [
+        { label: `$(rocket) ${name}`, detail },
+        { label: `$(layers) ${sourceText}` },
+        { label: '', kind: vscode.QuickPickItemKind.Separator },
+        { label: `$(gear) ${t('providers.openManager')}`, action: 'manage' },
+      ];
+      const pick = await vscode.window.showQuickPick(items, { title: t('providers.status.title') });
+      if (pick?.action === 'manage') {
         await vscode.commands.executeCommand('claudeCopilot.openProviderPanel');
       }
     }),
