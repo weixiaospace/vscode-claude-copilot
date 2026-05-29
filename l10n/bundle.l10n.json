@@ -255,6 +255,7 @@
   "tree.group.memory": "Memory",
   "tree.group.noWorkspace": "(no workspace)",
   "tree.layer.local": "Local",
+  "tree.settings.inherited": "Inherited",
   "tree.providers.label": "API Provider",
   "providers.webview.header": "API Provider",
   "providers.webview.active": "Active profile",

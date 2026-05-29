@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { userSettingsPath, projectSettingsPath, localSettingsPath, readUser, readProjectSettings, readLocalSettings } from '../core/settings';
-import { readProviders, matchProfileIdByEnv } from '../core/providers';
+import { readProviders, matchProfileIdByEnv, PROVIDER_MANAGED_ENV_KEYS, Profile } from '../core/providers';
 import { CLAUDE_HOME } from '../lib/paths';
 import { currentWorkspace } from '../lib/workspace';
 import { t } from '../lib/l10n';
@@ -52,10 +52,15 @@ export class SettingsTreeProvider implements vscode.TreeDataProvider<Node> {
       const proj = ws ? await readProjectSettings(ws.fsPath) : {};
       const local = ws ? await readLocalSettings(ws.fsPath) : {};
 
-      function nameFor(settings: Record<string, unknown>): string {
-        const id = matchProfileIdByEnv(settings, doc.profiles);
+      function hasProviderEnv(settings: Record<string, unknown>): boolean {
+        const env = (settings.env ?? {}) as Record<string, string>;
+        return Object.keys(env).some(k => PROVIDER_MANAGED_ENV_KEYS.includes(k as any));
+      }
+
+      function nameFor(settings: Record<string, unknown>, profiles: Profile[]): string {
+        const id = matchProfileIdByEnv(settings, profiles);
         if (id) {
-          const p = doc.profiles.find(x => x.id === id);
+          const p = profiles.find(x => x.id === id);
           return p ? p.name : t('providers.statusBar.subscription');
         }
         return t('providers.statusBar.subscription');
@@ -63,9 +68,9 @@ export class SettingsTreeProvider implements vscode.TreeDataProvider<Node> {
 
       return [
         { kind: 'profile-group' },
-        { kind: 'layer', layer: 'user', path: userSettingsPath(CLAUDE_HOME), available: true, profileName: nameFor(user) },
-        { kind: 'layer', layer: 'project', path: ws ? projectSettingsPath(ws.fsPath) : '', available: !!ws, profileName: ws ? nameFor(proj) : '—' },
-        { kind: 'layer', layer: 'local', path: ws ? localSettingsPath(ws.fsPath) : '', available: !!ws, profileName: ws ? nameFor(local) : '—' },
+        { kind: 'layer', layer: 'user', path: userSettingsPath(CLAUDE_HOME), available: true, profileName: nameFor(user, doc.profiles) },
+        { kind: 'layer', layer: 'project', path: ws ? projectSettingsPath(ws.fsPath) : '', available: !!ws, profileName: ws ? (hasProviderEnv(proj) ? nameFor(proj, doc.profiles) : t('tree.settings.inherited')) : '—' },
+        { kind: 'layer', layer: 'local', path: ws ? localSettingsPath(ws.fsPath) : '', available: !!ws, profileName: ws ? (hasProviderEnv(local) ? nameFor(local, doc.profiles) : t('tree.settings.inherited')) : '—' },
       ];
     }
     return [];

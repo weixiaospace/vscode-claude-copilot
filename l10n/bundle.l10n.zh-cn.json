@@ -255,6 +255,7 @@
   "tree.group.memory": "记忆",
   "tree.group.noWorkspace": "(未打开工作区)",
   "tree.layer.local": "本地",
+  "tree.settings.inherited": "继承",
   "tree.providers.label": "API 接入方",
   "providers.webview.header": "API 接入方",
   "providers.webview.active": "当前 Profile",
