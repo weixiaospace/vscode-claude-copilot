@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { listInstalledPlugins, listMarketplaces, listAvailablePlugins, type InstalledPlugin, type Marketplace, type PluginChild } from '../core/plugins';
+import { listInstalledPlugins, listMarketplaces, listAvailablePlugins, type InstalledPlugin, type Marketplace } from '../core/plugins';
 import { CLAUDE_HOME } from '../lib/paths';
 import { t } from '../lib/l10n';
 

@@ -84,7 +84,7 @@ export function registerProviderCommands(secrets: SecretsGateway, onChange: () =
       await fire();
     }),
 
-    vscode.commands.registerCommand('claudeCopilot.providers.edit', async (arg?: { id?: string }) => {
+    vscode.commands.registerCommand('claudeCopilot.providers.edit', async () => {
       const p = providersFilePath(CLAUDE_HOME);
       try { await fs.access(p); }
       catch { await writeProviders(CLAUDE_HOME, { version: 1, active: null, profiles: [] }); }
