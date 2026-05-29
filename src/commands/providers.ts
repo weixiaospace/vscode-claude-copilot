@@ -60,10 +60,10 @@ export function registerProviderCommands(secrets: SecretsGateway, onChange: () =
     }),
 
     vscode.commands.registerCommand('claudeCopilot.providers.delete', async (arg?: { id?: string }) => {
+      const doc = await readProviders(CLAUDE_HOME);
+      if (!doc.profiles.length) return;
       let id: string | undefined = arg?.id;
       if (!id) {
-        const doc = await readProviders(CLAUDE_HOME);
-        if (!doc.profiles.length) return;
         const pick = await vscode.window.showQuickPick(
           doc.profiles.map(p => ({ label: p.name, description: p.kind, id: p.id })),
           { title: t('providers.delete.pickTarget') },
@@ -71,16 +71,16 @@ export function registerProviderCommands(secrets: SecretsGateway, onChange: () =
         if (!pick) return;
         id = pick.id;
       }
-      const doc = await readProviders(CLAUDE_HOME);
       const target = doc.profiles.find(p => p.id === id);
       if (!target) return;
-      const confirm = await vscode.window.showWarningMessage(
-        t('providers.delete.confirm', target.name),
-        { modal: true },
-        t('providers.delete.confirmBtn'),
-      );
+      const isActive = doc.active === target.id;
+      const message = isActive
+        ? t('providers.delete.confirmActive', target.name)
+        : t('providers.delete.confirm', target.name);
+      const confirm = await vscode.window.showWarningMessage(message, { modal: true }, t('providers.delete.confirmBtn'));
       if (confirm !== t('providers.delete.confirmBtn')) return;
-      await deleteProfile(target.id, secrets);
+      const wasActive = await deleteProfile(target.id, secrets);
+      if (wasActive) vscode.window.showInformationMessage(t('providers.deactivatedAfterDelete', target.name));
       await fire();
     }),
 

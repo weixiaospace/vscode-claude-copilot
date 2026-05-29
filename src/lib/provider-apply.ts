@@ -56,10 +56,10 @@ export async function activateProfile(profileId: string | null, secrets: Secrets
   await writeProviders(CLAUDE_HOME, doc);
 }
 
-/** Delete a profile: clear its secrets + remove from library; if it was active, null it out and strip the user layer. */
-export async function deleteProfile(id: string, secrets: SecretsGateway): Promise<void> {
+/** Delete a profile: clear its secrets + remove from library; if it was active, null it out and strip the user layer. Returns whether it was the active profile. */
+export async function deleteProfile(id: string, secrets: SecretsGateway): Promise<boolean> {
   const doc = await readProviders(CLAUDE_HOME);
-  if (!doc.profiles.some(p => p.id === id)) return;
+  if (!doc.profiles.some(p => p.id === id)) return false;
   for (const field of ['apiKey', 'authToken', 'bedrockToken', 'foundryApiKey']) {
     await secrets.delete(secretKey(id, field));
   }
@@ -68,6 +68,7 @@ export async function deleteProfile(id: string, secrets: SecretsGateway): Promis
   if (wasActive) doc.active = null;
   await writeProviders(CLAUDE_HOME, doc);
   if (wasActive) await applyToLayer('user', null, secrets);
+  return wasActive;
 }
 
 /** Status bar / sidebar: merge managed env across the three layers and reverse-lookup the effective profile id (falls back to active). */

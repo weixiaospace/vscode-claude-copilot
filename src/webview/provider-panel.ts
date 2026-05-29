@@ -160,7 +160,11 @@ export function openProviderPanel(context: vscode.ExtensionContext): void {
         fireRefresh();
         res = { id: req.id, result: 'ok' };
       } else if (req.method === 'providers:delete') {
-        await deleteProfile((req.params as { id: string }).id, secrets);
+        const delId = (req.params as { id: string }).id;
+        const before = await readProviders(CLAUDE_HOME);
+        const name = before.profiles.find(p => p.id === delId)?.name ?? '';
+        const wasActive = await deleteProfile(delId, secrets);
+        if (wasActive) vscode.window.showInformationMessage(t('providers.deactivatedAfterDelete', name));
         fireRefresh();
         res = { id: req.id, result: 'ok' };
       } else if (req.method === 'providers:activate') {
