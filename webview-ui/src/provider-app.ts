@@ -73,7 +73,7 @@ export function mount(root: HTMLElement): void {
     await load();
   }
 
-  async function activate(id: string) { await call('providers:activate', { id }); await load(); }
+  async function activate(id: string | null) { await call('providers:activate', { id }); await load(); }
   async function del(p: Profile) {
     if (!confirm(t('providers.manage.deleteConfirm', p.name))) return;
     await call('providers:delete', { id: p.id });
@@ -84,23 +84,36 @@ export function mount(root: HTMLElement): void {
 
   function renderList(): string {
     if (!data) return '';
-    if (data.profiles.length === 0) return `<div class="text-sm opacity-60 px-1 py-3">${esc(t('providers.manage.empty'))}</div>`;
-    return data.profiles.map(p => {
-      const isActive = p.id === data!.active;
-      const right = isActive
-        ? `<span class="text-[11px] px-2 py-0.5 rounded-full text-[var(--vscode-textLink-foreground)] border border-[var(--vscode-textLink-foreground)]/40">${esc(t('providers.manage.active'))}</span>`
-        : `<button data-act="${esc(p.id)}" class="text-[11px] px-2 py-0.5 border border-current/20 rounded opacity-80 hover:opacity-100 hover:bg-current/5">${esc(t('providers.manage.activate'))}</button>`;
-      return `
-        <div class="flex items-center gap-3 px-3 py-2.5 border-b border-current/10">
-          <span class="font-medium">${esc(p.name)}</span>
-          <span class="text-[11px] opacity-50 border border-current/15 rounded-full px-2">${esc(kindLabel(p.kind))}</span>
-          <span class="text-[11px] opacity-45 font-mono truncate">${esc(p.baseUrl ?? '')}</span>
-          <span class="flex-1"></span>
-          ${right}
-          <button data-edit="${esc(p.id)}" class="text-[11px] px-2 py-0.5 border border-current/20 rounded opacity-80 hover:opacity-100 hover:bg-current/5">${esc(t('providers.manage.edit'))}</button>
-          <button data-del="${esc(p.id)}" class="text-[11px] px-2 py-0.5 border border-current/20 rounded opacity-80 hover:opacity-100 hover:bg-current/5">${esc(t('providers.manage.delete'))}</button>
-        </div>`;
-    }).join('');
+    const subActive = data.active === null;
+    const subRight = subActive
+      ? `<span class="text-[11px] px-2 py-0.5 rounded-full text-[var(--vscode-textLink-foreground)] border border-[var(--vscode-textLink-foreground)]/40">${esc(t('providers.manage.active'))}</span>`
+      : `<button id="act-sub" class="text-[11px] px-2 py-0.5 border border-current/20 rounded opacity-80 hover:opacity-100 hover:bg-current/5">${esc(t('providers.manage.activate'))}</button>`;
+    const subRow = `
+      <div class="flex items-center gap-3 px-3 py-2.5 border-b border-current/10">
+        <span class="font-medium">${esc(t('providers.statusBar.subscription'))}</span>
+        <span class="text-[11px] opacity-50 border border-current/15 rounded-full px-2">subscription</span>
+        <span class="flex-1"></span>
+        ${subRight}
+      </div>`;
+    const profileRows = data.profiles.length === 0
+      ? `<div class="text-sm opacity-60 px-3 py-3">${esc(t('providers.manage.empty'))}</div>`
+      : data.profiles.map(p => {
+          const isActive = p.id === data!.active;
+          const right = isActive
+            ? `<span class="text-[11px] px-2 py-0.5 rounded-full text-[var(--vscode-textLink-foreground)] border border-[var(--vscode-textLink-foreground)]/40">${esc(t('providers.manage.active'))}</span>`
+            : `<button data-act="${esc(p.id)}" class="text-[11px] px-2 py-0.5 border border-current/20 rounded opacity-80 hover:opacity-100 hover:bg-current/5">${esc(t('providers.manage.activate'))}</button>`;
+          return `
+            <div class="flex items-center gap-3 px-3 py-2.5 border-b border-current/10">
+              <span class="font-medium">${esc(p.name)}</span>
+              <span class="text-[11px] opacity-50 border border-current/15 rounded-full px-2">${esc(kindLabel(p.kind))}</span>
+              <span class="text-[11px] opacity-45 font-mono truncate">${esc(p.baseUrl ?? '')}</span>
+              <span class="flex-1"></span>
+              ${right}
+              <button data-edit="${esc(p.id)}" class="text-[11px] px-2 py-0.5 border border-current/20 rounded opacity-80 hover:opacity-100 hover:bg-current/5">${esc(t('providers.manage.edit'))}</button>
+              <button data-del="${esc(p.id)}" class="text-[11px] px-2 py-0.5 border border-current/20 rounded opacity-80 hover:opacity-100 hover:bg-current/5">${esc(t('providers.manage.delete'))}</button>
+            </div>`;
+        }).join('');
+    return subRow + profileRows;
   }
 
   function inp(id: string, value: string, ph: string, type = 'text'): string {
@@ -150,13 +163,18 @@ export function mount(root: HTMLElement): void {
     const presetHint = isPreset ? `<p class="text-xs opacity-55">${esc(t('providers.manage.presetHint', f.baseUrl))}</p>` : '';
     const title = isPreset ? `⚡ ${esc(f.presetLabel!)}` : (f.id ? t('providers.manage.edit') : t('providers.manage.newAdvanced'));
     return `
-      <div class="rounded-lg border border-[var(--vscode-textLink-foreground)]/30 bg-[var(--vscode-textLink-foreground)]/[0.06] p-4 space-y-3 mt-3">
-        <div class="font-semibold">${title}</div>
-        ${body}
-        ${presetHint}
-        <div class="flex gap-2 pt-1">
-          <button id="f-save" class="px-3 py-1.5 rounded text-sm border-none bg-[var(--vscode-textLink-foreground)] text-white">${esc(isPreset ? t('providers.manage.addToLibrary') : t('providers.manage.save'))}</button>
-          <button id="f-cancel" class="px-3 py-1.5 rounded text-sm border border-current/20 hover:bg-current/5">${esc(t('providers.manage.cancel'))}</button>
+      <div id="modal-backdrop" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+        <div class="relative w-full max-w-lg max-h-[85vh] overflow-auto rounded-lg border border-current/20 bg-[var(--vscode-editor-background)] shadow-2xl p-5 space-y-3" role="dialog" aria-modal="true">
+          <div class="flex items-center justify-between">
+            <div class="font-semibold">${title}</div>
+            <button id="f-close" class="text-lg leading-none opacity-60 hover:opacity-100 px-1" aria-label="Close">×</button>
+          </div>
+          ${body}
+          ${presetHint}
+          <div class="flex gap-2 pt-1">
+            <button id="f-save" class="px-3 py-1.5 rounded text-sm border-none bg-[var(--vscode-textLink-foreground)] text-white">${esc(isPreset ? t('providers.manage.addToLibrary') : t('providers.manage.save'))}</button>
+            <button id="f-cancel" class="px-3 py-1.5 rounded text-sm border border-current/20 hover:bg-current/5">${esc(t('providers.manage.cancel'))}</button>
+          </div>
         </div>
       </div>`;
   }
@@ -177,13 +195,13 @@ export function mount(root: HTMLElement): void {
         <section class="space-y-2">
           <div class="text-xs uppercase tracking-wider opacity-50">${esc(t('providers.manage.library'))}</div>
           <div class="rounded-lg border border-current/15 overflow-hidden">${renderList()}</div>
-          ${form ? renderForm() : `
           <div class="flex gap-2 pt-1">
             <button id="p-new" class="text-xs px-3 py-1.5 border border-current/20 rounded hover:bg-current/5">${esc(t('providers.manage.newAdvanced'))}</button>
             <button id="p-json" class="text-xs px-3 py-1.5 opacity-70 hover:opacity-100">${esc(t('providers.manage.openJson'))}</button>
-          </div>`}
+          </div>
         </section>
-      </div>`;
+      </div>
+      ${form ? renderForm() : ''}`;
     bind();
   }
 
@@ -201,6 +219,9 @@ export function mount(root: HTMLElement): void {
     g<HTMLInputElement>('f-resource')?.addEventListener('input', e => f.resource = (e.target as HTMLInputElement).value);
     g('f-save')?.addEventListener('click', () => void save());
     g('f-cancel')?.addEventListener('click', () => { form = null; render(); });
+    g('f-close')?.addEventListener('click', () => { form = null; render(); });
+    const backdrop = root.querySelector<HTMLElement>('#modal-backdrop');
+    backdrop?.addEventListener('click', (e) => { if (e.target === backdrop) { form = null; render(); } });
   }
 
   function bind() {
@@ -213,6 +234,7 @@ export function mount(root: HTMLElement): void {
       b.addEventListener('click', () => { const p = data!.profiles.find(x => x.id === b.dataset.edit); if (p) startEdit(p); }));
     root.querySelectorAll<HTMLButtonElement>('button[data-del]').forEach(b =>
       b.addEventListener('click', () => { const p = data!.profiles.find(x => x.id === b.dataset.del); if (p) void del(p); }));
+    root.querySelector('#act-sub')?.addEventListener('click', () => void activate(null));
     root.querySelector('#p-new')?.addEventListener('click', () => startNew());
     root.querySelector('#p-json')?.addEventListener('click', () => void call('providers:openJson'));
     bindForm();
