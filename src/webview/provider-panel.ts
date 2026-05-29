@@ -21,9 +21,8 @@ const PROVIDER_KEYS = [
   'providers.manage.effectiveNow', 'providers.manage.edit', 'providers.manage.delete', 'providers.manage.newAdvanced',
   'providers.manage.openJson', 'providers.manage.empty', 'providers.manage.name',
   'providers.manage.save', 'providers.manage.cancel', 'providers.manage.addToLibrary',
-  'providers.manage.presetHint', 'providers.manage.deleteConfirm',
-  'providers.manage.deleteActiveConfirm', 'providers.manage.secretSet',
-  'providers.manage.secretNone', 'providers.manage.newFromPreset',
+  'providers.manage.presetHint',
+  'providers.manage.secretSet', 'providers.manage.secretNone', 'providers.manage.newFromPreset',
   'providers.statusBar.subscription',
   'settings.provider.anthropic', 'settings.provider.bedrock', 'settings.provider.vertex', 'settings.provider.foundry',
   'settings.authMode.apiKey', 'settings.authMode.authToken', 'settings.authMode.helper', 'settings.authMode.subscription',
@@ -164,10 +163,18 @@ export function openProviderPanel(context: vscode.ExtensionContext): void {
       } else if (req.method === 'providers:delete') {
         const delId = (req.params as { id: string }).id;
         const before = await readProviders(CLAUDE_HOME);
-        const name = before.profiles.find(p => p.id === delId)?.name ?? '';
-        const wasActive = await deleteProfile(delId, secrets);
-        if (wasActive) vscode.window.showInformationMessage(t('providers.deactivatedAfterDelete', name));
-        fireRefresh();
+        const target = before.profiles.find(p => p.id === delId);
+        if (target) {
+          const msg = before.active === delId
+            ? t('providers.manage.deleteActiveConfirm', target.name)
+            : t('providers.manage.deleteConfirm', target.name);
+          const ok = await vscode.window.showWarningMessage(msg, { modal: true }, t('providers.delete.confirmBtn'));
+          if (ok === t('providers.delete.confirmBtn')) {
+            const wasActive = await deleteProfile(delId, secrets);
+            if (wasActive) vscode.window.showInformationMessage(t('providers.deactivatedAfterDelete', target.name));
+            fireRefresh();
+          }
+        }
         res = { id: req.id, result: 'ok' };
       } else if (req.method === 'providers:activate') {
         await activateProfile((req.params as { id: string | null }).id, secrets);

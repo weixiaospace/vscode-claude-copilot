@@ -72,10 +72,9 @@ export function mount(root: HTMLElement): void {
 
   async function activate(id: string | null) { await call('providers:activate', { id }); await load(); }
   async function del(p: Profile) {
-    const msg = data && p.id === data.active
-      ? t('providers.manage.deleteActiveConfirm', p.name)
-      : t('providers.manage.deleteConfirm', p.name);
-    if (!confirm(msg)) return;
+    // Confirmation is handled natively on the host side (VSCode webviews don't
+    // support window.confirm — it's a no-op). The host shows a modal and only
+    // deletes if confirmed.
     await call('providers:delete', { id: p.id });
     await load();
   }
