@@ -22,6 +22,8 @@ const PROVIDER_KEYS = [
   'providers.manage.openJson', 'providers.manage.empty', 'providers.manage.name',
   'providers.manage.save', 'providers.manage.cancel', 'providers.manage.addToLibrary',
   'providers.manage.presetHint', 'providers.manage.deleteConfirm', 'providers.manage.secretUnchanged',
+  'providers.manage.deleteActiveConfirm', 'providers.manage.secretSet',
+  'providers.manage.secretNone', 'providers.manage.newFromPreset',
   'providers.statusBar.subscription',
   'settings.provider.anthropic', 'settings.provider.bedrock', 'settings.provider.vertex', 'settings.provider.foundry',
   'settings.authMode.apiKey', 'settings.authMode.authToken', 'settings.authMode.helper', 'settings.authMode.subscription',

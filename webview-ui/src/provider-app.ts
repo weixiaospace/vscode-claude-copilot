@@ -72,7 +72,10 @@ export function mount(root: HTMLElement): void {
 
   async function activate(id: string | null) { await call('providers:activate', { id }); await load(); }
   async function del(p: Profile) {
-    if (!confirm(t('providers.manage.deleteConfirm', p.name))) return;
+    const msg = data && p.id === data.active
+      ? t('providers.manage.deleteActiveConfirm', p.name)
+      : t('providers.manage.deleteConfirm', p.name);
+    if (!confirm(msg)) return;
     await call('providers:delete', { id: p.id });
     await load();
   }
@@ -125,6 +128,8 @@ export function mount(root: HTMLElement): void {
   function renderForm(): string {
     if (!form) return '';
     const f = form;
+    const editing = f.id ? data?.profiles.find(p => p.id === f.id) : undefined;
+    const secretHint = (set: boolean) => f.id ? (set ? t('providers.manage.secretSet') : t('providers.manage.secretNone')) : '';
     const isPreset = !!f.presetLabel;
     const kinds: Kind[] = ['anthropic', 'bedrock', 'vertex', 'foundry'];
     let body = '';
@@ -143,24 +148,24 @@ export function mount(root: HTMLElement): void {
           ${modes.map(m => `<option value="${m}" ${f.authMode === m ? 'selected' : ''}>${esc(t('settings.authMode.' + m))}</option>`).join('')}
         </select>`);
       }
-      if (f.authMode === 'apiKey') body += fieldWrap(t('settings.env.apiKey'), inp('f-secret', f.secret, f.id ? t('providers.manage.secretUnchanged') : 'sk-ant-…', 'password'));
-      else if (f.authMode === 'authToken') body += fieldWrap(t('settings.env.authToken'), inp('f-secret', f.secret, f.id ? t('providers.manage.secretUnchanged') : '…', 'password'));
+      if (f.authMode === 'apiKey') body += fieldWrap(t('settings.env.apiKey'), inp('f-secret', f.secret, f.id ? '' : 'sk-ant-…', 'password'), secretHint(!!editing && (editing as any).hasApiKey));
+      else if (f.authMode === 'authToken') body += fieldWrap(t('settings.env.authToken'), inp('f-secret', f.secret, f.id ? '' : '…', 'password'), secretHint(!!editing && (editing as any).hasAuthToken));
       else if (f.authMode === 'helper') body += fieldWrap(t('settings.env.apiKeyHelper'), inp('f-apiKeyHelper', f.apiKeyHelper, '/path/to/helper.sh'));
       if (!isPreset) body += fieldWrap(t('settings.env.baseUrl'), inp('f-baseUrl', f.baseUrl, 'https://api.anthropic.com'));
     } else if (f.kind === 'bedrock') {
-      body += fieldWrap(t('settings.env.bedrockToken'), inp('f-secret', f.secret, f.id ? t('providers.manage.secretUnchanged') : '…', 'password'));
+      body += fieldWrap(t('settings.env.bedrockToken'), inp('f-secret', f.secret, f.id ? '' : '…', 'password'), secretHint(!!editing && (editing as any).hasBearerToken));
       body += fieldWrap(t('settings.env.baseUrl'), inp('f-baseUrl', f.baseUrl, 'https://bedrock-runtime…'));
     } else if (f.kind === 'vertex') {
       body += fieldWrap(t('settings.env.vertexProjectId'), inp('f-projectId', f.projectId, 'my-gcp-project'));
       body += fieldWrap(t('settings.env.baseUrl'), inp('f-baseUrl', f.baseUrl, 'https://…aiplatform.googleapis.com'));
     } else if (f.kind === 'foundry') {
-      body += fieldWrap(t('settings.env.foundryApiKey'), inp('f-secret', f.secret, f.id ? t('providers.manage.secretUnchanged') : '…', 'password'));
+      body += fieldWrap(t('settings.env.foundryApiKey'), inp('f-secret', f.secret, f.id ? '' : '…', 'password'), secretHint(!!editing && (editing as any).hasApiKey));
       body += fieldWrap(t('settings.env.foundryResource'), inp('f-resource', f.resource, 'my-resource'));
       body += fieldWrap(t('settings.env.baseUrl'), inp('f-baseUrl', f.baseUrl, 'https://…inference.ml.azure.com'));
     }
 
     const presetHint = isPreset ? `<p class="text-xs opacity-55">${esc(t('providers.manage.presetHint', f.baseUrl))}</p>` : '';
-    const title = isPreset ? `⚡ ${esc(f.presetLabel!)}` : (f.id ? t('providers.manage.edit') : t('providers.manage.newAdvanced'));
+    const title = isPreset ? esc(t('providers.manage.newFromPreset', f.presetLabel!)) : (f.id ? t('providers.manage.edit') : t('providers.manage.newAdvanced'));
     return `
       <div id="modal-backdrop" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
         <div class="relative w-full max-w-lg max-h-[85vh] overflow-auto rounded-lg border border-current/20 bg-[var(--vscode-editor-background)] shadow-2xl p-5 space-y-3" role="dialog" aria-modal="true">
@@ -171,7 +176,7 @@ export function mount(root: HTMLElement): void {
           ${body}
           ${presetHint}
           <div class="flex gap-2 pt-1">
-            <button id="f-save" class="px-3 py-1.5 rounded text-sm border-none bg-[var(--vscode-textLink-foreground)] text-white">${esc(isPreset ? t('providers.manage.addToLibrary') : t('providers.manage.save'))}</button>
+            <button id="f-save" ${f.name.trim() ? '' : 'disabled'} class="px-3 py-1.5 rounded text-sm border-none bg-[var(--vscode-textLink-foreground)] text-white disabled:opacity-40 disabled:cursor-not-allowed">${esc(isPreset ? t('providers.manage.addToLibrary') : t('providers.manage.save'))}</button>
             <button id="f-cancel" class="px-3 py-1.5 rounded text-sm border border-current/20 hover:bg-current/5">${esc(t('providers.manage.cancel'))}</button>
           </div>
         </div>
@@ -223,7 +228,11 @@ export function mount(root: HTMLElement): void {
     const g = <T extends HTMLElement>(id: string) => root.querySelector<T>('#' + id);
     g<HTMLSelectElement>('f-kind')?.addEventListener('change', e => { f.kind = (e.target as HTMLSelectElement).value as Kind; render(); });
     g<HTMLSelectElement>('f-authMode')?.addEventListener('change', e => { f.authMode = (e.target as HTMLSelectElement).value as AuthMode; render(); });
-    g<HTMLInputElement>('f-name')?.addEventListener('input', e => f.name = (e.target as HTMLInputElement).value);
+    g<HTMLInputElement>('f-name')?.addEventListener('input', e => {
+      f.name = (e.target as HTMLInputElement).value;
+      const saveBtn = g<HTMLButtonElement>('f-save');
+      if (saveBtn) saveBtn.disabled = !f.name.trim();
+    });
     g<HTMLInputElement>('f-secret')?.addEventListener('input', e => f.secret = (e.target as HTMLInputElement).value);
     g<HTMLInputElement>('f-baseUrl')?.addEventListener('input', e => f.baseUrl = (e.target as HTMLInputElement).value);
     g<HTMLInputElement>('f-apiKeyHelper')?.addEventListener('input', e => f.apiKeyHelper = (e.target as HTMLInputElement).value);
