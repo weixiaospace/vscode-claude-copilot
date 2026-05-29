@@ -3,3 +3,6 @@ out
 *.vsix
 .DS_Store
 webview-ui/dist
+
+# Playwright MCP artifacts
+.playwright-mcp/

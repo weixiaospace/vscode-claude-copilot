@@ -17,6 +17,7 @@ import { migrateProvidersOnce } from './lib/migrate-providers';
 import { openUsagePanel } from './webview/usage-panel';
 import { openMarketplacePanel, registerMarketplaceRefresh } from './webview/marketplace-panel';
 import { openSettingsPanel } from './webview/settings-panel';
+import { openProviderPanel, registerProviderPanelRefresh, refreshProviderPanel } from './webview/provider-panel';
 import { runClaude } from './core/claude-cli';
 import { t } from './lib/l10n';
 
@@ -51,9 +52,10 @@ export function activate(context: vscode.ExtensionContext): void {
       const doc = await vscode.workspace.openTextDocument(vscode.Uri.file(filePath));
       await vscode.window.showTextDocument(doc);
     }),
-    vscode.commands.registerCommand('claudeCopilot.openSettingsPanel', () => openSettingsPanel(context)),
+    vscode.commands.registerCommand('claudeCopilot.openSettingsPanel', (layer?: 'user' | 'project' | 'local') => openSettingsPanel(context, layer)),
     vscode.commands.registerCommand('claudeCopilot.openUsage', () => openUsagePanel(context)),
     vscode.commands.registerCommand('claudeCopilot.openMarketplace', () => openMarketplacePanel(context)),
+    vscode.commands.registerCommand('claudeCopilot.openProviderPanel', () => openProviderPanel(context)),
     ...registerPluginCommands(() => plugins.refresh()),
     ...registerMcpCommands(() => mcp.refresh()),
     ...registerSkillCommands(() => skills.refresh()),
@@ -61,6 +63,7 @@ export function activate(context: vscode.ExtensionContext): void {
     ...registerProviderCommands(secrets, () => {
       void statusBar.update();
       settings.refresh();
+      refreshProviderPanel();
     }),
     ...registerWatchers({
       plugins: () => plugins.refresh(),
@@ -73,6 +76,7 @@ export function activate(context: vscode.ExtensionContext): void {
   );
 
   registerMarketplaceRefresh(() => plugins.refresh());
+  registerProviderPanelRefresh(() => { void statusBar.update(); settings.refresh(); });
 
   runClaude(['--version'], 5000).catch(() => {
     vscode.window.showWarningMessage(t('toast.cliMissing'));

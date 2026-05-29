@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 **[English](CHANGELOG.md) | [中文](CHANGELOG.zh-CN.md)**
 
+## [0.1.18] - 2026-05-29
+
+### Changed
+
+**Provider profiles — dedicated manager, layer-aware switching**
+- The sidebar "API Provider" node now opens a full **Provider Manager webview** instead of inline tree CRUD. Quick-add presets (including KIMI CODE), a profile library list, and a modal create/edit flow with required-name validation and secret-set hints
+- The settings panel's provider selector is now **layer-scoped**: user / project / local layers each pick their own provider. The sidebar tree shows the per-layer provider name and "Inherited" for layers without an override
+- The status bar shows the **effective** provider resolved across all layers as read-only status, not an inline switcher
+- The manager page now notes that activating a profile writes its env to the **user layer** (`~/.claude/settings.json`); project / local layers can still override it
+- Settings webview redesigned into a two-pane **left-nav + scrollspy** layout with live search/filter, driven by a declarative section/field schema
+
+### Fixed
+
+- Profile delete did nothing — confirmation now handled host-side
+- `effectiveProfileId` used merged env, causing cross-layer match failures (e.g. user apiKey + project authToken)
+- Save errors are now surfaced, and unsaved-switch confirmation goes through the host
+- Status bar now refreshes on settings write / `setLayerProvider`
+
 ## [0.1.17] - 2026-04-22
 
 ### Added
@@ -109,7 +127,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Usage dashboard with token analytics
 - English + Simplified Chinese bilingual support
 
-[Unreleased]: https://github.com/weixiaospace/vscode-claude-copilot/compare/v0.1.17...HEAD
+[Unreleased]: https://github.com/weixiaospace/vscode-claude-copilot/compare/v0.1.18...HEAD
+[0.1.18]: https://github.com/weixiaospace/vscode-claude-copilot/releases/tag/v0.1.18
 [0.1.17]: https://github.com/weixiaospace/vscode-claude-copilot/releases/tag/v0.1.17
 [0.1.16]: https://github.com/weixiaospace/vscode-claude-copilot/releases/tag/v0.1.16
 [0.1.15]: https://github.com/weixiaospace/vscode-claude-copilot/releases/tag/v0.1.15

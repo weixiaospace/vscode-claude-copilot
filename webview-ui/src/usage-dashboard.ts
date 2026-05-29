@@ -1,5 +1,6 @@
 import { call } from './rpc';
 import { t } from './l10n';
+import { escapeHtml } from './ui';
 import type { UsageResult, DailyUsage, ModelUsage, ProjectUsage } from './types';
 
 declare global {
@@ -33,10 +34,6 @@ function estimateCostFor(model: string, c: CostItem): number {
   const entry = Object.entries(PRICING).find(([k]) => model.includes(k))?.[1];
   if (!entry) return 0;
   return (c.input * entry.input + c.output * entry.output + c.cacheRead * entry.cacheRead + c.cacheCreate * entry.cacheCreate) / 1_000_000;
-}
-
-function escapeHtml(s: string): string {
-  return s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
 }
 
 function cssVar(name: string, fallback: string): string {

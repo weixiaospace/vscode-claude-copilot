@@ -41,6 +41,31 @@ export interface ProvidersFile {
   profiles: Profile[];
 }
 
+/**
+ * Built-in provider presets — one-click templates for known Anthropic-compatible
+ * services. A preset fixes the provider kind / auth mode / base URL so the user
+ * only has to paste a single credential. Add new entries here to grow the list.
+ */
+export interface ProviderPreset {
+  id: string;
+  label: string;
+  kind: ProviderKind;
+  authMode: AuthMode;
+  baseUrl: string;
+  credentialField: 'apiKey' | 'authToken';
+}
+
+export const PROVIDER_PRESETS: ProviderPreset[] = [
+  {
+    id: 'kimi',
+    label: 'KIMI CODE',
+    kind: 'anthropic',
+    authMode: 'authToken',
+    baseUrl: 'https://api.kimi.com/coding/',
+    credentialField: 'authToken',
+  },
+];
+
 export interface SecretsGateway {
   get(key: string): Promise<string | undefined>;
   set(key: string, value: string): Promise<void>;
@@ -222,4 +247,47 @@ export function deactivateFromSettings(existing: Record<string, unknown>): Recor
   const existingEnv = (existing.env ?? {}) as Record<string, string>;
   const strippedEnv = stripManagedEnv(existingEnv);
   return mergeForSave(existing, { env: strippedEnv }, ['env', ...PROVIDER_MANAGED_SETTINGS_KEYS]);
+}
+
+function profileMatchesEnv(p: Profile, env: Record<string, string>, helper: string): boolean {
+  const usesCloud = env.CLAUDE_CODE_USE_BEDROCK === '1'
+    || env.CLAUDE_CODE_USE_VERTEX === '1'
+    || env.CLAUDE_CODE_USE_FOUNDRY === '1';
+  const eq = (a?: string, b?: string) => (a || '') === (b || '');
+
+  if (p.kind === 'anthropic') {
+    if (usesCloud) return false;
+    if (!eq(p.baseUrl, env.ANTHROPIC_BASE_URL)) return false;
+    if (p.authMode === 'apiKey') return !!env.ANTHROPIC_API_KEY && !env.ANTHROPIC_AUTH_TOKEN && !helper;
+    if (p.authMode === 'authToken') return !!env.ANTHROPIC_AUTH_TOKEN && !env.ANTHROPIC_API_KEY && !helper;
+    if (p.authMode === 'helper') return !!helper && eq(p.apiKeyHelper, helper);
+    return false; // subscription has no signature, never matches
+  }
+  if (p.kind === 'bedrock') {
+    return env.CLAUDE_CODE_USE_BEDROCK === '1' && eq(p.baseUrl, env.ANTHROPIC_BEDROCK_BASE_URL);
+  }
+  if (p.kind === 'vertex') {
+    return env.CLAUDE_CODE_USE_VERTEX === '1' && eq(p.projectId, env.ANTHROPIC_VERTEX_PROJECT_ID);
+  }
+  if (p.kind === 'foundry') {
+    return env.CLAUDE_CODE_USE_FOUNDRY === '1' && eq(p.resource, env.ANTHROPIC_FOUNDRY_RESOURCE);
+  }
+  return false;
+}
+
+/**
+ * Given a settings object (env + apiKeyHelper), find the id of the profile whose
+ * signature matches. Does not compare secret values; no managed provider env => null;
+ * multiple identical signatures => first match.
+ */
+export function matchProfileIdByEnv(
+  settings: Record<string, unknown>,
+  profiles: Profile[],
+): string | null {
+  const env = (settings.env ?? {}) as Record<string, string>;
+  const helper = typeof settings.apiKeyHelper === 'string' ? settings.apiKeyHelper : '';
+  for (const p of profiles) {
+    if (profileMatchesEnv(p, env, helper)) return p.id;
+  }
+  return null;
 }

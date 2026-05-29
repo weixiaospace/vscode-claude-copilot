@@ -10,6 +10,7 @@
   "cmd.refresh": "Claude Copilot: Refresh All",
   "cmd.openFile": "Claude Copilot: Open File",
   "cmd.openSettingsPanel": "Claude Copilot: Open Settings Panel",
+  "cmd.openProviderPanel": "Manage API Providers",
   "cmd.openUsage": "Claude Copilot: Open Usage Dashboard",
   "cmd.openMarketplace": "Claude Copilot: Browse Marketplace",
   "cmd.plugin.install": "Install Plugin...",
@@ -26,9 +27,7 @@
   "cmd.skill.delete": "Delete Skill",
   "cmd.memory.create": "New Memory...",
   "cmd.memory.delete": "Delete Memory",
-  "cmd.providers.quickSwitch": "Claude Copilot: Switch Provider Profile",
-  "cmd.providers.create": "Claude Copilot: Add Provider Profile...",
+  "cmd.providers.quickSwitch": "Claude Copilot: Provider Status",
   "cmd.providers.edit": "Claude Copilot: Edit Provider Profile...",
-  "cmd.providers.delete": "Claude Copilot: Delete Provider Profile...",
-  "cmd.providers.activateById": "Switch"
+  "cmd.providers.delete": "Claude Copilot: Delete Provider Profile..."
 }

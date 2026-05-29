@@ -1,7 +1,7 @@
 import * as fs from 'fs/promises';
 import * as vscode from 'vscode';
 import {
-  readProviders, writeProviders, providersFilePath,
+  writeProviders, providersFilePath,
   detectLegacyProfile, secretKey,
   type SecretsGateway, type Profile,
 } from '../core/providers';
