@@ -64,8 +64,9 @@ export function mount(root: HTMLElement): void {
       state.dirty = false;
       await load();
     } catch (err: any) {
+      // The host surfaces the failure via a native error toast (webviews
+      // can't show alert()); just keep the console trace here.
       console.error('settings:write failed', err);
-      alert(t('settings.saveFailed') + ': ' + (err?.message || err));
     } finally {
       state.saving = false; render();
     }
@@ -81,8 +82,15 @@ export function mount(root: HTMLElement): void {
 
   function openJson() { call('settings:openJson', { layer: state.layer }).catch(() => {}); }
 
-  function switchLayer(next: Layer) {
-    if (state.dirty && !confirm(t('settings.unsavedChanges'))) return;
+  async function switchLayer(next: Layer) {
+    if (state.dirty) {
+      // Native modal via host — window.confirm() is a no-op in webviews.
+      const ok = await call<boolean>('ui:confirm', {
+        message: t('settings.unsavedChanges'),
+        confirmLabel: t('settings.unsavedSwitch'),
+      });
+      if (!ok) return;
+    }
     state.layer = next; state.data = null; state.form = null; load();
   }
 
@@ -431,7 +439,7 @@ export function mount(root: HTMLElement): void {
   window.addEventListener('message', (e) => {
     const msg = e.data as { push?: string; layer?: Layer };
     if (msg?.push === 'layer:set' && msg.layer && msg.layer !== state.layer) {
-      switchLayer(msg.layer);
+      void switchLayer(msg.layer);
     }
   });
 

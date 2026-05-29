@@ -185,8 +185,8 @@ const SETTINGS_KEYS = [
   'settings.saving',
   'settings.reset',
   'settings.editJson',
-  'settings.saveFailed',
   'settings.unsavedChanges',
+  'settings.unsavedSwitch',
   'tree.group.user',
   'tree.group.project',
   'tree.layer.local',
@@ -290,8 +290,18 @@ export function openSettingsPanel(context: vscode.ExtensionContext, layer: Layer
         };
       } else if (req.method === 'settings:write') {
         const { layer, partial, knownKeys } = req.params;
-        await writeLayer(layer, partial, knownKeys);
-        res = { id: req.id, result: 'ok' };
+        try {
+          await writeLayer(layer, partial, knownKeys);
+          res = { id: req.id, result: 'ok' };
+        } catch (e: any) {
+          // Surface the failure natively — webviews can't show alert().
+          vscode.window.showErrorMessage(t('settings.saveFailed') + ': ' + (e?.message || String(e)));
+          res = { id: req.id, error: e?.message || String(e) };
+        }
+      } else if (req.method === 'ui:confirm') {
+        const { message, confirmLabel } = req.params as { message: string; confirmLabel: string };
+        const choice = await vscode.window.showWarningMessage(message, { modal: true }, confirmLabel);
+        res = { id: req.id, result: choice === confirmLabel };
       } else if (req.method === 'settings:openJson') {
         const layer = req.params?.layer as Layer;
         const existing = await readLayer(layer);

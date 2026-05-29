@@ -248,6 +248,7 @@
   "settings.editJson": "以 JSON 编辑 →",
   "settings.saveFailed": "保存失败",
   "settings.unsavedChanges": "有未保存的更改，确认切换？",
+  "settings.unsavedSwitch": "仍然切换",
 
   "tree.group.marketplaces": "市场",
   "tree.group.installed": "已安装",

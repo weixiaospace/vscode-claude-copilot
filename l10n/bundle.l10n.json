@@ -248,6 +248,7 @@
   "settings.editJson": "Edit as JSON →",
   "settings.saveFailed": "Save failed",
   "settings.unsavedChanges": "You have unsaved changes. Switch anyway?",
+  "settings.unsavedSwitch": "Switch anyway",
 
   "tree.group.marketplaces": "Marketplaces",
   "tree.group.installed": "Installed",
