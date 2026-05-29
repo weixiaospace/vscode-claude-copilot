@@ -240,6 +240,8 @@
   "settings.includeCoAuthored.desc": "git 提交追加 Co-Authored-By: Claude",
   "settings.cleanupDays": "会话清理天数",
   "settings.cleanupDays.desc": "删除早于这个天数的 session 文件（不可为 0）",
+  "settings.search": "搜索设置…",
+  "settings.search.empty": "没有匹配的设置",
   "settings.save": "保存",
   "settings.saving": "保存中...",
   "settings.reset": "重置",

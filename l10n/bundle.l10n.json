@@ -240,6 +240,8 @@
   "settings.includeCoAuthored.desc": "Add Co-Authored-By: Claude to git commit messages",
   "settings.cleanupDays": "Session cleanup (days)",
   "settings.cleanupDays.desc": "Delete session files older than this many days (0 is invalid)",
+  "settings.search": "Search settings…",
+  "settings.search.empty": "No settings match",
   "settings.save": "Save",
   "settings.saving": "Saving...",
   "settings.reset": "Reset",

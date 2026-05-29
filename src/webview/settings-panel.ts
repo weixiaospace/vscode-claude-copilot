@@ -179,6 +179,8 @@ const SETTINGS_KEYS = [
   'settings.includeCoAuthored.desc',
   'settings.cleanupDays',
   'settings.cleanupDays.desc',
+  'settings.search',
+  'settings.search.empty',
   'settings.save',
   'settings.saving',
   'settings.reset',
