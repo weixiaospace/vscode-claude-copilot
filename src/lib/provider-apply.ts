@@ -72,20 +72,24 @@ export async function deleteProfile(id: string, secrets: SecretsGateway): Promis
   return wasActive;
 }
 
-/** Status bar / sidebar: merge managed env across the three layers and reverse-lookup the effective profile id (falls back to active). */
+/** Status bar / sidebar: resolve the effective profile by checking layers in
+ *  priority order (local → project → user). Merging env before matching caused
+ *  cross-layer pollution (e.g. user apiKey + project authToken → no match).
+ */
 export async function effectiveProfileId(): Promise<string | null> {
   const doc = await readProviders(CLAUDE_HOME);
-  const user = await readLayer('user');
-  let env: Record<string, string> = { ...((user.env ?? {}) as Record<string, string>) };
-  let helper = (user as any).apiKeyHelper as string | undefined;
   if (currentWorkspace()) {
-    const proj = await readLayer('project');
     const local = await readLayer('local');
-    env = { ...env, ...((proj.env ?? {}) as Record<string, string>), ...((local.env ?? {}) as Record<string, string>) };
-    helper = (local as any).apiKeyHelper ?? (proj as any).apiKeyHelper ?? helper;
+    const matchedLocal = matchProfileIdByEnv(local, doc.profiles);
+    if (matchedLocal) return matchedLocal;
+
+    const proj = await readLayer('project');
+    const matchedProj = matchProfileIdByEnv(proj, doc.profiles);
+    if (matchedProj) return matchedProj;
   }
-  const matched = matchProfileIdByEnv({ env, apiKeyHelper: helper }, doc.profiles);
-  return matched ?? doc.active;
+  const user = await readLayer('user');
+  const matchedUser = matchProfileIdByEnv(user, doc.profiles);
+  return matchedUser ?? doc.active;
 }
 
 function hasProviderEnv(s: Record<string, unknown>): boolean {
