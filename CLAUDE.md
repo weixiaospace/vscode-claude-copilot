@@ -4,6 +4,8 @@
 
 Claude Copilot —— VSCode 扩展。为 Claude Code CLI 用户提供 plugins / MCP / skills / memory / settings / usage 一站式可视化管理，与官方 Claude Code 插件并存（不抢聊天入口）。
 
+> 文档最后更新：2026-06-18（0.1.19 修复 provider profile 签名撞车导致切换后 UI 不跟随的问题）。
+
 ## 常用命令
 
 ```bash
@@ -78,6 +80,7 @@ webview-ui/
 - **`mergeForSave` 语义**：partial 里的 key 会替换 existing；knownKeys 里但 partial 没写的 key 会被删除（默认值规范化）；未列入 knownKeys 的 key 全部保留（`hooks`/`statusLine`/`sandbox`/自定义等不会被动）。
 - **`_rawPermissions` / `_rawEnabledPlugins` shadow** —— 我们只管一部分子字段，其他原样回写，不吞掉用户自己加的或其他工具写入的条目。
 - **Provider Profile 系统** —— 多份 API 接入方配置作为命名 Profile 保存，凭证存入 VSCode SecretStorage（系统 keychain）。支持 Anthropic / Bedrock / Vertex / Foundry 四种 provider。Settings 侧边栏可展开显示所有 Profile + 订阅模式，带 inline 切换/编辑/删除按钮；Settings WebView 顶部也有可展开的 provider strip。切换 Profile 时自动清理旧凭证。
+- **⚠️ Provider active-state 陷阱** —— UI 里"当前生效/Active" provider 不是直接读取 `providers.json` 的 `active` 字段，而是每次用 `matchProfileIdByEnv()` 把当前层的 `env` 反推成 profile id。这导致 **同 baseUrl + 同 authMode 的两个 profile 签名完全一样，会被识别成同一个**；匹配器会返回数组里第一个，切换后 UI 仍停在旧 profile。缓解方案：`matchProfileIdByEnv(settings, profiles, preferId)` 把 `providers.json` 里记录的 `active` 作为平手裁决依据；所有切换入口（Provider Manager、Settings 面板 user 层）必须同步更新 `doc.active`。后续根治应改为按层显式存储 active id，反推只作外部手改配置的兜底。
 - **WebView ↔ Extension 通信** —— `postMessage` + `RpcRequest/RpcResponse` 协议（`messaging.ts`）。每个 panel 独立处理 `req.method`。
 - **WebView CSP + nonce** —— `<script>window.__l10n = ...</script>` 是内联脚本，CSP 必须带 `'nonce-{nonce}'` 否则被拒；module script 也要带同一个 nonce；`makeNonce()` 在 `src/webview/messaging.ts`。
 - **WebView 没有框架** —— 用纯 DOM + innerHTML 重渲染。每次状态变 → `render()` 整段重绘 → 重新绑事件。bundle 小（~5–12 KB）。
