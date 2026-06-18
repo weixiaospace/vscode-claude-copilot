@@ -151,10 +151,11 @@ VSCode 原生 l10n 的坑：**只自动加载 `bundle.l10n.<locale>.json`（带 
 
 远程：`github`（weixiaospace/vscode-claude-copilot）+ `cnb`（镜像）。发版只推 `github` 然后走 GitHub Release。
 
-1. **改版本号 + 更新 CHANGELOG**（中英文两份 + 添加 `[x.y.z]` 尾部链接）
+1. **改版本号 + 更新 CHANGELOG + 同步 README 版本徽章**
    ```bash
    # 编辑 package.json "version"
    # 编辑 CHANGELOG.md 和 CHANGELOG.zh-CN.md 加新条目 + 尾部链接
+   # 同步 README.md / README.zh-CN.md 里的 version badge 和 VSIX 示例版本号
    ```
 
 2. **测试 + 打包**
