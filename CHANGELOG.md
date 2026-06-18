@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 **[English](CHANGELOG.md) | [中文](CHANGELOG.zh-CN.md)**
 
+## [0.1.20] - 2026-06-18
+
+### Fixed
+
+- Re-release 0.1.19 with README version badge and VSIX example synchronized to the correct version.
+
 ## [0.1.19] - 2026-06-18
 
 ### Fixed
@@ -135,6 +141,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - English + Simplified Chinese bilingual support
 
 [Unreleased]: https://github.com/weixiaospace/vscode-claude-copilot/compare/v0.1.18...HEAD
+[0.1.20]: https://github.com/weixiaospace/vscode-claude-copilot/releases/tag/v0.1.20
 [0.1.19]: https://github.com/weixiaospace/vscode-claude-copilot/releases/tag/v0.1.19
 [0.1.18]: https://github.com/weixiaospace/vscode-claude-copilot/releases/tag/v0.1.18
 [0.1.17]: https://github.com/weixiaospace/vscode-claude-copilot/releases/tag/v0.1.17

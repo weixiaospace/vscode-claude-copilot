@@ -6,6 +6,12 @@
 
 **[English](CHANGELOG.md) | [中文](CHANGELOG.zh-CN.md)**
 
+## [0.1.20] - 2026-06-18
+
+### 修复
+
+- 重新发布 0.1.19，修正 README 版本徽章和 VSIX 示例版本号。
+
 ## [0.1.19] - 2026-06-18
 
 ### 修复
@@ -134,6 +140,7 @@
 - 中英文双语支持
 
 [Unreleased]: https://github.com/weixiaospace/vscode-claude-copilot/compare/v0.1.18...HEAD
+[0.1.20]: https://github.com/weixiaospace/vscode-claude-copilot/releases/tag/v0.1.20
 [0.1.19]: https://github.com/weixiaospace/vscode-claude-copilot/releases/tag/v0.1.19
 [0.1.18]: https://github.com/weixiaospace/vscode-claude-copilot/releases/tag/v0.1.18
 [0.1.17]: https://github.com/weixiaospace/vscode-claude-copilot/releases/tag/v0.1.17
