@@ -80,15 +80,15 @@ export async function effectiveProfileId(): Promise<string | null> {
   const doc = await readProviders(CLAUDE_HOME);
   if (currentWorkspace()) {
     const local = await readLayer('local');
-    const matchedLocal = matchProfileIdByEnv(local, doc.profiles);
+    const matchedLocal = matchProfileIdByEnv(local, doc.profiles, doc.active);
     if (matchedLocal) return matchedLocal;
 
     const proj = await readLayer('project');
-    const matchedProj = matchProfileIdByEnv(proj, doc.profiles);
+    const matchedProj = matchProfileIdByEnv(proj, doc.profiles, doc.active);
     if (matchedProj) return matchedProj;
   }
   const user = await readLayer('user');
-  const matchedUser = matchProfileIdByEnv(user, doc.profiles);
+  const matchedUser = matchProfileIdByEnv(user, doc.profiles, doc.active);
   return matchedUser ?? doc.active;
 }
 

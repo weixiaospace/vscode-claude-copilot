@@ -288,4 +288,44 @@ describe('matchProfileIdByEnv', () => {
     // profiles[0] is subscription-mode; empty env must still yield null, not 'off'
     assert.equal(matchProfileIdByEnv({ env: {} }, profiles), null);
   });
+
+  describe('signature collision tie-break via preferId', () => {
+    // Two profiles, identical signature (same baseUrl + apiKey auth): the env alone
+    // can't tell them apart, so a plain match always returns the first one.
+    const collided: Profile[] = [
+      { id: 'acct-a', name: 'Acct A', kind: 'anthropic', authMode: 'apiKey', baseUrl: 'https://proxy/', hasApiKey: true },
+      { id: 'acct-b', name: 'Acct B', kind: 'anthropic', authMode: 'apiKey', baseUrl: 'https://proxy/', hasApiKey: true },
+    ];
+    const env = { ANTHROPIC_API_KEY: 'sk-whatever', ANTHROPIC_BASE_URL: 'https://proxy/' };
+
+    it('without a hint, returns the first matching profile (the collision bug)', () => {
+      assert.equal(matchProfileIdByEnv({ env }, collided), 'acct-a');
+    });
+
+    it('preferId picks the recorded-active profile when it matches the env', () => {
+      assert.equal(matchProfileIdByEnv({ env }, collided, 'acct-b'), 'acct-b');
+      assert.equal(matchProfileIdByEnv({ env }, collided, 'acct-a'), 'acct-a');
+    });
+
+    it('ignores preferId when that profile does not match the env, falling back to first match', () => {
+      // 'kimi' has a different baseUrl, so it cannot match this env — must not be returned
+      assert.equal(matchProfileIdByEnv({ env }, [...collided, ...profiles], 'kimi'), 'acct-a');
+    });
+
+    it('ignores an unknown preferId', () => {
+      assert.equal(matchProfileIdByEnv({ env }, collided, 'does-not-exist'), 'acct-a');
+    });
+
+    // The exact field-reported case: two authToken profiles on the same baseUrl.
+    // Matching ignores the token value entirely, so even distinct tokens collide.
+    it('breaks authToken collision (same baseUrl, same auth mode) by preferId', () => {
+      const tokProfiles: Profile[] = [
+        { id: 'tok-a', name: 'Tok A', kind: 'anthropic', authMode: 'authToken', baseUrl: 'https://gw/', hasAuthToken: true },
+        { id: 'tok-b', name: 'Tok B', kind: 'anthropic', authMode: 'authToken', baseUrl: 'https://gw/', hasAuthToken: true },
+      ];
+      const tokEnv = { ANTHROPIC_AUTH_TOKEN: 'tok-value', ANTHROPIC_BASE_URL: 'https://gw/' };
+      assert.equal(matchProfileIdByEnv({ env: tokEnv }, tokProfiles), 'tok-a'); // bug without hint
+      assert.equal(matchProfileIdByEnv({ env: tokEnv }, tokProfiles, 'tok-b'), 'tok-b'); // fixed with hint
+    });
+  });
 });

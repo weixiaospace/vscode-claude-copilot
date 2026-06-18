@@ -10,7 +10,7 @@ import {
 import { listInstalledPlugins } from '../core/plugins';
 import { readProviders, matchProfileIdByEnv } from '../core/providers';
 import { makeSecretsGateway } from '../lib/secrets';
-import { applyToLayer } from '../lib/provider-apply';
+import { applyToLayer, activateProfile } from '../lib/provider-apply';
 import { refreshProviderPanel } from './provider-panel';
 import { CLAUDE_HOME } from '../lib/paths';
 import { currentWorkspace } from '../lib/workspace';
@@ -286,7 +286,7 @@ export function openSettingsPanel(context: vscode.ExtensionContext, layer: Layer
             availableLayers: availability(),
             installedPlugins: installed.map(p => ({ key: `${p.name}@${p.marketplace}`, name: p.name, marketplace: p.marketplace })),
             profiles: doc.profiles.map(p => ({ id: p.id, name: p.name, kind: p.kind, baseUrl: (p as any).baseUrl ?? '' })),
-            activeProfileId: matchProfileIdByEnv(settingsObj, doc.profiles),
+            activeProfileId: matchProfileIdByEnv(settingsObj, doc.profiles, doc.active),
           },
         };
       } else if (req.method === 'settings:write') {
@@ -315,7 +315,12 @@ export function openSettingsPanel(context: vscode.ExtensionContext, layer: Layer
       } else if (req.method === 'settings:setLayerProvider') {
         const { layer, id } = req.params as { layer: Layer; id: string | null };
         const secrets = makeSecretsGateway(context);
-        await applyToLayer(layer, id, secrets);
+        // The user layer is the activation baseline — route it through activateProfile
+        // so providers.json `active` stays in sync. That keeps the collision tie-break
+        // (preferId === doc.active) and the status-bar fallback correct. Project/local
+        // are per-layer overrides and must not clobber the baseline.
+        if (layer === 'user') await activateProfile(id, secrets);
+        else await applyToLayer(layer, id, secrets);
         refreshProviderPanel();
         res = { id: req.id, result: 'ok' };
       } else if (req.method === 'commands:execute') {

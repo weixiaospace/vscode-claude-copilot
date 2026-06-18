@@ -6,6 +6,13 @@
 
 **[English](CHANGELOG.md) | [中文](CHANGELOG.zh-CN.md)**
 
+## [0.1.19] - 2026-06-18
+
+### 修复
+
+- 当两个 Profile 的 base URL + 鉴权方式完全相同时（例如同一接入点的两个 authToken 账号），切换后 UI 仍停留在上一个服务商。现在把已记录的 `active` Profile 作为平手裁决依据，同签名 Profile 之间的切换能正确生效。
+- Settings 面板的用户层 provider 切换现在会同步更新 `providers.json` 的 `active`，行为与 Provider Manager 保持一致。
+
 ## [0.1.18] - 2026-05-29
 
 ### 变更
@@ -127,6 +134,7 @@
 - 中英文双语支持
 
 [Unreleased]: https://github.com/weixiaospace/vscode-claude-copilot/compare/v0.1.18...HEAD
+[0.1.19]: https://github.com/weixiaospace/vscode-claude-copilot/releases/tag/v0.1.19
 [0.1.18]: https://github.com/weixiaospace/vscode-claude-copilot/releases/tag/v0.1.18
 [0.1.17]: https://github.com/weixiaospace/vscode-claude-copilot/releases/tag/v0.1.17
 [0.1.16]: https://github.com/weixiaospace/vscode-claude-copilot/releases/tag/v0.1.16

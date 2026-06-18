@@ -277,15 +277,25 @@ function profileMatchesEnv(p: Profile, env: Record<string, string>, helper: stri
 
 /**
  * Given a settings object (env + apiKeyHelper), find the id of the profile whose
- * signature matches. Does not compare secret values; no managed provider env => null;
- * multiple identical signatures => first match.
+ * signature matches. Does not compare secret values; no managed provider env => null.
+ *
+ * Two profiles can share an identical signature (same baseUrl + auth mode, e.g. two
+ * accounts on the same endpoint) — the env alone can't tell them apart. `preferId`
+ * (typically the explicitly-recorded `doc.active`) breaks that tie: if it matches the
+ * env it wins, so switching between collided profiles actually sticks. Without a
+ * usable hint we fall back to first match.
  */
 export function matchProfileIdByEnv(
   settings: Record<string, unknown>,
   profiles: Profile[],
+  preferId?: string | null,
 ): string | null {
   const env = (settings.env ?? {}) as Record<string, string>;
   const helper = typeof settings.apiKeyHelper === 'string' ? settings.apiKeyHelper : '';
+  if (preferId) {
+    const preferred = profiles.find(p => p.id === preferId);
+    if (preferred && profileMatchesEnv(preferred, env, helper)) return preferred.id;
+  }
   for (const p of profiles) {
     if (profileMatchesEnv(p, env, helper)) return p.id;
   }

@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 **[English](CHANGELOG.md) | [中文](CHANGELOG.zh-CN.md)**
 
+## [0.1.19] - 2026-06-18
+
+### Fixed
+
+- Provider switching appeared to succeed but the UI stayed on the previous profile when two profiles shared the same base URL + auth mode (e.g. two authToken accounts on the same endpoint). Active-provider inference now uses the recorded `active` profile as a tie-breaker, so switching between collided profiles actually sticks.
+- Settings panel user-layer provider switch now keeps `providers.json` `active` in sync, matching the Provider Manager behavior.
+
 ## [0.1.18] - 2026-05-29
 
 ### Changed
@@ -128,6 +135,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - English + Simplified Chinese bilingual support
 
 [Unreleased]: https://github.com/weixiaospace/vscode-claude-copilot/compare/v0.1.18...HEAD
+[0.1.19]: https://github.com/weixiaospace/vscode-claude-copilot/releases/tag/v0.1.19
 [0.1.18]: https://github.com/weixiaospace/vscode-claude-copilot/releases/tag/v0.1.18
 [0.1.17]: https://github.com/weixiaospace/vscode-claude-copilot/releases/tag/v0.1.17
 [0.1.16]: https://github.com/weixiaospace/vscode-claude-copilot/releases/tag/v0.1.16

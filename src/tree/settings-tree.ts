@@ -58,7 +58,7 @@ export class SettingsTreeProvider implements vscode.TreeDataProvider<Node> {
       }
 
       function nameFor(settings: Record<string, unknown>, profiles: Profile[]): string {
-        const id = matchProfileIdByEnv(settings, profiles);
+        const id = matchProfileIdByEnv(settings, profiles, doc.active);
         if (id) {
           const p = profiles.find(x => x.id === id);
           return p ? p.name : t('providers.statusBar.subscription');
