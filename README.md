@@ -2,7 +2,7 @@
 
 # Claude Copilot
 
-[![Version](https://img.shields.io/badge/version-0.1.17-blue.svg)](https://github.com/weixiaospace/vscode-claude-copilot/releases)
+[![Version](https://img.shields.io/badge/version-0.1.19-blue.svg)](https://github.com/weixiaospace/vscode-claude-copilot/releases)
 [![VS Code](https://img.shields.io/badge/VS%20Code-%5E1.90.0-blue.svg?logo=visual-studio-code)](https://code.visualstudio.com/updates/v1_90)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
@@ -65,7 +65,7 @@ Search for **"Claude Copilot"** in the Extensions view (`Cmd+Shift+X` / `Ctrl+Sh
 Download the latest `.vsix` from [Releases](https://github.com/weixiaospace/vscode-claude-copilot/releases):
 
 ```bash
-code --install-extension claude-copilot-0.1.16.vsix
+code --install-extension claude-copilot-0.1.19.vsix
 ```
 
 ### Setup
