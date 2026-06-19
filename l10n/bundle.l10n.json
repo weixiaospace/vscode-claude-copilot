@@ -1,6 +1,4 @@
 {
-  "toast.cliMissing": "Claude CLI not detected. Please install claude, then run \"Claude Copilot: Refresh All\" from the command palette.",
-
   "toast.noWorkspace": "No workspace folder open",
   "toast.mcpUserAdded": "Added user MCP server: {0}",
   "toast.mcpProjectAdded": "Added project MCP server: {0}",
