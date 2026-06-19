@@ -6,6 +6,7 @@ import { AgentsTreeProvider } from './tree/agents-tree';
 import { WorkflowsTreeProvider } from './tree/workflows-tree';
 import { OutputStylesTreeProvider } from './tree/output-styles-tree';
 import { RulesTreeProvider } from './tree/rules-tree';
+import { HooksTreeProvider } from './tree/hooks-tree';
 import { MemoryTreeProvider } from './tree/memory-tree';
 import { SettingsTreeProvider } from './tree/settings-tree';
 import { UsageTreeProvider } from './tree/usage-tree';
@@ -37,6 +38,7 @@ export function activate(context: vscode.ExtensionContext): void {
   const workflows = new WorkflowsTreeProvider();
   const outputStyles = new OutputStylesTreeProvider();
   const rules = new RulesTreeProvider();
+  const hooks = new HooksTreeProvider();
   const memory = new MemoryTreeProvider();
   const settings = new SettingsTreeProvider();
   const usage = new UsageTreeProvider();
@@ -58,12 +60,13 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.window.registerTreeDataProvider('claudeCopilot.workflows', workflows),
     vscode.window.registerTreeDataProvider('claudeCopilot.outputStyles', outputStyles),
     vscode.window.registerTreeDataProvider('claudeCopilot.rules', rules),
+    vscode.window.registerTreeDataProvider('claudeCopilot.hooks', hooks),
     vscode.window.registerTreeDataProvider('claudeCopilot.memory', memory),
     vscode.window.registerTreeDataProvider('claudeCopilot.settings', settings),
     vscode.window.registerTreeDataProvider('claudeCopilot.usage', usage),
     vscode.commands.registerCommand('claudeCopilot.refresh', () => {
       plugins.refresh(); mcp.refresh(); skills.refresh(); agents.refresh();
-      workflows.refresh(); outputStyles.refresh(); rules.refresh();
+      workflows.refresh(); outputStyles.refresh(); rules.refresh(); hooks.refresh();
       memory.refresh(); settings.refresh();
     }),
     vscode.commands.registerCommand('claudeCopilot.openFile', async (filePath: string) => {
@@ -88,7 +91,7 @@ export function activate(context: vscode.ExtensionContext): void {
       refreshProviderPanel();
     }),
     ...registerWatchers({
-      plugins: () => plugins.refresh(),
+      plugins: () => { plugins.refresh(); hooks.refresh(); },
       mcp: () => mcp.refresh(),
       skills: () => skills.refresh(),
       agents: () => agents.refresh(),
@@ -96,7 +99,7 @@ export function activate(context: vscode.ExtensionContext): void {
       outputStyles: () => outputStyles.refresh(),
       rules: () => rules.refresh(),
       memory: () => memory.refresh(),
-      settings: () => { settings.refresh(); outputStyles.refresh(); },
+      settings: () => { settings.refresh(); outputStyles.refresh(); hooks.refresh(); },
       providers: () => { void statusBar.update(); settings.refresh(); },
     }),
   );

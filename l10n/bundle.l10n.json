@@ -283,6 +283,12 @@
   "tree.agent.toolsCount": "{0} tools",
   "tree.rule.scoped": "path-scoped",
   "tree.outputStyle.active": "✓ active",
+  "tree.hooks.entryCount": "{0} handlers",
+
+  "hooks.source.user": "User",
+  "hooks.source.project": "Project",
+  "hooks.source.local": "Local",
+  "hooks.source.plugin": "Plugin: {0}",
 
   "plugin.type.skills": "skills",
   "plugin.type.agents": "agents",

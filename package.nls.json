@@ -8,6 +8,7 @@
   "view.workflows.name": "Workflows",
   "view.outputStyles.name": "Output Styles",
   "view.rules.name": "Rules",
+  "view.hooks.name": "Hooks",
   "view.memory.name": "Memory",
   "view.settings.name": "Settings",
   "view.usage.name": "Usage",

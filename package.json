@@ -33,6 +33,7 @@
         { "id": "claudeCopilot.workflows", "name": "%view.workflows.name%" },
         { "id": "claudeCopilot.outputStyles", "name": "%view.outputStyles.name%" },
         { "id": "claudeCopilot.rules", "name": "%view.rules.name%" },
+        { "id": "claudeCopilot.hooks", "name": "%view.hooks.name%" },
         { "id": "claudeCopilot.memory", "name": "%view.memory.name%" },
         { "id": "claudeCopilot.settings", "name": "%view.settings.name%" },
         { "id": "claudeCopilot.usage", "name": "%view.usage.name%" }

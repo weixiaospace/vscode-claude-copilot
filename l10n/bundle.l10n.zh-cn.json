@@ -283,6 +283,12 @@
   "tree.agent.toolsCount": "{0} 工具",
   "tree.rule.scoped": "路径作用域",
   "tree.outputStyle.active": "✓ 生效",
+  "tree.hooks.entryCount": "{0} 项",
+
+  "hooks.source.user": "用户",
+  "hooks.source.project": "项目",
+  "hooks.source.local": "本地",
+  "hooks.source.plugin": "插件：{0}",
 
   "plugin.type.skills": "技能",
   "plugin.type.agents": "代理",
