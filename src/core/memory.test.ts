@@ -50,4 +50,16 @@ describe('memory', () => {
     assert.ok(!idx.includes('note.md'));
     assert.ok(idx.includes('other.md'));
   });
+
+  it('deleteMemory prunes only the index link, not prose mentioning the filename', async () => {
+    const memDir = memoryDir(tmpHome, '/proj2');
+    await fs.mkdir(memDir, { recursive: true });
+    await fs.writeFile(path.join(memDir, 'guide.md'), '');
+    await fs.writeFile(path.join(memDir, 'MEMORY.md'),
+      '- [Guide](guide.md) — hook\n- [Other](other.md) — see (guide.md) for context');
+    await deleteMemory(tmpHome, '/proj2', path.join(memDir, 'guide.md'));
+    const idx = await fs.readFile(path.join(memDir, 'MEMORY.md'), 'utf-8');
+    assert.ok(!idx.includes('[Guide](guide.md)'), 'index entry should be pruned');
+    assert.ok(idx.includes('[Other](other.md)'), 'prose line referencing (guide.md) should survive');
+  });
 });

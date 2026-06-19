@@ -217,3 +217,98 @@ describe('file-resource descriptor pipeline (flat-subdirs discovery)', () => {
     await assert.rejects(fs.stat(path.join(tmpHome, 'dirs', 'has-marker')));
   });
 });
+
+// Skills/agents are frequently symlinked into ~/.claude/skills from shared
+// locations (e.g. ~/.agents/skills, cc-switch, matt-pocock setups). readdir
+// withFileTypes reports a symlink's lstat, so isDirectory()/isFile() are both
+// false for symlinks — discovery must resolve them, or the panel silently
+// drops every symlinked resource.
+describe('file-resource symlink handling', () => {
+  let tmpHome: string;
+  let external: string;
+
+  interface SItem extends FileResourceItem {}
+
+  const flatDesc = defineFileResource<SItem>({
+    kind: 'flat',
+    scopeRoots: { user: home => path.join(home, 'flats'), project: () => '/never' },
+    discovery: { kind: 'flat-subdirs', basename: 'MARKER.md' },
+    parse: (filePath, _content, scope) => ({
+      name: path.basename(path.dirname(filePath)),
+      description: '',
+      scope,
+      path: filePath,
+    }),
+    template: () => '# marker\n',
+    createFilePath: (baseDir, _scope, name) => path.join(baseDir, 'flats', name, 'MARKER.md'),
+    deletePath: filePath => path.dirname(filePath),
+  });
+
+  const recDesc = defineFileResource<SItem>({
+    kind: 'rec',
+    scopeRoots: { user: home => path.join(home, 'recs'), project: () => '/never' },
+    discovery: 'recursive',
+    parse: (filePath, content, scope) => ({
+      name: extractFrontmatter(content)['name'] || path.basename(filePath, '.md'),
+      description: '',
+      scope,
+      path: filePath,
+    }),
+    template: name => `---\nname: ${name}\n---\n`,
+    createFilePath: (baseDir, _scope, name) => path.join(baseDir, 'recs', `${name}.md`),
+    deletePath: filePath => filePath,
+  });
+
+  before(async () => {
+    tmpHome = await fs.mkdtemp(path.join(os.tmpdir(), 'cc-fileres-link-'));
+    external = await fs.mkdtemp(path.join(os.tmpdir(), 'cc-fileres-ext-'));
+    await fs.mkdir(path.join(tmpHome, 'flats'), { recursive: true });
+    await fs.mkdir(path.join(tmpHome, 'recs'), { recursive: true });
+  });
+  after(async () => {
+    await fs.rm(tmpHome, { recursive: true, force: true });
+    await fs.rm(external, { recursive: true, force: true });
+  });
+
+  it('flat-subdirs: discovers a symlinked subdir that contains the basename', async () => {
+    const target = path.join(external, 'linked-skill');
+    await fs.mkdir(target, { recursive: true });
+    await fs.writeFile(path.join(target, 'MARKER.md'), '# yes');
+    await fs.symlink(target, path.join(tmpHome, 'flats', 'linked'));
+    const result = await listResource(flatDesc, tmpHome, null);
+    assert.ok(result.find(i => i.name === 'linked'), 'symlinked skill dir should be discovered');
+  });
+
+  it('flat-subdirs: ignores a symlink whose target lacks the basename', async () => {
+    const target = path.join(external, 'bare');
+    await fs.mkdir(target, { recursive: true });
+    await fs.symlink(target, path.join(tmpHome, 'flats', 'bare-link'));
+    const result = await listResource(flatDesc, tmpHome, null);
+    assert.ok(!result.find(i => i.name === 'bare-link'), 'symlink without MARKER.md should be skipped');
+  });
+
+  it('recursive: discovers a symlinked .md file', async () => {
+    const target = path.join(external, 'delta.md');
+    await fs.writeFile(target, '---\nname: delta\n---\n');
+    await fs.symlink(target, path.join(tmpHome, 'recs', 'delta-link.md'));
+    const result = await listResource(recDesc, tmpHome, null);
+    assert.ok(result.find(i => i.name === 'delta'), 'symlinked .md should be discovered');
+  });
+
+  it('recursive: recurses into a symlinked subdirectory', async () => {
+    const target = path.join(external, 'nested-dir');
+    await fs.mkdir(target, { recursive: true });
+    await fs.writeFile(path.join(target, 'epsilon.md'), '---\nname: epsilon\n---\n');
+    await fs.symlink(target, path.join(tmpHome, 'recs', 'linked-dir'));
+    const result = await listResource(recDesc, tmpHome, null);
+    assert.ok(result.find(i => i.name === 'epsilon'), 'skill in symlinked subdir should be discovered');
+  });
+
+  it('recursive: a symlink cycle does not hang or throw', async () => {
+    // recs/loop -> recs  (points back at an ancestor)
+    await fs.symlink(path.join(tmpHome, 'recs'), path.join(tmpHome, 'recs', 'loop'));
+    const result = await listResource(recDesc, tmpHome, null);
+    // delta is still found; the cycle is simply pruned
+    assert.ok(result.find(i => i.name === 'delta'));
+  });
+});

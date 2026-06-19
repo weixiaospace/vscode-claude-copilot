@@ -10,7 +10,7 @@ export interface FileResourceItem {
   path: string;
 }
 
-export type Discovery =
+type Discovery =
   | 'recursive'
   | { kind: 'flat-subdirs'; basename: string };
 
@@ -74,27 +74,55 @@ async function discoverFiles(
   return walkMarkdown(dir);
 }
 
+// readdir's Dirent reflects the entry's own lstat, so a symlink-to-directory
+// reports isDirectory() === false. Skills/agents are routinely symlinked into
+// ~/.claude from shared dirs, so resolve the symlink's real kind before
+// deciding. Returns 'dir' | 'file' | 'other' (broken/dangling links -> 'other').
+export async function entryKind(
+  entry: { isDirectory(): boolean; isFile(): boolean; isSymbolicLink(): boolean },
+  full: string,
+): Promise<'dir' | 'file' | 'other'> {
+  if (entry.isDirectory()) return 'dir';
+  if (entry.isFile()) return 'file';
+  if (entry.isSymbolicLink()) {
+    try {
+      const st = await fs.stat(full); // follows the link
+      if (st.isDirectory()) return 'dir';
+      if (st.isFile()) return 'file';
+    } catch { /* dangling symlink */ }
+  }
+  return 'other';
+}
+
 async function discoverFlatSubdirs(dir: string, basename: string): Promise<string[]> {
   const out: string[] = [];
   const entries = await fs.readdir(dir, { withFileTypes: true });
   entries.sort((a, b) => a.name.localeCompare(b.name));
   for (const entry of entries) {
-    if (!entry.isDirectory()) continue;
+    if (await entryKind(entry, path.join(dir, entry.name)) !== 'dir') continue;
     const file = path.join(dir, entry.name, basename);
     if (await exists(file)) out.push(file);
   }
   return out;
 }
 
-async function walkMarkdown(dir: string): Promise<string[]> {
+async function walkMarkdown(dir: string, seen?: Set<string>): Promise<string[]> {
+  // Guard against symlink cycles (e.g. a link pointing back at an ancestor).
+  const visited = seen ?? new Set<string>();
+  let real: string;
+  try { real = await fs.realpath(dir); } catch { return []; }
+  if (visited.has(real)) return [];
+  visited.add(real);
+
   const out: string[] = [];
   const entries = await fs.readdir(dir, { withFileTypes: true });
   entries.sort((a, b) => a.name.localeCompare(b.name));
   for (const entry of entries) {
     const full = path.join(dir, entry.name);
-    if (entry.isDirectory()) {
-      out.push(...await walkMarkdown(full));
-    } else if (entry.isFile() && entry.name.endsWith('.md')) {
+    const kind = await entryKind(entry, full);
+    if (kind === 'dir') {
+      out.push(...await walkMarkdown(full, visited));
+    } else if (kind === 'file' && entry.name.endsWith('.md')) {
       out.push(full);
     }
   }
@@ -110,7 +138,16 @@ async function scanScope<T extends FileResourceItem>(
   const seen = new Set<string>();
   const out: T[] = [];
   for (const file of files) {
-    const content = await fs.readFile(file, 'utf-8');
+    let content: string;
+    try {
+      content = await fs.readFile(file, 'utf-8');
+    } catch (err: any) {
+      // A file (or symlink target) can vanish between discovery and read,
+      // e.g. when a watcher-driven refresh races a delete. Skip it rather
+      // than blanking the whole panel.
+      if (err?.code === 'ENOENT') continue;
+      throw err;
+    }
     const item = desc.parse(file, content, scope);
     if (seen.has(item.name)) continue;
     seen.add(item.name);

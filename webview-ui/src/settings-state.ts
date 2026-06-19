@@ -60,7 +60,7 @@ export const ENV_NUMBERS: EnvDef[] = [
   { key: 'BASH_MAX_OUTPUT_LENGTH', labelKey: 'settings.env.bashMaxOutputLength' },
 ];
 
-export const PROVIDER_ENV = {
+const PROVIDER_ENV = {
   bedrock: 'CLAUDE_CODE_USE_BEDROCK',
   vertex: 'CLAUDE_CODE_USE_VERTEX',
   foundry: 'CLAUDE_CODE_USE_FOUNDRY',

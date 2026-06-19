@@ -9,6 +9,9 @@ tsconfig.json
 **/*.map
 CLAUDE.md
 TODO.md
+CONTEXT.md
+.claude
+scripts
 webview-ui/node_modules
 webview-ui/src
 webview-ui/*.html

@@ -1,6 +1,7 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { runClaude } from './claude-cli';
+import { entryKind } from './file-resource';
 
 export interface InstalledPlugin {
   name: string;
@@ -110,7 +111,9 @@ async function listSkillChildren(dir: string): Promise<PluginChild[]> {
     const entries = await fs.readdir(dir, { withFileTypes: true });
     const out: PluginChild[] = [];
     for (const e of entries) {
-      if (!e.isDirectory()) continue;
+      // Plugins routinely vendor skills as symlinks; readdir's Dirent reports
+      // a symlinked dir as isDirectory() === false, so resolve via entryKind.
+      if (await entryKind(e, path.join(dir, e.name)) !== 'dir') continue;
       const skillFile = path.join(dir, e.name, 'SKILL.md');
       if (await exists(skillFile)) out.push({ name: e.name, path: skillFile });
     }

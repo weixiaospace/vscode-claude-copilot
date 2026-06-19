@@ -1,3 +1,12 @@
 packages:
   - .
   - webview-ui
+# Declared so pnpm stops prompting about ignored build scripts. Keep these
+# false: esbuild's install script swaps its JS launcher for the native binary,
+# which pnpm's pre-generated `node`-based .bin shim then fails to run
+# ("SyntaxError: Invalid or unexpected token"). All three are dev/build-time
+# only — runtime secrets go through VSCode SecretStorage, not keytar.
+allowBuilds:
+  '@vscode/vsce-sign': false
+  esbuild: false
+  keytar: false

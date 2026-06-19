@@ -6,7 +6,7 @@
 
 **[English](CHANGELOG.md) | [中文](CHANGELOG.zh-CN.md)**
 
-## [0.2.0] - 2026-06-19
+## [0.1.21] - 2026-06-19
 
 ### 新增
 
@@ -14,7 +14,7 @@
 
 - **Agents**（`~/.claude/agents/`、`.claude/agents/`）—— subagent 定义。递归扫描；身份从 YAML frontmatter `name` 取（缺失时退回到文件名）。tree 展示 `model · N tools · color`；同 scope 内同名冲突按"先到先得"去重
 - **Workflows**（`~/.claude/workflows/`、`.claude/workflows/`）—— 保存的 `/<name>` 脚本。递归扫描；身份从文件名取
-- **Output Styles**（`~/.claude/output-styles/`、`.claude/output-styles/`）—— 系统提示词风格。身份优先 YAML `name`，缺失时退回到文件名。新增"**Set Active**"命令，把所选风格写入 `.claude/settings.local.json#outputStyle`（与 `/config` 一致）。当前生效的风格在 tree 里带 ✓ + ⭐ 标记
+- **Output Styles**（`~/.claude/output-styles/`、`.claude/output-styles/`）—— 系统提示词风格。身份优先 YAML `name`，缺失时退回到文件名。新增"**Set Active**"命令，把所选风格写入 `.claude/settings.local.json#outputStyle`（与 `/config` 一致）。当前生效的风格在 tree 里带 ⭐ 标记
 - **Rules**（`~/.claude/rules/`、`.claude/rules/`）—— 模块化的 CLAUDE.md 补充。递归扫描（含 `frontend/` 之类子目录）。带 `paths:` frontmatter 的 rule 在 tree 里显示 `path-scoped` 标签
 - **Hooks**（只读视图，合并 4 源：user / project / local 的 settings.json + 各 plugin 的 `hooks/hooks.json`）。按事件分组（`PreToolUse` / `PostToolUse` / `SessionStart` …），每条 handler 带 source 标签。点击 entry 跳到对应源文件。每种 handler 有专属图标：command / http / mcp_tool / prompt / agent
 
@@ -30,8 +30,15 @@
 - 新增 `src/commands/file-resource-commands.ts` 通用 `.create` / `.delete` 注册器
 - Skills + Agents 迁到抽象：`skills-tree.ts` 从 72 LOC 缩到 13，`agents-tree.ts` 从 73 缩到 27，command 模块同步瘦身。原测试不动，全部通过
 
+### 修复
+
+- **能发现 symlink 形式的资源了。** `readdir` 会把 symlink 子目录报成"非目录"，导致 symlink 形式的 skills / agents / output-styles / rules（以及插件用 symlink vendor 的 skill）被无声丢弃。现在发现逻辑会解析 symlink，并防 symlink 环
+- **不再覆写 `settings.local.json`。** 之前在格式损坏的 `settings.local.json` 上设置 active output style，会把它当空文件覆写，毁掉用户其它的键（hooks / permissions / mcpServers）。现在损坏文件会报错而不是被静默替换；读取也不再吞掉解析/权限错误
+- **Usage 不再掩盖错误。** 之前一个大 catch 把所有失败（含权限错误和 bug）都报成"零用量"，现在只容忍"扫描途中文件消失"这种良性竞态
+- 资源列举在扫描途中文件消失时跳过该文件，而不是清空整个面板
+
 ### 测试
-- 137 个 core 层单测（之前 35）—— 新增 Agents 10 + file-resource 20 + Workflows 6 + Rules 7 + Output Styles 9 + Hooks 9
+- 148 个 core 层单测（之前 35）—— 新增 Agents 10 + file-resource 20 + Workflows 6 + Rules 7 + Output Styles 9 + Hooks 9，外加 symlink 发现与损坏 settings 的回归覆盖
 
 ## [0.1.20] - 2026-06-18
 
@@ -166,8 +173,8 @@
 - Usage Dashboard 用量统计与成本估算
 - 中英文双语支持
 
-[Unreleased]: https://github.com/weixiaospace/vscode-claude-copilot/compare/v0.2.0...HEAD
-[0.2.0]: https://github.com/weixiaospace/vscode-claude-copilot/releases/tag/v0.2.0
+[Unreleased]: https://github.com/weixiaospace/vscode-claude-copilot/compare/v0.1.21...HEAD
+[0.1.21]: https://github.com/weixiaospace/vscode-claude-copilot/releases/tag/v0.1.21
 [0.1.20]: https://github.com/weixiaospace/vscode-claude-copilot/releases/tag/v0.1.20
 [0.1.19]: https://github.com/weixiaospace/vscode-claude-copilot/releases/tag/v0.1.19
 [0.1.18]: https://github.com/weixiaospace/vscode-claude-copilot/releases/tag/v0.1.18

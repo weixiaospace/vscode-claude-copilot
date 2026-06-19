@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 **[English](CHANGELOG.md) | [中文](CHANGELOG.zh-CN.md)**
 
-## [0.2.0] - 2026-06-19
+## [0.1.21] - 2026-06-19
 
 ### Added
 
@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Agents** (`~/.claude/agents/`, `.claude/agents/`) — subagent definitions. Recursive scan; identity from YAML `name` frontmatter (filename fallback). Tree shows `model · N tools · color` from the frontmatter; first-occurrence wins on duplicate names within a scope.
 - **Workflows** (`~/.claude/workflows/`, `.claude/workflows/`) — saved `/<name>` scripts. Recursive scan; identity from filename.
-- **Output Styles** (`~/.claude/output-styles/`, `.claude/output-styles/`) — system-prompt modifiers. Identity from YAML `name` (filename fallback). A "**Set Active**" command writes the chosen style to `.claude/settings.local.json#outputStyle` (matching what `/config` does). The active style is marked in the tree with ✓ and a star icon.
+- **Output Styles** (`~/.claude/output-styles/`, `.claude/output-styles/`) — system-prompt modifiers. Identity from YAML `name` (filename fallback). A "**Set Active**" command writes the chosen style to `.claude/settings.local.json#outputStyle` (matching what `/config` does). The active style is marked in the tree with a star icon.
 - **Rules** (`~/.claude/rules/`, `.claude/rules/`) — modular CLAUDE.md companions. Recursive scan, including subdirectories like `frontend/`. Rules with a `paths:` frontmatter get a `path-scoped` chip in the tree.
 - **Hooks** (read-only view, merges 4 sources: user / project / local settings.json + plugin `hooks/hooks.json`). Grouped by event (`PreToolUse`, `PostToolUse`, `SessionStart`, …); each handler tagged with source label. Click an entry to open its source file. Per-type icons: command / http / mcp_tool / prompt / agent.
 
@@ -31,8 +31,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - New `src/commands/file-resource-commands.ts` generic `.create` / `.delete` registrar.
 - Skills + Agents migrated to the abstraction: `skills-tree.ts` dropped from 72 to 13 LOC, `agents-tree.ts` from 73 to 27 LOC, with equivalent shrinkage on the command modules. Existing tests untouched and still pass.
 
+### Fixed
+
+- **Symlinked resources are now discovered.** `readdir` reports a symlinked directory as a non-directory, so symlinked skills / agents / output-styles / rules (and plugin-vendored skills) were silently dropped from their panels. Discovery now resolves symlinks and guards against symlink cycles.
+- **No more clobbering `settings.local.json`.** Setting an active output style on a malformed `settings.local.json` previously parsed it as empty and overwrote the file, destroying the user's other keys (hooks / permissions / mcpServers). A corrupt file now surfaces an error instead of being silently replaced; reads no longer mask parse/permission errors.
+- **Usage no longer hides errors.** A blanket catch reported every failure (including permission errors and bugs) as zero usage; only the benign "file vanished mid-scan" race is now tolerated.
+- Resource listing tolerates a file disappearing mid-scan instead of blanking the whole panel.
+
 ### Tests
-- 137 core-layer tests (up from 35) — added 10 Agents + 20 file-resource + 6 Workflows + 7 Rules + 9 Output Styles + 9 Hooks.
+- 148 core-layer tests (up from 35) — added 10 Agents + 20 file-resource + 6 Workflows + 7 Rules + 9 Output Styles + 9 Hooks, plus symlink-discovery and corrupt-settings regression coverage.
 
 ## [0.1.20] - 2026-06-18
 
@@ -167,8 +174,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Usage dashboard with token analytics
 - English + Simplified Chinese bilingual support
 
-[Unreleased]: https://github.com/weixiaospace/vscode-claude-copilot/compare/v0.2.0...HEAD
-[0.2.0]: https://github.com/weixiaospace/vscode-claude-copilot/releases/tag/v0.2.0
+[Unreleased]: https://github.com/weixiaospace/vscode-claude-copilot/compare/v0.1.21...HEAD
+[0.1.21]: https://github.com/weixiaospace/vscode-claude-copilot/releases/tag/v0.1.21
 [0.1.20]: https://github.com/weixiaospace/vscode-claude-copilot/releases/tag/v0.1.20
 [0.1.19]: https://github.com/weixiaospace/vscode-claude-copilot/releases/tag/v0.1.19
 [0.1.18]: https://github.com/weixiaospace/vscode-claude-copilot/releases/tag/v0.1.18

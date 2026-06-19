@@ -2,7 +2,7 @@
 
 # Claude Copilot
 
-[![Version](https://img.shields.io/badge/version-0.2.0-blue.svg)](https://github.com/weixiaospace/vscode-claude-copilot/releases)
+[![Version](https://img.shields.io/badge/version-0.1.21-blue.svg)](https://github.com/weixiaospace/vscode-claude-copilot/releases)
 [![VS Code](https://img.shields.io/badge/VS%20Code-%5E1.90.0-blue.svg?logo=visual-studio-code)](https://code.visualstudio.com/updates/v1_90)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
@@ -50,7 +50,7 @@ VS Code 扩展 —— [Claude Code](https://docs.claude.com/zh-CN/docs/claude-co
 | 🪄 **Skills** | 浏览 `~/.claude/skills` 与 `.claude/skills`。展开秒显示（已缓存）。点击即可编辑 `SKILL.md` |
 | 🤖 **Agents** | 浏览用户级 / 项目级 subagent。tree 展示 YAML frontmatter 里的 `model · N tools · color`；身份取自 `name` 字段（缺失时退回到文件名）；递归扫描 |
 | 🛠 **Workflows** | 浏览 `~/.claude/workflows/` 和项目 `.claude/workflows/` 下保存的 `/<name>` 脚本。身份取自文件名；递归扫描 |
-| 🎨 **Output Styles** | 浏览用户级 / 项目级输出风格。**Set Active** 命令把所选风格写入 `.claude/settings.local.json#outputStyle`（与 `/config` 等价）；当前生效的风格在 tree 里带 ✓ + ⭐ 标记 |
+| 🎨 **Output Styles** | 浏览用户级 / 项目级输出风格。**Set Active** 命令把所选风格写入 `.claude/settings.local.json#outputStyle`（与 `/config` 等价）；当前生效的风格在 tree 里带 ⭐ 标记 |
 | 📐 **Rules** | 浏览 `.claude/rules/` 下的模块化 CLAUDE.md 补充。带 `paths:` frontmatter 的 rule 显示 `path-scoped` 标签；支持 `frontend/`、`backend/` 等子目录组织 |
 | ⚡ **Hooks** | 只读视图，合并 **4 个源**的 hooks：user / project / local 三层 `settings.json` + 各 plugin 的 `hooks/hooks.json`。按事件分组（`PreToolUse` / `PostToolUse` / `SessionStart` …），每条 handler 带 source 标签 + 简要描述（command / URL / MCP tool / prompt / agent）。点击 entry 跳到对应源文件 |
 | 🧠 **Memory** | 浏览 `~/.claude/projects/<slug>/memory` 下的记忆文件，单独列出 MEMORY.md 索引项 |
@@ -70,7 +70,7 @@ VS Code 扩展 —— [Claude Code](https://docs.claude.com/zh-CN/docs/claude-co
 从 [Releases](https://github.com/weixiaospace/vscode-claude-copilot/releases) 下载最新 `.vsix`：
 
 ```bash
-code --install-extension claude-copilot-0.2.0.vsix
+code --install-extension claude-copilot-0.1.21.vsix
 ```
 
 ### 使用步骤
@@ -107,7 +107,7 @@ code --install-extension claude-copilot-0.2.0.vsix
 ```bash
 pnpm install       # 安装 root + webview-ui 依赖
 pnpm build         # esbuild 扩展 + vite webview 打包
-pnpm test          # 35 个 mocha 核心层单测
+pnpm test          # 148 个 mocha 核心层单测
 pnpm package       # vsce 打包 → claude-copilot-<版本>.vsix
 ```
 

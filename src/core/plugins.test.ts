@@ -65,4 +65,23 @@ describe('plugins', () => {
     assert.equal(result[0]?.name, 'cool-plugin');
     assert.equal(result[0]?.marketplace, 'official');
   });
+
+  it('discovers plugin skills behind symlinked dirs (not just real dirs)', async () => {
+    const installPath = path.join(tmpHome, 'plugin-sk');
+    const skillsDir = path.join(installPath, 'skills');
+    await fs.mkdir(path.join(skillsDir, 'real-skill'), { recursive: true });
+    await fs.writeFile(path.join(skillsDir, 'real-skill', 'SKILL.md'), '# real');
+    // a skill vendored via symlink — readdir reports it as a non-directory
+    const external = path.join(tmpHome, 'external-skill');
+    await fs.mkdir(external, { recursive: true });
+    await fs.writeFile(path.join(external, 'SKILL.md'), '# linked');
+    await fs.symlink(external, path.join(skillsDir, 'linked-skill'));
+
+    await fs.writeFile(path.join(tmpHome, 'plugins', 'installed_plugins.json'),
+      JSON.stringify({ plugins: { 'sk@official': [{ version: '1.0.0', scope: 'user', installPath }] } }));
+    const result = await listInstalledPlugins(tmpHome);
+    const sk = result.find(p => p.name === 'sk');
+    const names = (sk?.skills ?? []).map(s => s.name).sort();
+    assert.deepEqual(names, ['linked-skill', 'real-skill']);
+  });
 });

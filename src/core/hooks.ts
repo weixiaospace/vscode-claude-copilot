@@ -7,7 +7,7 @@ export type HookSource =
   | { kind: 'local' }
   | { kind: 'plugin'; pluginKey: string };
 
-export interface HookHandler {
+interface HookHandler {
   type: string; // 'command' | 'http' | 'mcp_tool' | 'prompt' | 'agent' | 'unknown'
   summary: string;
   raw: Record<string, unknown>;

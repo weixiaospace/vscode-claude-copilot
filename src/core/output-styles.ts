@@ -73,29 +73,33 @@ function settingsLocalPath(projectPath: string): string {
   return path.join(projectPath, '.claude', 'settings.local.json');
 }
 
-async function exists(p: string): Promise<boolean> {
-  try { await fs.access(p); return true; } catch { return false; }
+// Read settings.local.json, returning {} only when it is absent. A corrupt or
+// unreadable file MUST surface (never silently treated as empty) — otherwise we
+// would report "no active style" on EACCES and, worse, clobber the user's other
+// keys on the next write. Mirrors the readJsonSafe ENOENT-only contract.
+async function readSettingsLocal(file: string): Promise<Record<string, unknown>> {
+  let raw: string;
+  try {
+    raw = await fs.readFile(file, 'utf-8');
+  } catch (err: any) {
+    if (err?.code === 'ENOENT') return {};
+    throw err;
+  }
+  const doc = JSON.parse(raw);
+  return doc && typeof doc === 'object' && !Array.isArray(doc)
+    ? (doc as Record<string, unknown>)
+    : {};
 }
 
 export async function readActiveOutputStyle(projectPath: string): Promise<string | null> {
-  const file = settingsLocalPath(projectPath);
-  if (!await exists(file)) return null;
-  try {
-    const doc = JSON.parse(await fs.readFile(file, 'utf-8'));
-    return typeof doc.outputStyle === 'string' ? doc.outputStyle : null;
-  } catch {
-    return null;
-  }
+  const doc = await readSettingsLocal(settingsLocalPath(projectPath));
+  return typeof doc.outputStyle === 'string' ? doc.outputStyle : null;
 }
 
 export async function writeActiveOutputStyle(projectPath: string, name: string): Promise<void> {
   const file = settingsLocalPath(projectPath);
-  const dir = path.dirname(file);
-  await fs.mkdir(dir, { recursive: true });
-  let doc: Record<string, unknown> = {};
-  if (await exists(file)) {
-    try { doc = JSON.parse(await fs.readFile(file, 'utf-8')); } catch { doc = {}; }
-  }
+  const doc = await readSettingsLocal(file); // throws on corrupt JSON — do not clobber
   doc.outputStyle = name;
+  await fs.mkdir(path.dirname(file), { recursive: true });
   await fs.writeFile(file, JSON.stringify(doc, null, 2) + '\n', 'utf-8');
 }

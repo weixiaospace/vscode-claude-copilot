@@ -94,4 +94,33 @@ describe('output-styles', () => {
     const result = await listOutputStyles(tmpHome, tmpProject);
     assert.ok(!result.find(s => s.name === 'concise'));
   });
+
+  // A corrupt/unreadable settings.local.json must surface, never be silently
+  // treated as empty — otherwise reads lie and writes destroy the user's data.
+  it('readActiveOutputStyle throws on corrupt settings.local.json (no masking)', async () => {
+    const proj = await fs.mkdtemp(path.join(os.tmpdir(), 'cc-os-corrupt-'));
+    try {
+      const file = path.join(proj, '.claude', 'settings.local.json');
+      await fs.mkdir(path.dirname(file), { recursive: true });
+      await fs.writeFile(file, '{ "outputStyle": "x"', 'utf-8'); // truncated JSON
+      await assert.rejects(readActiveOutputStyle(proj));
+    } finally {
+      await fs.rm(proj, { recursive: true, force: true });
+    }
+  });
+
+  it('writeActiveOutputStyle refuses to clobber a corrupt settings.local.json', async () => {
+    const proj = await fs.mkdtemp(path.join(os.tmpdir(), 'cc-os-corrupt2-'));
+    try {
+      const file = path.join(proj, '.claude', 'settings.local.json');
+      await fs.mkdir(path.dirname(file), { recursive: true });
+      const corrupt = '{ "permissions": { "allow": ["Bash"] },'; // trailing comma
+      await fs.writeFile(file, corrupt, 'utf-8');
+      await assert.rejects(writeActiveOutputStyle(proj, 'concise'));
+      const after = await fs.readFile(file, 'utf-8');
+      assert.equal(after, corrupt, 'corrupt file must be left untouched');
+    } finally {
+      await fs.rm(proj, { recursive: true, force: true });
+    }
+  });
 });

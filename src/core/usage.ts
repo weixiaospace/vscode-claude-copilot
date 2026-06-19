@@ -93,7 +93,11 @@ export async function queryUsage(home: string, projectPathFilter: string | null)
     const projects = Object.values(projectMap).filter(p => p.calls > 0).sort((a, b) => b.output - a.output);
 
     return { daily, models, projects, totalSessions };
-  } catch {
-    return { daily: [], models: [], projects: [], totalSessions: 0 };
+  } catch (err: any) {
+    // A session dir/file can vanish mid-scan (a watcher refresh racing a
+    // cleanup) — tolerate that. Anything else (EACCES, a real bug) must
+    // surface rather than be silently reported as zero usage.
+    if (err?.code === 'ENOENT') return { daily: [], models: [], projects: [], totalSessions: 0 };
+    throw err;
   }
 }

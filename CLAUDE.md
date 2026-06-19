@@ -4,14 +4,14 @@
 
 Claude Copilot —— VSCode 扩展。为 Claude Code CLI 用户提供 plugins / MCP / skills / agents / workflows / output styles / rules / hooks / memory / settings / usage 一站式可视化管理，与官方 Claude Code 插件并存（不抢聊天入口）。
 
-> 文档最后更新：2026-06-19（0.2.0 资源面板扩张：Agents / Workflows / Output Styles / Rules / Hooks 五大新面板 + file-resource 抽象层，详见 [ADR-0001](docs/adr/0001-file-backed-resource-abstraction.md) 和 [CONTEXT.md](CONTEXT.md)）。
+> 文档最后更新：2026-06-19（0.1.21 资源面板扩张：Agents / Workflows / Output Styles / Rules / Hooks 五大新面板 + file-resource 抽象层，详见 [ADR-0001](docs/adr/0001-file-backed-resource-abstraction.md) 和 [CONTEXT.md](CONTEXT.md)）。
 
 ## 常用命令
 
 ```bash
 pnpm install         # 安装 root + webview-ui 依赖
 pnpm build           # esbuild + vite 链式构建（extension + 3 个 webview bundle）
-pnpm test            # Mocha + ts-node，137 个 core 层单测
+pnpm test            # Mocha + ts-node，148 个 core 层单测
 pnpm package         # 产 claude-copilot-<version>.vsix
 ```
 
@@ -35,7 +35,7 @@ pnpm package         # 产 claude-copilot-<version>.vsix
 
 ```
 src/
-├── core/          纯逻辑，零 vscode 依赖，TDD 覆盖（137 tests）
+├── core/          纯逻辑，零 vscode 依赖，TDD 覆盖（148 tests）
 │   ├── claude-cli.ts        CLI 二进制发现 + execFile 包装
 │   ├── settings.ts          三层 settings.json 读取 + mergeForSave 合并
 │   ├── providers.ts         provider profile + matchProfileIdByEnv 反推
@@ -74,7 +74,7 @@ src/
 │   ├── skills-tree.ts         file-resource 子类
 │   ├── agents-tree.ts         file-resource 子类 + model · N tools · color 描述
 │   ├── workflows-tree.ts      file-resource 子类
-│   ├── output-styles-tree.ts  file-resource 子类，override loadAll 并发拉 active；✓ + ⭐ 标记
+│   ├── output-styles-tree.ts  file-resource 子类，override loadAll 并发拉 active；⭐ 标记
 │   ├── rules-tree.ts          file-resource 子类，path-scoped chip
 │   ├── hooks-tree.ts          event 分组（PreToolUse / PostToolUse / …），每条带 source 标签
 │   ├── memory-tree.ts         项目记忆列表（bespoke）
@@ -111,7 +111,7 @@ webview-ui/
 - **WebView ↔ Extension 通信** —— `postMessage` + `RpcRequest/RpcResponse` 协议（`messaging.ts`）。每个 panel 独立处理 `req.method`。
 - **WebView CSP + nonce** —— `<script>window.__l10n = ...</script>` 是内联脚本，CSP 必须带 `'nonce-{nonce}'` 否则被拒；module script 也要带同一个 nonce；`makeNonce()` 在 `src/webview/messaging.ts`。
 - **WebView 没有框架** —— 用纯 DOM + innerHTML 重渲染。每次状态变 → `render()` 整段重绘 → 重新绑事件。bundle 小（~5–12 KB）。
-- **File-backed resource 抽象（0.2.0+）** —— skills / agents / workflows / output-styles / rules 全部共享 `src/core/file-resource.ts` 的 `FileResourceDescriptor` 描述符 + `listResource/createResource/deleteResource` 原语，tree 走 `FileResourceTreeProvider<T>` 子类（~15 LOC each），commands 走 `registerFileResourceCommands(desc, …)` 通用注册器。新增同型资源 ~30 LOC。详见 [ADR-0001](docs/adr/0001-file-backed-resource-abstraction.md)。
+- **File-backed resource 抽象（0.1.21+）** —— skills / agents / workflows / output-styles / rules 全部共享 `src/core/file-resource.ts` 的 `FileResourceDescriptor` 描述符 + `listResource/createResource/deleteResource` 原语，tree 走 `FileResourceTreeProvider<T>` 子类（~15 LOC each），commands 走 `registerFileResourceCommands(desc, …)` 通用注册器。新增同型资源 ~30 LOC。详见 [ADR-0001](docs/adr/0001-file-backed-resource-abstraction.md)。
 - **Tree caching** —— file-resource 子类自带 `cache + inflight`；`getChildren(root)` 触发后台预热，子节点展开时瞬间命中。`refresh()` 清缓存后 fire。Bespoke tree（plugins/memory）也走相同模式。
 - **文件 auto-refresh** —— `lib/watchers.ts` 用 `createFileSystemWatcher` 监听 `~/.claude/` 关键路径，变化时触发对应 TreeView refresh。
 

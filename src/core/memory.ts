@@ -47,6 +47,8 @@ export async function deleteMemory(home: string, projectPath: string, filePath: 
   const idxPath = path.join(memoryDir(home, projectPath), 'MEMORY.md');
   if (!await exists(idxPath)) return;
   const indexContent = await fs.readFile(idxPath, 'utf-8');
-  const lines = indexContent.split('\n').filter(l => !l.includes(`(${fileName})`));
+  // Anchor on the markdown link target `](file.md)` so prose mentioning the
+  // filename isn't pruned and only the real index entry is dropped.
+  const lines = indexContent.split('\n').filter(l => !l.includes(`](${fileName})`));
   await fs.writeFile(idxPath, lines.join('\n'), 'utf-8');
 }
