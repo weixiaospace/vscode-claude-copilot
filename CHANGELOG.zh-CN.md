@@ -20,7 +20,7 @@
 
 **文档**
 - 新增 [ADR-0001](docs/adr/0001-file-backed-resource-abstraction.md) 记录 file-backed 资源抽象决策：哪些资源共抽象、留了哪些"逃生门"、明确放弃覆盖什么
-- 新增 [CONTEXT.md](CONTEXT.md) 项目术语表：*scope*、*file-backed resource*、*bespoke module*、*closest wins*、*settings minimization*、*provider profile*
+- 新增 [CONTEXT.md](CONTEXT.md) 项目术语表：*scope*、*file-backed resource*、*bespoke module*、*first-wins*、*settings minimization*、*provider profile*
 
 ### 变更
 

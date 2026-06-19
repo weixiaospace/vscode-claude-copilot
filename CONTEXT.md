@@ -12,11 +12,11 @@ A user-authored config that lives as one-or-more `.md` files in a known director
 _Avoid_: "simple resource", "Group X"
 
 **Bespoke module**:
-A config surface that does NOT fit the file-backed pattern. Plugins (manifest + delegated to `claude plugin` CLI), MCP (CLI/JSON hybrid), Settings (multi-layer overlay + WebView), Usage (computed analytics), Hooks (5-source merge), and Memory (file-backed but with MEMORY.md index update) each get their own module.
+A config surface that does NOT fit the file-backed pattern. Plugins (manifest + delegated to `claude plugin` CLI), MCP (CLI/JSON hybrid), Settings (multi-layer overlay + WebView), Usage (computed analytics), Hooks (4-source merge — user/project/local settings + plugin `hooks/hooks.json`), and Memory (file-backed but with MEMORY.md index update) each get their own module.
 _Avoid_: "special resource", "Group Y"
 
-**Closest wins**:
-Claude Code's resolution rule for nested same-name resources within one scope: when a project has both `.claude/agents/review.md` and `./packages/foo/.claude/agents/review.md`, the one closest to the working directory wins. Introduced in CC 2.1.178.
+**First-wins**:
+Within-scope same-name dedup when a recursive scan picks up two files declaring the same identity. We sort entries alphabetically (`Array.sort` on `readdir` output, depth-first) and the first one kept. Claude Code itself has a richer "closest to the working directory wins" rule for nested monorepo `.claude/` dirs (CC 2.1.178), but the extension does not implement walk-up scanning, so the two semantics agree only when each scope has a single `.claude/<resource>/` root.
 
 **Settings minimization**:
 Policy: the Settings panel only surfaces fields that have no dedicated module. As new modules are added (Agents, Hooks, Output Styles, etc.), the related fields move out of Settings and into the new module. Settings ends up as the residue.

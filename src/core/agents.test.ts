@@ -77,7 +77,7 @@ describe('agents', () => {
     assert.equal(byName['my-agent'], 'user');
   });
 
-  it('extracts model, tools, color frontmatter fields', async () => {
+  it('extracts model, tools (inline-array form), color frontmatter fields', async () => {
     await writeAgent(path.join(tmpHome, 'agents', 'rich.md'), {
       name: 'rich',
       description: 'rich agent',
@@ -91,6 +91,30 @@ describe('agents', () => {
     assert.equal(rich?.model, 'opus');
     assert.deepEqual(rich?.tools, ['Read', 'Edit']);
     assert.equal(rich?.color, 'blue');
+  });
+
+  it('parses tools authored as a YAML comma-scalar (the official docs form)', async () => {
+    const file = path.join(tmpHome, 'agents', 'scalar-tools.md');
+    await fs.mkdir(path.dirname(file), { recursive: true });
+    await fs.writeFile(
+      file,
+      '---\nname: scalar-tools\ntools: Read, Glob, Grep\nmodel: sonnet\n---\n',
+      'utf-8',
+    );
+    const result = await listAgents(tmpHome, tmpProject);
+    const a = result.find(x => x.name === 'scalar-tools');
+    assert.ok(a, 'comma-scalar tools agent should be listed');
+    assert.deepEqual(a?.tools, ['Read', 'Glob', 'Grep']);
+    assert.equal(a?.model, 'sonnet');
+  });
+
+  it('parses tools authored as a single bare value', async () => {
+    const file = path.join(tmpHome, 'agents', 'single-tool.md');
+    await fs.mkdir(path.dirname(file), { recursive: true });
+    await fs.writeFile(file, '---\nname: single-tool\ntools: Bash\n---\n', 'utf-8');
+    const result = await listAgents(tmpHome, tmpProject);
+    const a = result.find(x => x.name === 'single-tool');
+    assert.deepEqual(a?.tools, ['Bash']);
   });
 
   it('within one scope, duplicate name keeps only the first occurrence', async () => {

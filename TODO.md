@@ -33,3 +33,7 @@
 - **Skill/agent frontmatter inline hooks** —— Phase 4 跳过的源。需要 frontmatter 多行 list 解析。不常用，等用户反馈再补
 - **Hooks 面板 add/edit/delete 命令** —— 现在只读。可改成 schema 驱动表单
 - **Plugin scope 的 file-resource** —— ADR-0001 显式排除"plugin 提供的同类资源在顶层 tree 重复出现"。如果用户反馈想看，可加 toggle
+- **Agents `tools:` block-list 支持** —— 现在 `parseAgentTools` 覆盖了 inline-array、comma-scalar、单值；多行 `- item` block-list 还没覆盖（fallback：tree 不显示 tools 计数，agent 本身仍工作）
+- **Closest-wins 嵌套 `.claude/` 扫描** —— CC 2.1.178 monorepo 行为；我们当前只扫每个 scope 的根 `.claude/<resource>/`，按字母序 first-wins。如果有用户在 monorepo 场景反馈不一致，给 file-resource 加 `discovery: 'walk-up'` 变种
+- **i18n 死键清理** —— audit 显示 `l10n/bundle.l10n.json` 有 ~191/328 keys 没被引用（中英对称）。多数是 Settings WebView 设计阶段的占位，少数是被重构掉的。0.2.x 集中清一次，bundle 能瘦 ~20KB
+- **`McpServer.scope` audit** —— 这次 typecheck 才发现该字段曾是 optional 但所有构造点都填了它；改成 required 已纳入 0.2.0。其他 interface 也可 grep 一遍找类似"声明可选但实际必填"的字段

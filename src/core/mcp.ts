@@ -7,7 +7,7 @@ export interface McpServer {
   transport: 'stdio' | 'http' | 'sse' | 'unknown';
   command?: string;
   url?: string;
-  scope?: 'user' | 'project';
+  scope: 'user' | 'project';
   status?: 'connected' | 'needs-auth' | 'error' | 'unknown';
 }
 

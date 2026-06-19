@@ -21,7 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 **Documentation**
 - New [ADR-0001](docs/adr/0001-file-backed-resource-abstraction.md) recording the file-backed resource abstraction decision: which resources share an abstraction, what the escape hatches are, and what is explicitly out of scope.
-- New [CONTEXT.md](CONTEXT.md) project glossary: *scope*, *file-backed resource*, *bespoke module*, *closest wins*, *settings minimization*, *provider profile*.
+- New [CONTEXT.md](CONTEXT.md) project glossary: *scope*, *file-backed resource*, *bespoke module*, *first-wins*, *settings minimization*, *provider profile*.
 
 ### Changed
 

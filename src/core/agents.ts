@@ -9,6 +9,27 @@ import {
   type FileResourceItem,
 } from './file-resource';
 
+/**
+ * Agents' `tools:` field can be authored in three forms across the wild:
+ *   tools: [Read, Edit]      ← inline-array form (our test fixtures use this)
+ *   tools: Read, Edit, Bash  ← comma-scalar form (the official docs use this)
+ *   tools: Bash              ← single tool
+ * Block-list form (`- Read\n  - Edit`) is multi-line and falls outside the
+ * single-line frontmatter parser; agents authored that way will simply not
+ * surface a tools count in the tree, but the agent itself still works in CLI.
+ */
+function parseAgentTools(raw: string | undefined): string[] | undefined {
+  if (raw === undefined) return undefined;
+  const trimmed = raw.trim();
+  if (!trimmed) return undefined;
+  const inline = parseInlineList(trimmed);
+  if (inline !== undefined) return inline;
+  return trimmed
+    .split(',')
+    .map(s => s.trim().replace(/^["']|["']$/g, ''))
+    .filter(Boolean);
+}
+
 export type AgentScope = 'user' | 'project';
 
 export interface Agent extends FileResourceItem {
@@ -50,7 +71,7 @@ export const agentsDescriptor = defineFileResource<Agent>({
       scope,
       path: filePath,
       model: fm['model'] || undefined,
-      tools: parseInlineList(fm['tools']),
+      tools: parseAgentTools(fm['tools']),
       color: fm['color'] || undefined,
     };
   },
