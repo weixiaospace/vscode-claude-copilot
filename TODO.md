@@ -28,6 +28,19 @@
 
 ## 📅 计划
 
+## 📅 计划
+
+### 0.3.0 — Path A 凭证迁移：与 claude-copilot-desktop 共享 keychain
+
+依据 [claude-copilot-desktop 设计](docs/superpowers/specs/2026-06-19-claude-copilot-desktop-design.md) §11 §14。
+
+- `src/lib/secrets.ts` 从 `vscode.SecretStorage` 切到 `keytar`（或同等直访 Keychain 的 npm 包）
+- 命名约定固定：service = `claude-copilot`，account = 现有 `secretKey()` 返回的字符串（`claude-copilot.provider.<id>.<field>`）—— **保持不变**
+- activate 时一次性 migration：检测 `context.secrets.get()` 还能拿到旧值 → 搬到 keytar → 删旧值 → 写 marker (`globalState.migration.secretsToKeytar = true`)
+- migration 失败要可观察（toast 提示 + log）
+- 跨平台测试：macOS Keychain / Windows Credential Manager / Linux libsecret
+- 完成后 desktop 端 v0.1 跟 VSCode 0.3.0 之间凭证自动共享，无需"Import" 命令
+
 ## 💡 想法
 
 - **Skill/agent frontmatter inline hooks** —— Phase 4 跳过的源。需要 frontmatter 多行 list 解析。不常用，等用户反馈再补
