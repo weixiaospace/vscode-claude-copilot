@@ -29,6 +29,7 @@
         { "id": "claudeCopilot.plugins", "name": "%view.plugins.name%" },
         { "id": "claudeCopilot.mcp", "name": "%view.mcp.name%" },
         { "id": "claudeCopilot.skills", "name": "%view.skills.name%" },
+        { "id": "claudeCopilot.agents", "name": "%view.agents.name%" },
         { "id": "claudeCopilot.memory", "name": "%view.memory.name%" },
         { "id": "claudeCopilot.settings", "name": "%view.settings.name%" },
         { "id": "claudeCopilot.usage", "name": "%view.usage.name%" }
@@ -53,6 +54,8 @@
       { "command": "claudeCopilot.mcp.remove", "title": "%cmd.mcp.remove%" },
       { "command": "claudeCopilot.skill.create", "title": "%cmd.skill.create%", "icon": "$(add)" },
       { "command": "claudeCopilot.skill.delete", "title": "%cmd.skill.delete%" },
+      { "command": "claudeCopilot.agent.create", "title": "%cmd.agent.create%", "icon": "$(add)" },
+      { "command": "claudeCopilot.agent.delete", "title": "%cmd.agent.delete%" },
       { "command": "claudeCopilot.memory.create", "title": "%cmd.memory.create%", "icon": "$(add)" },
       { "command": "claudeCopilot.memory.delete", "title": "%cmd.memory.delete%" },
       { "command": "claudeCopilot.providers.quickSwitch", "title": "%cmd.providers.quickSwitch%", "icon": "$(rocket)" },
@@ -68,6 +71,7 @@
         { "command": "claudeCopilot.plugin.install", "when": "view == claudeCopilot.plugins", "group": "navigation@1" },
         { "command": "claudeCopilot.refresh", "when": "view == claudeCopilot.plugins", "group": "navigation@2" },
         { "command": "claudeCopilot.skill.create", "when": "view == claudeCopilot.skills", "group": "navigation@1" },
+        { "command": "claudeCopilot.agent.create", "when": "view == claudeCopilot.agents", "group": "navigation@1" },
         { "command": "claudeCopilot.memory.create", "when": "view == claudeCopilot.memory", "group": "navigation@1" }
       ],
       "view/item/context": [
@@ -81,6 +85,7 @@
         { "command": "claudeCopilot.mcp.addProject", "when": "view == claudeCopilot.mcp && viewItem == group:mcp:project", "group": "inline" },
         { "command": "claudeCopilot.mcp.remove", "when": "view == claudeCopilot.mcp && viewItem =~ /^mcp:/" },
         { "command": "claudeCopilot.skill.delete", "when": "view == claudeCopilot.skills && viewItem =~ /^skill:/" },
+        { "command": "claudeCopilot.agent.delete", "when": "view == claudeCopilot.agents && viewItem =~ /^agent:/" },
         { "command": "claudeCopilot.memory.delete", "when": "view == claudeCopilot.memory && viewItem == memory:item" }
       ]
     }

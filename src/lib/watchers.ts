@@ -6,6 +6,7 @@ export interface RefreshHandlers {
   plugins(): void;
   mcp(): void;
   skills(): void;
+  agents(): void;
   memory(): void;
   settings(): void;
   providers(): void;
@@ -24,6 +25,7 @@ export function registerWatchers(handlers: RefreshHandlers): vscode.Disposable[]
   out.push(watch(new vscode.RelativePattern(CLAUDE_HOME, 'plugins/**'), handlers.plugins));
   out.push(watch(new vscode.RelativePattern(CLAUDE_HOME, 'settings.json'), () => { handlers.plugins(); handlers.settings(); }));
   out.push(watch(new vscode.RelativePattern(CLAUDE_HOME, 'skills/**/SKILL.md'), handlers.skills));
+  out.push(watch(new vscode.RelativePattern(CLAUDE_HOME, 'agents/**/*.md'), handlers.agents));
   out.push(watch(new vscode.RelativePattern(CLAUDE_HOME, 'projects/**/memory/*.md'), handlers.memory));
   out.push(watch(new vscode.RelativePattern(CLAUDE_HOME, 'claude-copilot/providers.json'), handlers.providers));
 
@@ -33,6 +35,7 @@ export function registerWatchers(handlers: RefreshHandlers): vscode.Disposable[]
     out.push(watch(new vscode.RelativePattern(ws.fsPath, '.claude/settings.json'), () => { handlers.settings(); handlers.mcp(); }));
     out.push(watch(new vscode.RelativePattern(ws.fsPath, '.claude/settings.local.json'), handlers.settings));
     out.push(watch(new vscode.RelativePattern(ws.fsPath, '.claude/skills/**/SKILL.md'), handlers.skills));
+    out.push(watch(new vscode.RelativePattern(ws.fsPath, '.claude/agents/**/*.md'), handlers.agents));
   }
 
   return out;

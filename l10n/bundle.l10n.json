@@ -17,6 +17,8 @@
   "prompt.memoryFileName": "File name (e.g. user_role.md)",
   "prompt.skillName": "Skill name (kebab-case)",
   "prompt.skillScope": "Select scope",
+  "prompt.agentName": "Agent name",
+  "prompt.agentScope": "Select scope",
   "prompt.marketplaceSource": "Enter marketplace git URL or owner/repo",
 
   "progress.installPlugin": "Installing {0}...",
@@ -33,6 +35,8 @@
   "confirm.deleteMemoryBtn": "Delete",
   "confirm.deleteSkill": "Delete skill {0}? This will remove the entire directory.",
   "confirm.deleteSkillBtn": "Delete",
+  "confirm.deleteAgent": "Delete agent {0}?",
+  "confirm.deleteAgentBtn": "Delete",
   "confirm.uninstallPlugin": "Uninstall plugin {0}?",
   "confirm.uninstallPluginBtn": "Uninstall",
   "confirm.removeMarketplace": "Remove marketplace \"{0}\"?",
@@ -261,6 +265,7 @@
   "tree.providers.label": "API Provider",
   "tree.mp.installedCount": "{0}/{1} installed",
   "tree.mp.updatedAt": "updated {0}",
+  "tree.agent.toolsCount": "{0} tools",
 
   "plugin.type.skills": "skills",
   "plugin.type.agents": "agents",

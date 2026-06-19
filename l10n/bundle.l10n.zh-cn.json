@@ -17,6 +17,8 @@
   "prompt.memoryFileName": "文件名（如 user_role.md）",
   "prompt.skillName": "Skill 名称（kebab-case）",
   "prompt.skillScope": "选择 scope",
+  "prompt.agentName": "Agent 名称",
+  "prompt.agentScope": "选择 scope",
   "prompt.marketplaceSource": "输入 marketplace git URL 或 owner/repo",
 
   "progress.installPlugin": "安装 {0}...",
@@ -33,6 +35,8 @@
   "confirm.deleteMemoryBtn": "删除",
   "confirm.deleteSkill": "删除 skill {0}？这将移除整个目录。",
   "confirm.deleteSkillBtn": "删除",
+  "confirm.deleteAgent": "删除 agent {0}？",
+  "confirm.deleteAgentBtn": "删除",
   "confirm.uninstallPlugin": "卸载插件 {0}？",
   "confirm.uninstallPluginBtn": "卸载",
   "confirm.removeMarketplace": "移除 marketplace {0}？",
@@ -261,6 +265,7 @@
   "tree.providers.label": "API 接入方",
   "tree.mp.installedCount": "已装 {0}/{1}",
   "tree.mp.updatedAt": "{0}更新",
+  "tree.agent.toolsCount": "{0} 工具",
 
   "plugin.type.skills": "技能",
   "plugin.type.agents": "代理",

@@ -2,12 +2,14 @@ import * as vscode from 'vscode';
 import { PluginsTreeProvider } from './tree/plugins-tree';
 import { McpTreeProvider } from './tree/mcp-tree';
 import { SkillsTreeProvider } from './tree/skills-tree';
+import { AgentsTreeProvider } from './tree/agents-tree';
 import { MemoryTreeProvider } from './tree/memory-tree';
 import { SettingsTreeProvider } from './tree/settings-tree';
 import { UsageTreeProvider } from './tree/usage-tree';
 import { registerPluginCommands } from './commands/plugins';
 import { registerMcpCommands } from './commands/mcp';
 import { registerSkillCommands } from './commands/skills';
+import { registerAgentCommands } from './commands/agents';
 import { registerMemoryCommands } from './commands/memory';
 import { registerProviderCommands } from './commands/providers';
 import { registerWatchers } from './lib/watchers';
@@ -25,6 +27,7 @@ export function activate(context: vscode.ExtensionContext): void {
   const plugins = new PluginsTreeProvider();
   const mcp = new McpTreeProvider();
   const skills = new SkillsTreeProvider();
+  const agents = new AgentsTreeProvider();
   const memory = new MemoryTreeProvider();
   const settings = new SettingsTreeProvider();
   const usage = new UsageTreeProvider();
@@ -42,11 +45,12 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.window.registerTreeDataProvider('claudeCopilot.plugins', plugins),
     vscode.window.registerTreeDataProvider('claudeCopilot.mcp', mcp),
     vscode.window.registerTreeDataProvider('claudeCopilot.skills', skills),
+    vscode.window.registerTreeDataProvider('claudeCopilot.agents', agents),
     vscode.window.registerTreeDataProvider('claudeCopilot.memory', memory),
     vscode.window.registerTreeDataProvider('claudeCopilot.settings', settings),
     vscode.window.registerTreeDataProvider('claudeCopilot.usage', usage),
     vscode.commands.registerCommand('claudeCopilot.refresh', () => {
-      plugins.refresh(); mcp.refresh(); skills.refresh(); memory.refresh(); settings.refresh();
+      plugins.refresh(); mcp.refresh(); skills.refresh(); agents.refresh(); memory.refresh(); settings.refresh();
     }),
     vscode.commands.registerCommand('claudeCopilot.openFile', async (filePath: string) => {
       const doc = await vscode.workspace.openTextDocument(vscode.Uri.file(filePath));
@@ -59,6 +63,7 @@ export function activate(context: vscode.ExtensionContext): void {
     ...registerPluginCommands(() => plugins.refresh()),
     ...registerMcpCommands(() => mcp.refresh()),
     ...registerSkillCommands(() => skills.refresh()),
+    ...registerAgentCommands(() => agents.refresh()),
     ...registerMemoryCommands(() => memory.refresh()),
     ...registerProviderCommands(secrets, () => {
       void statusBar.update();
@@ -69,6 +74,7 @@ export function activate(context: vscode.ExtensionContext): void {
       plugins: () => plugins.refresh(),
       mcp: () => mcp.refresh(),
       skills: () => skills.refresh(),
+      agents: () => agents.refresh(),
       memory: () => memory.refresh(),
       settings: () => settings.refresh(),
       providers: () => { void statusBar.update(); settings.refresh(); },
