@@ -5,6 +5,7 @@ import {
 } from '../core/mcp';
 import { currentWorkspace } from '../lib/workspace';
 import { t } from '../lib/l10n';
+import { notifyCliError } from '../lib/cli-prompt';
 
 async function promptMcpForm(): Promise<{ name: string; transport: string; urlOrCommand: string } | undefined> {
   const transport = await vscode.window.showQuickPick(['stdio', 'http', 'sse'], { placeHolder: t('prompt.mcpTransport') });
@@ -23,7 +24,8 @@ export function registerMcpCommands(refresh: () => void): vscode.Disposable[] {
     vscode.commands.registerCommand('claudeCopilot.mcp.addUser', async () => {
       const form = await promptMcpForm();
       if (!form) return;
-      await addUserMcp(form.name, form.transport, form.urlOrCommand);
+      try { await addUserMcp(form.name, form.transport, form.urlOrCommand); }
+      catch (err) { await notifyCliError(err); return; }
       vscode.window.showInformationMessage(t('toast.mcpUserAdded', form.name));
       refresh();
     }),
@@ -50,7 +52,8 @@ export function registerMcpCommands(refresh: () => void): vscode.Disposable[] {
         if (!ws) return;
         await removeProjectMcp(ws.fsPath, s.name);
       } else {
-        await removeUserMcp(s.name);
+        try { await removeUserMcp(s.name); }
+        catch (err) { await notifyCliError(err); return; }
       }
       refresh();
     }),

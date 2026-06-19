@@ -5,6 +5,13 @@ export interface ClaudeEnv {
   path: string;
 }
 
+export class ClaudeCliMissingError extends Error {
+  constructor() {
+    super('Claude CLI binary not found');
+    this.name = 'ClaudeCliMissingError';
+  }
+}
+
 let cached: ClaudeEnv | null = null;
 
 export function resolveClaudeBinary(): Promise<ClaudeEnv> {
@@ -36,8 +43,13 @@ export function runClaude(args: string[], timeout = 30000): Promise<string> {
       env: { ...process.env, PATH: env.path },
       timeout,
     }, (err, stdout, stderr) => {
-      if (err) reject(new Error(stderr || err.message));
-      else resolve(stdout);
+      if (err) {
+        // ENOENT here means the resolved binary path does not exist —
+        // either claude was never installed or it has since been removed.
+        const code = (err as NodeJS.ErrnoException).code;
+        if (code === 'ENOENT') reject(new ClaudeCliMissingError());
+        else reject(new Error(stderr || err.message));
+      } else resolve(stdout);
     });
   }));
 }

@@ -1,4 +1,7 @@
 {
+  "toast.cliMissing": "未检测到 Claude CLI，无法执行该命令。",
+  "toast.installClaudeCli": "安装 Claude CLI",
+
   "toast.noWorkspace": "未打开 workspace",
   "toast.mcpUserAdded": "已添加 user MCP server: {0}",
   "toast.mcpProjectAdded": "已添加 project MCP server: {0}",

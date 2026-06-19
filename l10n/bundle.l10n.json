@@ -1,4 +1,7 @@
 {
+  "toast.cliMissing": "Claude CLI not found. Install it to use this command.",
+  "toast.installClaudeCli": "Install Claude CLI",
+
   "toast.noWorkspace": "No workspace folder open",
   "toast.mcpUserAdded": "Added user MCP server: {0}",
   "toast.mcpProjectAdded": "Added project MCP server: {0}",

@@ -4,6 +4,7 @@ import { listAvailablePlugins, listInstalledPlugins, listMarketplaces, installPl
 import { CLAUDE_HOME } from '../lib/paths';
 import { makeNonce, type RpcRequest, type RpcResponse } from './messaging';
 import { t } from '../lib/l10n';
+import { notifyCliError } from '../lib/cli-prompt';
 
 let current: vscode.WebviewPanel | null = null;
 const refreshers: (() => void)[] = [];
@@ -90,16 +91,26 @@ export function openMarketplacePanel(context: vscode.ExtensionContext): void {
         };
       } else if (req.method === 'marketplace:install') {
         const { name, marketplace } = req.params;
-        await installPlugin(`${name}@${marketplace}`);
-        refreshers.forEach(r => r());
-        vscode.window.showInformationMessage(t('toast.pluginInstalled', name));
-        res = { id: req.id, result: 'ok' };
+        try {
+          await installPlugin(`${name}@${marketplace}`);
+          refreshers.forEach(r => r());
+          vscode.window.showInformationMessage(t('toast.pluginInstalled', name));
+          res = { id: req.id, result: 'ok' };
+        } catch (err) {
+          await notifyCliError(err);
+          res = { id: req.id, error: 'cli-error' };
+        }
       } else if (req.method === 'marketplace:uninstall') {
         const { name, marketplace } = req.params;
-        await uninstallPlugin(`${name}@${marketplace}`);
-        refreshers.forEach(r => r());
-        vscode.window.showInformationMessage(t('toast.pluginUninstalled', name));
-        res = { id: req.id, result: 'ok' };
+        try {
+          await uninstallPlugin(`${name}@${marketplace}`);
+          refreshers.forEach(r => r());
+          vscode.window.showInformationMessage(t('toast.pluginUninstalled', name));
+          res = { id: req.id, result: 'ok' };
+        } catch (err) {
+          await notifyCliError(err);
+          res = { id: req.id, error: 'cli-error' };
+        }
       } else {
         res = { id: req.id, error: `unknown method ${req.method}` };
       }
