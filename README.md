@@ -2,7 +2,7 @@
 
 # Claude Copilot
 
-[![Version](https://img.shields.io/badge/version-0.1.19-blue.svg)](https://github.com/weixiaospace/vscode-claude-copilot/releases)
+[![Version](https://img.shields.io/badge/version-0.2.0-blue.svg)](https://github.com/weixiaospace/vscode-claude-copilot/releases)
 [![VS Code](https://img.shields.io/badge/VS%20Code-%5E1.90.0-blue.svg?logo=visual-studio-code)](https://code.visualstudio.com/updates/v1_90)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
@@ -48,6 +48,11 @@ A VS Code extension that provides a visual management interface for [Claude Code
 | 🔌 **Plugins & Marketplaces** | Install / uninstall / enable / disable; add / remove / **update** marketplaces (single or bulk). Installed plugins are **expandable** — click a plugin to see its skills, agents, commands, hooks and MCP declarations; each child opens the underlying file. |
 | 🧩 **MCP Servers** | Manage user-level (via CLI) and project-level (`.claude/settings.json`) servers. Separate trees per scope. |
 | 🪄 **Skills** | Browse `~/.claude/skills` and `.claude/skills`. Instant expand (cached). Click any skill to edit `SKILL.md`. |
+| 🤖 **Agents** | Browse user / project subagents. Tree shows `model · N tools · color` from YAML frontmatter; identity from `name` field (filename fallback); recursive scan. |
+| 🛠 **Workflows** | Browse saved `/<name>` scripts under user / project `.claude/workflows/`. Identity from filename; recursive. |
+| 🎨 **Output Styles** | Browse user / project output styles. **Set Active** command writes to `.claude/settings.local.json#outputStyle` (matches `/config`); the active style is marked with ✓ and a star icon. |
+| 📐 **Rules** | Browse modular CLAUDE.md companions under `.claude/rules/`. Path-scoped rules (with `paths:` frontmatter) get a chip. Subdirectory organization like `frontend/`, `backend/` is supported. |
+| ⚡ **Hooks** | Read-only view that merges hooks declared across **4 sources**: user / project / local `settings.json` plus each installed plugin's `hooks/hooks.json`. Grouped by event (`PreToolUse` / `PostToolUse` / `SessionStart` / …). Each handler is tagged with its source and shows a compact summary (command / URL / MCP tool / prompt / agent). Click an entry to open its source file. |
 | 🧠 **Memory** | Browse memory files under `~/.claude/projects/<slug>/memory`. Dedicated MEMORY.md index link. |
 | ⚙️ **Settings** | Fully visual editor for User / Project / Local. Switches, toggles, selects and tag lists for **~50 settings** — including provider switching (Anthropic / Bedrock / Vertex / Foundry), auth mode switching (Subscription / API Key / Auth Token / Helper script), permissions allow/ask/deny/additionalDirectories, 15 feature flags, 6 numeric limits, memory & dream toggles, and more. Credentials auto-clear on provider/mode switch. **Provider profiles** — save multiple API configs as named profiles, credentials stored in VSCode SecretStorage (OS keychain). Expandable provider group in the sidebar with inline switch/edit/delete buttons. |
 | 📊 **Usage Dashboard** | Parses session jsonl. Interactive **Chart.js** stacked bars and doughnut charts. Switch by day / week / month granularity, filter by project, per-model breakdown. Cost estimate uses official Anthropic pricing (Opus / Sonnet / Haiku 4.x and 3.5). |
@@ -65,7 +70,7 @@ Search for **"Claude Copilot"** in the Extensions view (`Cmd+Shift+X` / `Ctrl+Sh
 Download the latest `.vsix` from [Releases](https://github.com/weixiaospace/vscode-claude-copilot/releases):
 
 ```bash
-code --install-extension claude-copilot-0.1.19.vsix
+code --install-extension claude-copilot-0.2.0.vsix
 ```
 
 ### Setup

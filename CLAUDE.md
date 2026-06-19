@@ -2,16 +2,16 @@
 
 ## 项目概述
 
-Claude Copilot —— VSCode 扩展。为 Claude Code CLI 用户提供 plugins / MCP / skills / memory / settings / usage 一站式可视化管理，与官方 Claude Code 插件并存（不抢聊天入口）。
+Claude Copilot —— VSCode 扩展。为 Claude Code CLI 用户提供 plugins / MCP / skills / agents / workflows / output styles / rules / hooks / memory / settings / usage 一站式可视化管理，与官方 Claude Code 插件并存（不抢聊天入口）。
 
-> 文档最后更新：2026-06-18（0.1.19 修复 provider profile 签名撞车导致切换后 UI 不跟随的问题）。
+> 文档最后更新：2026-06-19（0.2.0 资源面板扩张：Agents / Workflows / Output Styles / Rules / Hooks 五大新面板 + file-resource 抽象层，详见 [ADR-0001](docs/adr/0001-file-backed-resource-abstraction.md) 和 [CONTEXT.md](CONTEXT.md)）。
 
 ## 常用命令
 
 ```bash
 pnpm install         # 安装 root + webview-ui 依赖
 pnpm build           # esbuild + vite 链式构建（extension + 3 个 webview bundle）
-pnpm test            # Mocha + ts-node，35 个 core 层单测
+pnpm test            # Mocha + ts-node，137 个 core 层单测
 pnpm package         # 产 claude-copilot-<version>.vsix
 ```
 
@@ -35,30 +35,57 @@ pnpm package         # 产 claude-copilot-<version>.vsix
 
 ```
 src/
-├── core/          纯逻辑，零 vscode 依赖，TDD 覆盖（35 tests）
-│   ├── claude-cli.ts   CLI 二进制发现 + execFile 包装
-│   ├── settings.ts     三层 settings.json 读取 + mergeForSave 合并
-│   ├── skills.ts       SKILL.md 扫描/创建/删除
-│   ├── memory.ts       memory 文件扫描 + MEMORY.md 索引维护
-│   ├── mcp.ts          MCP server 用户级（CLI）+ 项目级（JSON）
-│   ├── plugins.ts      installed_plugins.json 解析 + marketplace 管理 + 类型/子项探测
-│   └── usage.ts        session jsonl 聚合（daily/model/project）
+├── core/          纯逻辑，零 vscode 依赖，TDD 覆盖（137 tests）
+│   ├── claude-cli.ts        CLI 二进制发现 + execFile 包装
+│   ├── settings.ts          三层 settings.json 读取 + mergeForSave 合并
+│   ├── providers.ts         provider profile + matchProfileIdByEnv 反推
+│   ├── file-resource.ts     FileResourceDescriptor + listResource/createResource/deleteResource
+│   │                        + extractFrontmatter / parseInlineList。`recursive` 与 `flat-subdirs`
+│   │                        两种 discovery；first-wins 同名去重。skills/agents/workflows/
+│   │                        output-styles/rules 全部 ride 此抽象（ADR-0001）
+│   ├── skills.ts            SKILL.md（flat-subdirs，identity=dir-name）
+│   ├── agents.ts            .md（recursive，identity=YAML name，frontmatter model/tools/color）
+│   ├── workflows.ts         .md（recursive，identity=filename）
+│   ├── output-styles.ts     .md（recursive，identity=filename-or-frontmatter）+ active selection
+│   │                        读写 .claude/settings.local.json#outputStyle
+│   ├── rules.ts             .md（recursive，identity=filename）+ paths-scoped frontmatter 探测
+│   ├── hooks.ts             4 源合并：user/project/local settings.json + plugin hooks/hooks.json
+│   │                        flattenHooks → {event, matcher, handler, source, sourceFile}
+│   ├── memory.ts            memory 文件扫描 + MEMORY.md 索引维护（bespoke：index 特殊）
+│   ├── mcp.ts               MCP server 用户级（CLI）+ 项目级（JSON）
+│   ├── plugins.ts           installed_plugins.json 解析 + marketplace 管理 + 类型/子项探测
+│   └── usage.ts             session jsonl 聚合（daily/model/project）
 │
 ├── lib/           vscode 相关工具
 │   ├── paths.ts        CLAUDE_HOME 常量
 │   ├── workspace.ts    currentWorkspace() helper
 │   ├── watchers.ts     FileSystemWatcher 注册（auto-refresh）
+│   ├── secrets.ts      VSCode SecretStorage gateway
+│   ├── status-bar.ts   provider 状态栏
+│   ├── migrate-providers.ts 一次性迁移
 │   └── l10n.ts         t() helper（vscode.l10n + en bundle fallback）
 │
-├── tree/          6 个 TreeViewProvider
-│   ├── plugins-tree.ts  Marketplaces + Installed（插件可展开看子项）
-│   ├── mcp-tree.ts      User + Project MCP server
-│   ├── skills-tree.ts   User + Project skill；缓存首次加载结果
-│   ├── memory-tree.ts   项目记忆列表；缓存首次加载
-│   ├── settings-tree.ts  Provider 可展开组（订阅模式 + Profile 列表，带 inline 切换/编辑/删除按钮）+ 三层 settings 文件入口
-│   └── usage-tree.ts    单一入口打开 usage WebView
-├── commands/      4 个 CRUD 命令模块（plugins/mcp/skills/memory）
-├── webview/       3 个 WebViewPanel host（usage/marketplace/settings）
+├── tree/          11 个 TreeViewProvider
+│   ├── file-resource-tree.ts  通用抽象：cache + inflight、scope 分组、adornment 注入
+│   │                          icon/display/tooltip。skills/agents/workflows/output-styles/rules
+│   │                          的 tree 都是 ~15 LOC 的子类
+│   ├── plugins-tree.ts        Marketplaces + Installed（bespoke）
+│   ├── mcp-tree.ts            User + Project MCP server（bespoke）
+│   ├── skills-tree.ts         file-resource 子类
+│   ├── agents-tree.ts         file-resource 子类 + model · N tools · color 描述
+│   ├── workflows-tree.ts      file-resource 子类
+│   ├── output-styles-tree.ts  file-resource 子类，override loadAll 并发拉 active；✓ + ⭐ 标记
+│   ├── rules-tree.ts          file-resource 子类，path-scoped chip
+│   ├── hooks-tree.ts          event 分组（PreToolUse / PostToolUse / …），每条带 source 标签
+│   ├── memory-tree.ts         项目记忆列表（bespoke）
+│   ├── settings-tree.ts       Provider 可展开组 + 三层 settings 文件入口（bespoke）
+│   └── usage-tree.ts          单一入口打开 usage WebView
+├── commands/      8 个 CRUD 命令模块
+│   ├── file-resource-commands.ts  通用 .create / .delete 注册器（按 desc.kind 派发）
+│   ├── skills.ts / agents.ts / workflows.ts / rules.ts  全部 ~12 LOC 描述符调用
+│   ├── output-styles.ts  通用 + .setActive 命令（写 settings.local.json）
+│   ├── plugins.ts / mcp.ts / memory.ts / providers.ts  bespoke
+├── webview/       4 个 WebViewPanel host（usage/marketplace/settings/provider）
 │                  每个 panel 注入 nonce + __l10n，CSP 白名单含 jsdelivr（仅 usage）
 └── extension.ts   activate() 入口，装配所有 provider/command/watcher
 
@@ -84,7 +111,8 @@ webview-ui/
 - **WebView ↔ Extension 通信** —— `postMessage` + `RpcRequest/RpcResponse` 协议（`messaging.ts`）。每个 panel 独立处理 `req.method`。
 - **WebView CSP + nonce** —— `<script>window.__l10n = ...</script>` 是内联脚本，CSP 必须带 `'nonce-{nonce}'` 否则被拒；module script 也要带同一个 nonce；`makeNonce()` 在 `src/webview/messaging.ts`。
 - **WebView 没有框架** —— 用纯 DOM + innerHTML 重渲染。每次状态变 → `render()` 整段重绘 → 重新绑事件。bundle 小（~5–12 KB）。
-- **Tree caching（skills/memory）** —— Provider 内部 `cache` + `inflight`，`getChildren(root)` 触发后台预热，子节点展开时瞬间命中。`refresh()` 清缓存后 fire。
+- **File-backed resource 抽象（0.2.0+）** —— skills / agents / workflows / output-styles / rules 全部共享 `src/core/file-resource.ts` 的 `FileResourceDescriptor` 描述符 + `listResource/createResource/deleteResource` 原语，tree 走 `FileResourceTreeProvider<T>` 子类（~15 LOC each），commands 走 `registerFileResourceCommands(desc, …)` 通用注册器。新增同型资源 ~30 LOC。详见 [ADR-0001](docs/adr/0001-file-backed-resource-abstraction.md)。
+- **Tree caching** —— file-resource 子类自带 `cache + inflight`；`getChildren(root)` 触发后台预热，子节点展开时瞬间命中。`refresh()` 清缓存后 fire。Bespoke tree（plugins/memory）也走相同模式。
 - **文件 auto-refresh** —— `lib/watchers.ts` 用 `createFileSystemWatcher` 监听 `~/.claude/` 关键路径，变化时触发对应 TreeView refresh。
 
 ## i18n

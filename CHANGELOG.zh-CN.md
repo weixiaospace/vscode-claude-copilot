@@ -6,6 +6,33 @@
 
 **[English](CHANGELOG.md) | [中文](CHANGELOG.zh-CN.md)**
 
+## [0.2.0] - 2026-06-19
+
+### 新增
+
+**5 个新资源面板** —— 把过去一年 Claude Code 新增的 `.claude/` 资源面板化：
+
+- **Agents**（`~/.claude/agents/`、`.claude/agents/`）—— subagent 定义。递归扫描；身份从 YAML frontmatter `name` 取（缺失时退回到文件名）。tree 展示 `model · N tools · color`；同 scope 内同名冲突按"先到先得"去重
+- **Workflows**（`~/.claude/workflows/`、`.claude/workflows/`）—— 保存的 `/<name>` 脚本。递归扫描；身份从文件名取
+- **Output Styles**（`~/.claude/output-styles/`、`.claude/output-styles/`）—— 系统提示词风格。身份优先 YAML `name`，缺失时退回到文件名。新增"**Set Active**"命令，把所选风格写入 `.claude/settings.local.json#outputStyle`（与 `/config` 一致）。当前生效的风格在 tree 里带 ✓ + ⭐ 标记
+- **Rules**（`~/.claude/rules/`、`.claude/rules/`）—— 模块化的 CLAUDE.md 补充。递归扫描（含 `frontend/` 之类子目录）。带 `paths:` frontmatter 的 rule 在 tree 里显示 `path-scoped` 标签
+- **Hooks**（只读视图，合并 4 源：user / project / local 的 settings.json + 各 plugin 的 `hooks/hooks.json`）。按事件分组（`PreToolUse` / `PostToolUse` / `SessionStart` …），每条 handler 带 source 标签。点击 entry 跳到对应源文件。每种 handler 有专属图标：command / http / mcp_tool / prompt / agent
+
+**文档**
+- 新增 [ADR-0001](docs/adr/0001-file-backed-resource-abstraction.md) 记录 file-backed 资源抽象决策：哪些资源共抽象、留了哪些"逃生门"、明确放弃覆盖什么
+- 新增 [CONTEXT.md](CONTEXT.md) 项目术语表：*scope*、*file-backed resource*、*bespoke module*、*closest wins*、*settings minimization*、*provider profile*
+
+### 变更
+
+**内部抽象 harvest**（零用户可见变化）：
+- 新增 `src/core/file-resource.ts`（`FileResourceDescriptor` + `listResource` / `createResource` / `deleteResource` + frontmatter 工具）。两种 discovery 模式：`recursive`（递归扫 `.md` 并按 first-wins 去重）和 `flat-subdirs`（Skills 模式：`<dir>/<basename>`）
+- 新增 `src/tree/file-resource-tree.ts` 通用 provider，自带 cache + inflight 加载和可注入的 display/tooltip adornment
+- 新增 `src/commands/file-resource-commands.ts` 通用 `.create` / `.delete` 注册器
+- Skills + Agents 迁到抽象：`skills-tree.ts` 从 72 LOC 缩到 13，`agents-tree.ts` 从 73 缩到 27，command 模块同步瘦身。原测试不动，全部通过
+
+### 测试
+- 137 个 core 层单测（之前 35）—— 新增 Agents 10 + file-resource 20 + Workflows 6 + Rules 7 + Output Styles 9 + Hooks 9
+
 ## [0.1.20] - 2026-06-18
 
 ### 修复
@@ -139,7 +166,8 @@
 - Usage Dashboard 用量统计与成本估算
 - 中英文双语支持
 
-[Unreleased]: https://github.com/weixiaospace/vscode-claude-copilot/compare/v0.1.18...HEAD
+[Unreleased]: https://github.com/weixiaospace/vscode-claude-copilot/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/weixiaospace/vscode-claude-copilot/releases/tag/v0.2.0
 [0.1.20]: https://github.com/weixiaospace/vscode-claude-copilot/releases/tag/v0.1.20
 [0.1.19]: https://github.com/weixiaospace/vscode-claude-copilot/releases/tag/v0.1.19
 [0.1.18]: https://github.com/weixiaospace/vscode-claude-copilot/releases/tag/v0.1.18

@@ -2,7 +2,7 @@
 
 # Claude Copilot
 
-[![Version](https://img.shields.io/badge/version-0.1.19-blue.svg)](https://github.com/weixiaospace/vscode-claude-copilot/releases)
+[![Version](https://img.shields.io/badge/version-0.2.0-blue.svg)](https://github.com/weixiaospace/vscode-claude-copilot/releases)
 [![VS Code](https://img.shields.io/badge/VS%20Code-%5E1.90.0-blue.svg?logo=visual-studio-code)](https://code.visualstudio.com/updates/v1_90)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
@@ -48,6 +48,11 @@ VS Code 扩展 —— [Claude Code](https://docs.claude.com/zh-CN/docs/claude-co
 | 🔌 **插件与市集** | 安装 / 卸载 / 启用 / 禁用插件；添加 / 移除 / **更新** marketplace（单个或全部）。已安装插件**可展开** —— 点进去能看到 skills、agents、commands、hooks、MCP 等具体内容，点子节点直接打开对应文件 |
 | 🧩 **MCP 服务器** | 用户级（CLI）和项目级（`.claude/settings.json`）分别管理，两棵独立的树 |
 | 🪄 **Skills** | 浏览 `~/.claude/skills` 与 `.claude/skills`。展开秒显示（已缓存）。点击即可编辑 `SKILL.md` |
+| 🤖 **Agents** | 浏览用户级 / 项目级 subagent。tree 展示 YAML frontmatter 里的 `model · N tools · color`；身份取自 `name` 字段（缺失时退回到文件名）；递归扫描 |
+| 🛠 **Workflows** | 浏览 `~/.claude/workflows/` 和项目 `.claude/workflows/` 下保存的 `/<name>` 脚本。身份取自文件名；递归扫描 |
+| 🎨 **Output Styles** | 浏览用户级 / 项目级输出风格。**Set Active** 命令把所选风格写入 `.claude/settings.local.json#outputStyle`（与 `/config` 等价）；当前生效的风格在 tree 里带 ✓ + ⭐ 标记 |
+| 📐 **Rules** | 浏览 `.claude/rules/` 下的模块化 CLAUDE.md 补充。带 `paths:` frontmatter 的 rule 显示 `path-scoped` 标签；支持 `frontend/`、`backend/` 等子目录组织 |
+| ⚡ **Hooks** | 只读视图，合并 **4 个源**的 hooks：user / project / local 三层 `settings.json` + 各 plugin 的 `hooks/hooks.json`。按事件分组（`PreToolUse` / `PostToolUse` / `SessionStart` …），每条 handler 带 source 标签 + 简要描述（command / URL / MCP tool / prompt / agent）。点击 entry 跳到对应源文件 |
 | 🧠 **Memory** | 浏览 `~/.claude/projects/<slug>/memory` 下的记忆文件，单独列出 MEMORY.md 索引项 |
 | ⚙️ **Settings** | User / Project / Local 三层**完全可视化**编辑器。~50 个配置项全部是开关 / toggle / select / tag 列表 —— 包括：provider 切换（Anthropic / Bedrock / Vertex / Foundry），鉴权方式切换（订阅 / API Key / Auth Token / Helper 脚本），权限的 allow/ask/deny/附加目录，15 个功能开关，6 个数值限制，记忆与梦境开关等等。切换 provider / 鉴权模式时旧凭证自动清除。**接入 Profile** —— 多份 API 配置作为命名 Profile 保存，凭证存入 VSCode SecretStorage（系统 keychain）。侧边栏可展开显示所有 Profile + 订阅模式，带 inline 切换/编辑/删除按钮 |
 | 📊 **Usage 仪表盘** | 解析 session jsonl。**Chart.js** 交互式堆叠柱状图 + 环形图。支持按日 / 周 / 月切换粒度，按项目过滤，按模型拆分。成本估算使用 Anthropic 官方价格（Opus / Sonnet / Haiku 4.x 和 3.5） |
@@ -65,7 +70,7 @@ VS Code 扩展 —— [Claude Code](https://docs.claude.com/zh-CN/docs/claude-co
 从 [Releases](https://github.com/weixiaospace/vscode-claude-copilot/releases) 下载最新 `.vsix`：
 
 ```bash
-code --install-extension claude-copilot-0.1.19.vsix
+code --install-extension claude-copilot-0.2.0.vsix
 ```
 
 ### 使用步骤

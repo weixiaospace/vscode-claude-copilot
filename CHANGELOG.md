@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 **[English](CHANGELOG.md) | [中文](CHANGELOG.zh-CN.md)**
 
+## [0.2.0] - 2026-06-19
+
+### Added
+
+**Five new resource panels** — surfacing the `.claude/` resources that Claude Code added over the last year:
+
+- **Agents** (`~/.claude/agents/`, `.claude/agents/`) — subagent definitions. Recursive scan; identity from YAML `name` frontmatter (filename fallback). Tree shows `model · N tools · color` from the frontmatter; first-occurrence wins on duplicate names within a scope.
+- **Workflows** (`~/.claude/workflows/`, `.claude/workflows/`) — saved `/<name>` scripts. Recursive scan; identity from filename.
+- **Output Styles** (`~/.claude/output-styles/`, `.claude/output-styles/`) — system-prompt modifiers. Identity from YAML `name` (filename fallback). A "**Set Active**" command writes the chosen style to `.claude/settings.local.json#outputStyle` (matching what `/config` does). The active style is marked in the tree with ✓ and a star icon.
+- **Rules** (`~/.claude/rules/`, `.claude/rules/`) — modular CLAUDE.md companions. Recursive scan, including subdirectories like `frontend/`. Rules with a `paths:` frontmatter get a `path-scoped` chip in the tree.
+- **Hooks** (read-only view, merges 4 sources: user / project / local settings.json + plugin `hooks/hooks.json`). Grouped by event (`PreToolUse`, `PostToolUse`, `SessionStart`, …); each handler tagged with source label. Click an entry to open its source file. Per-type icons: command / http / mcp_tool / prompt / agent.
+
+**Documentation**
+- New [ADR-0001](docs/adr/0001-file-backed-resource-abstraction.md) recording the file-backed resource abstraction decision: which resources share an abstraction, what the escape hatches are, and what is explicitly out of scope.
+- New [CONTEXT.md](CONTEXT.md) project glossary: *scope*, *file-backed resource*, *bespoke module*, *closest wins*, *settings minimization*, *provider profile*.
+
+### Changed
+
+**Internal abstraction harvest** (zero user-facing change):
+- New `src/core/file-resource.ts` (`FileResourceDescriptor` + `listResource` / `createResource` / `deleteResource` + frontmatter helpers). Two discovery modes: `recursive` (recursive `.md` scan with first-wins de-dup) and `flat-subdirs` (the Skills pattern: `<dir>/<basename>`).
+- New `src/tree/file-resource-tree.ts` generic provider with cache + inflight loading and injectable display/tooltip adornments.
+- New `src/commands/file-resource-commands.ts` generic `.create` / `.delete` registrar.
+- Skills + Agents migrated to the abstraction: `skills-tree.ts` dropped from 72 to 13 LOC, `agents-tree.ts` from 73 to 27 LOC, with equivalent shrinkage on the command modules. Existing tests untouched and still pass.
+
+### Tests
+- 137 core-layer tests (up from 35) — added 10 Agents + 20 file-resource + 6 Workflows + 7 Rules + 9 Output Styles + 9 Hooks.
+
 ## [0.1.20] - 2026-06-18
 
 ### Fixed
@@ -140,7 +167,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Usage dashboard with token analytics
 - English + Simplified Chinese bilingual support
 
-[Unreleased]: https://github.com/weixiaospace/vscode-claude-copilot/compare/v0.1.18...HEAD
+[Unreleased]: https://github.com/weixiaospace/vscode-claude-copilot/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/weixiaospace/vscode-claude-copilot/releases/tag/v0.2.0
 [0.1.20]: https://github.com/weixiaospace/vscode-claude-copilot/releases/tag/v0.1.20
 [0.1.19]: https://github.com/weixiaospace/vscode-claude-copilot/releases/tag/v0.1.19
 [0.1.18]: https://github.com/weixiaospace/vscode-claude-copilot/releases/tag/v0.1.18
