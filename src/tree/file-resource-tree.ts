@@ -25,10 +25,10 @@ export type FileResourceNode<T extends FileResourceItem> =
 
 export class FileResourceTreeProvider<T extends FileResourceItem>
   implements vscode.TreeDataProvider<FileResourceNode<T>> {
-  private _onDidChange = new vscode.EventEmitter<void>();
+  protected _onDidChange = new vscode.EventEmitter<void>();
   readonly onDidChangeTreeData = this._onDidChange.event;
-  private cache: T[] | null = null;
-  private inflight: Promise<T[]> | null = null;
+  protected cache: T[] | null = null;
+  protected inflight: Promise<T[]> | null = null;
 
   constructor(
     protected readonly desc: FileResourceDescriptor<T>,
@@ -41,7 +41,7 @@ export class FileResourceTreeProvider<T extends FileResourceItem>
     this._onDidChange.fire();
   }
 
-  private async loadAll(): Promise<T[]> {
+  protected async loadAll(): Promise<T[]> {
     if (this.cache) return this.cache;
     if (this.inflight) return this.inflight;
     const ws = currentWorkspace();
