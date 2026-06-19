@@ -7,3 +7,6 @@ webview-ui/dist
 # Playwright MCP artifacts
 .playwright-mcp/
 .claude/settings.json
+
+# Mirrored upstream Claude Code docs (regenerable via scripts/mirror-claude-docs.sh)
+docs/claude-code-upstream/
